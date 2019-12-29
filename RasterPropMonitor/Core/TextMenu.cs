@@ -15,10 +15,15 @@ namespace JSI
         public string menuTitle = string.Empty;
         public int rightColumnWidth;
 
-        public string ShowMenu(int width, int height)
-        {
-            var menuString = new StringBuilder();
+		public string ShowMenu(int width, int height)
+		{
+			var menuString = new StringBuilder();
+			ShowMenu(menuString, width, height);
+			return menuString.ToString();
+		}
 
+		public virtual void ShowMenu(StringBuilder menuString, int width, int height)
+        {
             if (!string.IsNullOrEmpty(menuTitle))
             {
                 menuString.AppendLine(menuTitle);
@@ -99,8 +104,6 @@ namespace JSI
 
                 menuString.AppendLine(textItem.ToString());
             }
-
-            return menuString.ToString();
         }
 
         public void NextItem()
