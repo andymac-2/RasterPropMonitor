@@ -7,4 +7,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription ("RasterPropMonitor plugin for Kerbal Space Program")]
 
 // This supposedly helps avoid plugin depencency problems.
-[assembly: KSPAssembly("RasterPropMonitor", 0, 17)]
+[assembly: KSPAssembly("RasterPropMonitor", 0, 18)]
