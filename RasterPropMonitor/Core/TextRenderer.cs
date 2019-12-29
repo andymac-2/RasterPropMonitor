@@ -159,10 +159,10 @@ namespace JSI
             }
 
             manuallyInvertY = false;
-            if (SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 9") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 11") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 12"))
-            {
-                manuallyInvertY = (UnityEngine.QualitySettings.antiAliasing > 0);
-            }
+            //if (SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 9") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 11") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 12"))
+            //{
+            //    manuallyInvertY = (UnityEngine.QualitySettings.antiAliasing > 0);
+            //}
 
             screenPixelWidth = screenWidth;
             screenPixelHeight = screenHeight;
