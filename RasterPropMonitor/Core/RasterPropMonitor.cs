@@ -493,7 +493,7 @@ namespace JSI
                 RenderTexture.active = screenTexture;
                 screenshot.ReadPixels(new Rect(0, 0, screenTexture.width, screenTexture.height), 0, 0);
                 RenderTexture.active = backupRenderTexture;
-                var bytes = screenshot.EncodeToPNG();
+                var bytes = ImageConversion.EncodeToPNG(screenshot);
                 Destroy(screenshot);
                 File.WriteAllBytes(screenshotName, bytes);
             }

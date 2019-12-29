@@ -224,3 +224,5 @@ dev_README.txt
 *.zip
 GameData/ModuleManager.*.dll
 GameData/JSI/JSIAdvTransparentPods/Plugins/JSIAdvTransparentPods.dll
+/.vs
+/ksp

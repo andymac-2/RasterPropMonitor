@@ -2209,8 +2209,12 @@ namespace JSI
                                 return 1d;
                             case FlightUIMode.STAGING:
                                 return -1d;
-                            case FlightUIMode.ORBITAL:
+                            case FlightUIMode.MAPMODE:
                                 return 0d;
+							case FlightUIMode.MANEUVER_EDIT:
+								return 2d;
+							case FlightUIMode.MANEUVER_INFO:
+								return 3d;
                         }
                         return double.NaN;
                     };
