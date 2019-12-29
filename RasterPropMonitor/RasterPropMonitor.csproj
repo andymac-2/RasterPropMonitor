@@ -126,6 +126,7 @@
     <Compile Include="Handlers\JSIParachute.cs" />
     <Compile Include="Handlers\JSIPilotAssistant.cs" />
     <Compile Include="Handlers\JSISASMenu.cs" />
+    <Compile Include="Handlers\JSIScienceDisplay.cs" />
     <Compile Include="Handlers\KACWrapper.cs" />
     <Compile Include="Handlers\MechJebRPM.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
