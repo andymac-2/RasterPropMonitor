@@ -105,12 +105,12 @@ namespace JSI
 
         public void NextItem()
         {
-            currentSelection = Math.Min(currentSelection + 1, Count - 1);
+            currentSelection = (currentSelection + 1) % Count;
         }
 
         public void PreviousItem()
         {
-            currentSelection = Math.Max(currentSelection - 1, 0);
+            currentSelection = (currentSelection + Count - 1) % Count;
         }
 
         public void SelectItem()
