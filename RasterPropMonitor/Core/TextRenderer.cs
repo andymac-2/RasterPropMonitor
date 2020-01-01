@@ -123,9 +123,9 @@ namespace JSI
         private readonly Dictionary<char, Rect> fontCharacters = new Dictionary<char, Rect>();
         private readonly HashSet<char> characterWarnings = new HashSet<char>();
 
-        // Stores the hash of the current strings so we can determine if they've changed.
-        private int cachedTextHash = -1;
-        private int cachedOverlayTextHash = -1;
+        // Stores the last strings we drew so we can determine if they've changed.
+        private string cachedText;
+        private string cachedOverlayText;
 
         private readonly bool manuallyInvertY;
 
@@ -460,14 +460,12 @@ namespace JSI
          */
         public void Render(RenderTexture screen, MonitorPage activePage)
         {
-            int screenTextHash = activePage.Text.GetHashCode();
-            int overlayTextHash = activePage.textOverlay.GetHashCode();
-            bool textDirty = (cachedTextHash != screenTextHash) || (cachedOverlayTextHash != overlayTextHash);
+            bool textDirty = (cachedText != activePage.Text) || (cachedOverlayText != activePage.textOverlay);
 
             if (textDirty)
             {
-                cachedTextHash = screenTextHash;
-                cachedOverlayTextHash = overlayTextHash;
+                cachedText = activePage.Text;
+                cachedOverlayText = activePage.textOverlay;
 
                 for (int i = 0; i < fontRenderer.Count; ++i)
                 {
