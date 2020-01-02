@@ -226,3 +226,5 @@ GameData/ModuleManager.*.dll
 GameData/JSI/JSIAdvTransparentPods/Plugins/JSIAdvTransparentPods.dll
 /.vs
 /ksp
+/GameData/JSI/PartUtilities/Plugins
+/GameData/JSI/RPMBundles
