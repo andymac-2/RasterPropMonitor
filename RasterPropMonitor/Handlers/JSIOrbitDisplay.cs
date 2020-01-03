@@ -65,7 +65,6 @@ namespace JSI
         [KSPField]
         public int orbitPoints = 120;
         private bool startupComplete;
-        private Material iconMaterial;
         private readonly Material lineMaterial = JUtil.DrawLineMaterial();
         // All units in pixels.  Assumes GL.Begin(LINES) and GL.Color() have
         // already been called for this circle.
@@ -644,24 +643,56 @@ namespace JSI
             var position = new Rect(xPos - iconPixelSize * 0.5f, yPos - iconPixelSize * 0.5f,
                                iconPixelSize, iconPixelSize);
 
-            Rect shadow = position;
-            shadow.x += iconShadowShift.x;
-            shadow.y += iconShadowShift.y;
+            //Rect shadow = position;
+            //shadow.x += iconShadowShift.x;
+            //shadow.y += iconShadowShift.y;
 
-            iconMaterial.color = iconColorShadowValue;
-            Graphics.DrawTexture(shadow, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, iconMaterial);
+            //MapView.OrbitIconsMaterial.color = iconColorShadowValue;
+            //Graphics.DrawTexture(shadow, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, MapView.OrbitIconsMaterial);
 
-            iconMaterial.color = iconColor;
-            Graphics.DrawTexture(position, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, iconMaterial);
+			// the old icon material wasn't working, so just use this one
+			// but I don't fully understand the color/blend system
+			// a = 1.0 is far too faint; 4.0 looks pretty good
+            MapView.OrbitIconsMaterial.color = new Color(iconColor.r, iconColor.g, iconColor.b, 4.0f);
+            Graphics.DrawTexture(position, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, MapView.OrbitIconsMaterial);
+			
+			// if the icon texture ever changes, you can use this code to dump it out for inspection
+			#if false
+			var filepath = "orbiticonsmap.png";
+			if (!System.IO.File.Exists(filepath))
+			{
+				var textureCopy = duplicateTexture(MapView.OrbitIconsMap);
+				var textureBytes = textureCopy.EncodeToPNG();
+				System.IO.File.WriteAllBytes(filepath, textureBytes);
+			}
+			#endif
         }
+
+		Texture2D duplicateTexture(Texture2D source)
+		{
+			RenderTexture renderTex = RenderTexture.GetTemporary(
+						source.width,
+						source.height,
+						0,
+						RenderTextureFormat.Default,
+						RenderTextureReadWrite.Linear);
+
+			Graphics.Blit(source, renderTex);
+			RenderTexture previous = RenderTexture.active;
+			RenderTexture.active = renderTex;
+			Texture2D readableText = new Texture2D(source.width, source.height);
+			readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+			readableText.Apply();
+			RenderTexture.active = previous;
+			RenderTexture.ReleaseTemporary(renderTex);
+			return readableText;
+		}
 
         public void Start()
         {
             // Skip the entire sequence when in editor -- this means we're part of a transparent pod and won't get used anyway.
             if (HighLogic.LoadedSceneIsEditor)
             {
-                iconMaterial = new Material(Shader.Find("KSP/Alpha/Unlit Transparent"));
-                iconMaterial.color = new Color(0.5f, 0.5f, 0.5f, 1.0f);
                 startupComplete = true;
                 return;
             }
@@ -720,10 +751,6 @@ namespace JSI
                 {
                     iconColorClosestApproachValue = ConfigNode.ParseColor32(iconColorClosestApproach);
                 }
-
-                // This mess with shaders has to stop. Maybe we should have a single shader to draw EVERYTHING on the screen...
-                iconMaterial = new Material(Shader.Find("KSP/Alpha/Unlit Transparent"));
-                iconMaterial.color = new Color(0.5f, 0.5f, 0.5f, 1.0f);
 
                 startupComplete = true;
             }

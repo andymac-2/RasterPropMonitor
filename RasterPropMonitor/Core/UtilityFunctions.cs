@@ -102,13 +102,49 @@ namespace JSI
             {
                 switch (type)
                 {
-                    case VesselType.Base:
-                        x = 2;
-                        y = 0;
-                        break;
                     case VesselType.Debris:
                         x = 1;
                         y = 3;
+                        break;
+                    case VesselType.SpaceObject:
+                        x = 4;
+                        y = 1;
+                        break;
+                    case VesselType.Unknown:
+                        x = 3;
+                        y = 3;
+                        break;
+                    case VesselType.Probe:
+                        x = 1;
+                        y = 0;
+                        break;
+					case VesselType.Relay:
+						x = 4;
+						y = 3;
+						break;
+                    case VesselType.Rover:
+                        x = 0;
+                        y = 0;
+                        break;
+                    case VesselType.Lander:
+                        x = 3;
+                        y = 0;
+                        break;
+                    case VesselType.Ship:
+                        x = 0;
+                        y = 3;
+						break;
+					case VesselType.Plane:
+						x = 4;
+						y = 4;
+						break;
+                    case VesselType.Station:
+                        x = 3;
+                        y = 1;
+                        break;
+					case VesselType.Base:
+                        x = 2;
+                        y = 0;
                         break;
                     case VesselType.EVA:
                         x = 2;
@@ -118,36 +154,8 @@ namespace JSI
                         x = 4;
                         y = 0;
                         break;
-                    case VesselType.Lander:
-                        x = 3;
-                        y = 0;
-                        break;
-                    case VesselType.Probe:
-                        x = 1;
-                        y = 0;
-                        break;
-                    case VesselType.Rover:
-                        x = 0;
-                        y = 0;
-                        break;
-                    case VesselType.Ship:
-                        x = 0;
-                        y = 3;
-                        break;
-                    case VesselType.Station:
-                        x = 3;
-                        y = 1;
-                        break;
-                    case VesselType.Unknown:
-                        x = 3;
-                        y = 3;
-                        break;
-                    case VesselType.SpaceObject:
-                        x = 4;
-                        y = 1;
-                        break;
                     default:
-                        x = 3;
+                        x = 4;
                         y = 2;
                         break;
                 }
