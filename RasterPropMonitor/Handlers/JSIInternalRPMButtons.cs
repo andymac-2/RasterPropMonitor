@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
+
 using KSP.UI;
 using KSP.UI.Screens;
 using System;
@@ -585,7 +586,7 @@ namespace JSI
         {
             if (vessel != null && vessel.IsRecoverable)
             {
-                GameEvents.OnVesselRecoveryRequested.Fire(vessel);
+				JSI.Core.JSIVesselRecovery.Recover(vessel);
             }
         }
 
