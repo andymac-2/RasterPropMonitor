@@ -98,15 +98,18 @@ namespace JSI
             { VesselType.Ship,true },
             { VesselType.Station,true },
             { VesselType.Probe,false },
-            { VesselType.Lander,false },
+			{ VesselType.Lander,false },
             { VesselType.Rover,false },
             { VesselType.EVA,false },
             { VesselType.Flag,false },
             { VesselType.Base,false },
             { VesselType.Debris,false },
             { VesselType.Unknown,false },
-            { VesselType.Relay,false }
-        };
+			{ VesselType.Relay,false },
+			{ VesselType.Plane,false },
+			{ VesselType.DeployedScienceController,false },
+			{ VesselType.DeployedSciencePart,false },
+		};
 
         private enum MenuList
         {
@@ -763,6 +766,8 @@ namespace JSI
         private static int VesselFilterToBitmask(Dictionary<VesselType, bool> filterList)
         {
             // Because VesselType is not [Flags]. Gweh.
+			// this is pretty silly, we could use the official VesselType enum to future-proof this better
+			// but I'm a little worried about any existing content using the defaultFilter field
             int mask = 0;
             if (filterList[VesselType.Ship])
                 mask |= 1 << 0;
@@ -786,7 +791,13 @@ namespace JSI
                 mask |= 1 << 9;
             if (filterList[VesselType.Relay])
                 mask |= 1 << 10;
-            return mask;
+			if (filterList[VesselType.Plane])
+				mask |= 1 << 11;
+			if (filterList[VesselType.DeployedScienceController])
+				mask |= 1 << 12;
+			if (filterList[VesselType.DeployedSciencePart])
+				mask |= 1 << 13;
+			return mask;
         }
 
         private void VesselFilterFromBitmask(int mask)
@@ -802,7 +813,10 @@ namespace JSI
             vesselFilter[VesselType.Debris] = (mask & (1 << 8)) > 0;
             vesselFilter[VesselType.Unknown] = (mask & (1 << 9)) > 0;
             vesselFilter[VesselType.Relay] = (mask & (1 << 10)) > 0;
-        }
+			vesselFilter[VesselType.Plane] = (mask & (1 << 11)) > 0;
+			vesselFilter[VesselType.DeployedScienceController] = (mask & (1 << 12)) > 0;
+			vesselFilter[VesselType.DeployedSciencePart] = (mask & (1 << 13)) > 0;
+		}
 
         // Returns true if the reference part is a claw and the part can be
         // toggled (state is Ready or state is Disabled).  Also updates the
