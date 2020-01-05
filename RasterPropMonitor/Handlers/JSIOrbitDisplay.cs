@@ -65,10 +65,21 @@ namespace JSI
         [KSPField]
         public int orbitPoints = 120;
         private bool startupComplete;
-        private readonly Material lineMaterial = JUtil.DrawLineMaterial();
-        // All units in pixels.  Assumes GL.Begin(LINES) and GL.Color() have
-        // already been called for this circle.
-        private static void DrawCircle(float centerX, float centerY, float radius, int maxOrbitPoints)
+		private Material lineMaterial;
+
+		public override void OnAwake()
+		{
+			base.OnAwake();
+
+			if (lineMaterial == null)
+			{
+				lineMaterial = JUtil.DrawLineMaterial();
+			}
+		}
+
+		// All units in pixels.  Assumes GL.Begin(LINES) and GL.Color() have
+		// already been called for this circle.
+		private static void DrawCircle(float centerX, float centerY, float radius, int maxOrbitPoints)
         {
             // Figure out the tessellation level to use, based on circle size
             // and user limits.

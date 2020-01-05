@@ -48,7 +48,7 @@ namespace JSI
         [KSPField]
         public string backgroundTextureURL = string.Empty;
         private readonly List<GraphLine> graphs = new List<GraphLine>();
-        public static Material lineMaterial = JUtil.DrawLineMaterial();
+		public static Material lineMaterial;
         private Rect graphSpace;
         private double lastDataPoint;
         private Texture2D backgroundTexture;
@@ -70,7 +70,12 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
 
-                if (!string.IsNullOrEmpty(borderColor))
+				if (lineMaterial == null)
+				{
+					lineMaterial = JUtil.DrawLineMaterial();
+				}
+
+				if (!string.IsNullOrEmpty(borderColor))
                 {
                     borderColorValue = ConfigNode.ParseColor32(borderColor);
                 }

@@ -34,7 +34,7 @@ namespace JSI
         private Color32 backgroundColorValue;
         private List<DataSet> dataSets = new List<DataSet>();
         private bool startupComplete = false;
-        private Material lineMaterial = JUtil.DrawLineMaterial();
+		private Material lineMaterial;
         private RasterPropMonitorComputer rpmComp;
 
         public bool RenderBackground(RenderTexture screen, float cameraAspect)
@@ -99,6 +99,11 @@ namespace JSI
             try
             {
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+
+				if (lineMaterial == null)
+				{
+					lineMaterial = JUtil.DrawLineMaterial();
+				}
 
                 if (string.IsNullOrEmpty(layout))
                 {

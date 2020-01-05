@@ -50,7 +50,7 @@ namespace JSI
         // The rest of it
         private GameObject lightCone;
         private LineRenderer lightConeRenderer;
-        private static readonly Material lightConeMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Additive"));
+		private static Material lightConeMaterial;
         private Transform actualCamera;
         private const float endSpan = 15f;
         private const float fovAngle = 60f;
@@ -91,7 +91,18 @@ namespace JSI
             }
         }
 
-        public override void OnStart(PartModule.StartState state)
+		public override void OnAwake()
+		{
+			base.OnAwake();
+
+			// initialize the static material if it hasn't been loaded yet.  this clearly isn't threadsafe...
+			if (lightConeMaterial == null)
+			{
+				lightConeMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Additive"));
+			}
+		}
+
+		public override void OnStart(PartModule.StartState state)
         {
             if (string.IsNullOrEmpty(cameraContainer))
             {

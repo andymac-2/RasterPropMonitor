@@ -1685,14 +1685,6 @@ namespace JSI
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class RPMShaderLoader : MonoBehaviour
     {
-        RPMShaderLoader()
-        {
-            // I don't want this object destroyed on scene change, since the database
-            // loader coroutine can take a while to run to completion.  Eventually,
-            // I may add smarts so database reloads get handled, too.
-            DontDestroyOnLoad(this);
-        }
-
         private void LoadAssets()
         {
             String assetsPath = KSPUtil.ApplicationRootPath + "GameData/JSI/RasterPropMonitor/";
@@ -1790,7 +1782,12 @@ namespace JSI
         /// </summary>
         private void Awake()
         {
-            if (!GameDatabase.Instance.IsReady())
+			// I don't want this object destroyed on scene change, since the database
+			// loader coroutine can take a while to run to completion.  Eventually,
+			// I may add smarts so database reloads get handled, too.
+			DontDestroyOnLoad(this);
+
+			if (!GameDatabase.Instance.IsReady())
             {
                 JUtil.LogErrorMessage(this, "GameDatabase.IsReady is false");
                 throw new Exception("RPMShaderLoader: GameDatabase is not ready.  Unable to continue.");
