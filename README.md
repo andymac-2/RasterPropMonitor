@@ -1,13 +1,12 @@
 # RasterPropMonitor
 
-To view this document with formatting, refer to https://github.com/Mihara/RasterPropMonitor/blob/master/README.md
+To view this document with formatting, refer to https://github.com/JonnyOThan/RasterPropMonitor/blob/master/README.md
 
 RasterPropMonitor (RPM) is a toolkit and plugin that provides drastically-increased functionality to the IVA
 mode in Kerbal Space Program.  Using RPM-enabled props, a player can control almost any aspect of spacecraft
 or spaceplane operations.
 
-RPM can interface with some mods, incorporating those mods' behaviors seamlessly into the RPM IVA.  A list of
-actively supported and known working mods is available in the [release notes](https://github.com/Mihara/RasterPropMonitor/wiki/Changes-in-this-version).
+RPM can interface with some mods, incorporating those mods' behaviors seamlessly into the RPM IVA.  A partial list of supported mods and IVAs is below.
 
 Included in the RPM distribution are example props for use in enhancing the IVA experience.  Most of these
 props were created by using stock KSP prop models.  There is also an MFD model by alexustas for use in glass cockpit designs.
@@ -23,6 +22,10 @@ accomplished using RasterPropMonitor.
 
 ## INSTALLATION INSTRUCTIONS:
 
+### CKAN
+As of RPM v0.31.1, installation via CKAN is officially supported.  CKAN provides two packages: RasterPropMonitor is the entire mod including the JSI Agency and example IVA overrides.  RasterPropMonitor-core only includes the plugin and props for use in other mods.  If you install only RasterPropMonitor-core, you must also install some other IVA mods.
+
+### Manual Installation
 Extract the contents of the GameData folder in the RPM zip file into the GameData folder of your KSP install.  You should see the following folder structure:
 
 ```
@@ -37,9 +40,7 @@ If you do not see GameData/JSI, you have installed this mod incorrectly, and it 
 
 If you have JSIAdvTransparentPods installed, you will see it next to RasterPropMonitor in your file list.
 
-If you used CKAN to install this mod, check the file structure.  CKAN has installed this mod incorrectly in the past.  If CKAN installed it incorrectly, remove this mod and install it manually.  I do not provide support for CKAN installations.
-
-If the plugin was listed as a dependency by some other mod author, and you do not want to use the modified stock interiors included in this package, the JSI/RPMPodPatches directory may be safely deleted. Every capsule being modified has its own pair of patch config files -- you can safely delete only those you don't want.
+If the plugin was listed as a dependency by some other mod author, and you do not want to use the modified stock interiors included in this package, the JSI/RPMPodPatches/PatchesMod and JSI/RPMPodPatches/PatchesStock directories may be safely deleted. Every capsule being modified has its own pair of patch config files -- you can safely delete only those you don't want.  The JSI/RPMPodPatches/BasicMFD directory contains the MFD props and must not be deleted if you're using an IVA that uses it.
 
 ### UPGRADING FROM OLDER VERSIONS:
 As a general rule, you should delete any existing installation (just don't accidentally delete JSIAdvTransparentPods
@@ -48,6 +49,11 @@ corresponding JSINonTransparentPod.  Contact the makers of the transparent
 pods to ask them to upgrade to use JSIAdvTransparentPods.
 
 JSIAdvTransparentPods is a separate mod created by JPLRepo.  It can be found on GitHub at https://github.com/JPLRepo/JSIAdvTransparentPods and on the [KSP forum](http://forum.kerbalspaceprogram.com/index.php?/topic/138433-111-jsi-advanced-transparent-pods-v0160-previously-part-of-rasterpropmonitor-14th-may-2016/).
+
+## GETTING SUPPORT
+Make sure you've installed Module Manager and followed the installation instructions above.  Then read [this post](https://forum.kerbalspaceprogram.com/index.php?/topic/83212-how-to-get-support-read-first/) and post a comment on [this thread](https://forum.kerbalspaceprogram.com/index.php?/topic/190737-18x-rasterpropmonitor-adopted/) that includes your ksp.log file and screenshots of the problem.  *If you don't include the log file you will probably not get help.*
+
+If you have a reproducible bug or suggestions for changes, you are welcome to open an issue on the [github issue tracker](https://github.com/JonnyOThan/RasterPropMonitor/issues).  Please first use the search feature to see if it's already been reported, and include your log file and screenshots in the issue.
 
 ## CONFIGURATION
 
@@ -71,15 +77,51 @@ Large minimum values will cause some animations and updates to stutter, instead 
 
 ## MOAR IVAs?
 
-If the basic IVA experience included in this package is not enough, take a look at some of these:
+### Add-ons for RasterPropMonitor:
 
-* [Aerokerbin Industries](http://forum.kerbalspaceprogram.com/index.php?/topic/86692-v50-rc1-released-aerokerbin-industries-modified-ivas/) Modified IVAs by MasseFlieger
-* [ALCOR](http://forum.kerbalspaceprogram.com/index.php?/topic/50272-104alcorquotadvanced-landing-capsule-for-orbital-rendezvousquot-by-aset-21072015/) lander capsule by alexustas
-* Yarbrough [Mk1. 1-1 A2](http://forum.kerbalspaceprogram.com/index.php?/topic/60681-10511-flight-systems-redux-aset-props-and-rpm-iva-8-april-2016/) IVA replacement by MOARdV
-* [Mk1-2 Pod](http://forum.kerbalspaceprogram.com/index.php?/topic/116440-iva104-mk1-2-pod-iva-replacement-by-aset-wip/) by alexustas
-* [Mk3 Pod IVA](http://forum.kerbalspaceprogram.com/index.php?/topic/119612-iva11-mk3-pod-iva-replacement-by-apex-wip/) Replacement by Apex
+Plugins that integrate with RasterPropMonitor, enhancing the IVA experience.
 
-Take a look around the forum, and you'll find other mods with RasterPropMonitor IVAs.
+* Astrogator, for planning transfers between worlds.
+* Docking Port Alignment Indicator, to make IVA docking much, much easier.
+* NavUtilities, providing ILS and HSI in the cockpit.
+* SCANsat, for map views on the MFDs.
+* VesselView, for graphical representations of your craft.
+* ProbeControlRoom for adding a control room IVA to unmanned craft.
+* kOSPropMonitor (requires kOS) - provides an IVA terminal for kOS.
+* Chatterer (ASET only) - IVA buttons and indicators for kerbalized radio chatter
+* Engine Ignitor - limited engine restarts
+* Hullcam VDS - more external cameras
+
+Plugins RasterPropMonitor can interact with, enhancing the IVA experience even more.
+
+* Ferram Aerospace Research: for FAR-computed variables, as well as controlling flaps and spoilers from IVA.
+* MechJeb: for all sorts of auto-pilot features and flight information.
+* RealChute: RPM can arm, disarm, deploy, and cut RealChute parachutes (as well as deploying and cutting stock 'chutes).
+
+### IVAs for stock pods:
+
+* KSA IVA Upgrade (note this is the old mk1 pod, you can find it in the VAB if you filter by cross section)
+* Mk3 Pod IVA Replacement by Apex
+* Mk1 Lander Can by alexustas
+* Mk1-2 Pod by alexustas (Note this is the old one)
+* DE_IVAExtension (all pods!) by DemonEin
+
+### Other IVAs:
+
+* Aerokerbin Industries Modified IVAs by MasseFlieger.
+* The ALCOR capsule and ERS rover by alexustas.
+* CST-100 7-seat crew vehicle by xxhansonmaxx
+* Falcon Command Cockpit cockpit
+* Home Grown Rockets
+* B9 Aerospace by @blowfish
+
+### Other suggested mods for IVA playing:
+
+* Through the Eyes of a Kerbal - 1st-person EVA
+* QuickIVA - force IVA mode
+* MOARDv Avionics System - the successor to RasterPropMonitor
+
+Don't see a current IVA project on this list? Let me know. I may have missed it.  Take a look around the forum, and you'll find other mods with RasterPropMonitor IVAs.
 
 ### Even MOAR IVAs!
 Maybe you want to try making your own IVA?  You'll need to download Unity and KSP's PartTools (look on the forum for more information).
@@ -92,15 +134,15 @@ following prop packs to make something exceptional:
 
 ## LINKS
 
-See [the forum support thread](http://forum.kerbalspaceprogram.com/index.php?/topic/105821-105-rasterpropmonitor-still-putting-the-a-in-iva-v0240-10-november-2015/) for support.
+See [the forum support thread](https://forum.kerbalspaceprogram.com/index.php?/topic/190737-18x-rasterpropmonitor-adopted/) for support.
 
 See [the dull^H^H^H^H full documentation](https://github.com/Mihara/RasterPropMonitor/wiki) in the wiki on GitHub.
 
 For the latest release notes, please refer to the wiki at
-[Changes in this version](https://github.com/Mihara/RasterPropMonitor/wiki/Changes-in-this-version)
+[Changes in this version](https://github.com/JonnyOThan/RasterPropMonitor/wiki/Changes-in-this-version)
 
 Source code and full license information available at
-[GitHub](https://github.com/Mihara/RasterPropMonitor/)
+[GitHub](https://github.com/JonnyOThan/RasterPropMonitor/)
 
 ## LICENSES
 
