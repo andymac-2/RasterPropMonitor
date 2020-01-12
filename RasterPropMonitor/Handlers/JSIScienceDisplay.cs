@@ -12,6 +12,7 @@ namespace JSI.Handlers
         public ExperimentDetailsMenu(ModuleScienceExperiment experimentModule)
         {
             m_experimentModule = experimentModule;
+			m_results = string.Empty;
 
             menuTitle = experimentModule.experiment.experimentTitle;
 
@@ -44,12 +45,22 @@ namespace JSI.Handlers
             {
                 var subject = ResearchAndDevelopment.GetSubjectByID(scienceData.subjectID);
                 Util.WordWrap(subject.title, menuString, width);
-                var results = ResearchAndDevelopment.GetResults(scienceData.subjectID);
-                Util.WordWrap(results, menuString, width);
+
+				// Some experiment results have multiple flavor texts, and GetResults returns a random one
+				// So cache the subjectID and results string and only update results if the subject changes.
+				if (m_subjectID != scienceData.subjectID)
+				{
+					m_results = ResearchAndDevelopment.GetResults(scienceData.subjectID);
+					m_subjectID = scienceData.subjectID;
+				}
+
+                Util.WordWrap(m_results, menuString, width);
             }
         }
 
         ModuleScienceExperiment m_experimentModule;
+		string m_subjectID;
+		string m_results;
     }
 
     static class Util
