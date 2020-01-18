@@ -289,20 +289,13 @@ namespace JSI
                                     }
                                     else
                                     {
-										JUtil.LogErrorMessage(this, "No lights named {0} found in internal model", internalLightName);
                                         actionName = "dummy";
                                     }
                                 }
-								else
-								{
-									JUtil.LogErrorMessage(this, "No lights found in internal model", internalLightName);
-									actionName = "dummy";
-								}
-							}
+                            }
                             else
                             {
-								JUtil.LogErrorMessage(this, "light switch requires internalLightName set", internalLightName);
-								actionName = "dummy";
+                                actionName = "dummy";
                             }
                             break;
                         case "plugin":

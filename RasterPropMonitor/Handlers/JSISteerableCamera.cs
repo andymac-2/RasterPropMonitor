@@ -115,7 +115,7 @@ namespace JSI
         [KSPField]
         public int flickerRange;
         [KSPField]
-        public bool skipMissingCameras = true;
+        public bool skipMissingCameras = false;
         [KSPField]
         public string cameraInfoVarName = string.Empty;
         [KSPField]
