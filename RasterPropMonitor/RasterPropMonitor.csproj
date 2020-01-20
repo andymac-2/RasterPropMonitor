@@ -114,6 +114,7 @@
     <Compile Include="Auxiliary modules\JSINumericInput.cs" />
     <Compile Include="Auxiliary modules\JSIRadar.cs" />
     <Compile Include="Auxiliary modules\JSIThrustReverser.cs" />
+    <Compile Include="Core\ElectricalSystem.cs" />
     <Compile Include="Core\JSIVesselRecovery.cs" />
     <Compile Include="Core\AeroExtensions.cs" />
     <Compile Include="Core\CustomVariable.cs" />
