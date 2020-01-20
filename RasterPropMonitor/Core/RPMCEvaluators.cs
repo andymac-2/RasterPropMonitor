@@ -67,7 +67,26 @@ namespace JSI
         {
             cacheable = true;
 
-            if (input.IndexOf("_", StringComparison.Ordinal) > -1)
+			// If we've made it clear down here, maybe it's one of the plugin variables ... ?
+			try
+			{
+				object result;
+				if (plugins.ProcessVariable(input, out result, out cacheable))
+				{
+					// It's a plugin variable.
+					return (string variable, RPMVesselComputer comp) =>
+					{
+						object o;
+						bool b;
+						// Ignore return value - we already checked it
+						plugins.ProcessVariable(variable, out o, out b);
+						return o;
+					};
+				}
+			}
+			catch { }
+
+			if (input.IndexOf("_", StringComparison.Ordinal) > -1)
             {
                 string[] tokens = input.Split('_');
 
@@ -2626,25 +2645,6 @@ namespace JSI
                         return -1d;
                     };
             }
-
-            // If we've made it clear down here, maybe it's one of the plugin variables ... ?
-            try
-            {
-                object result;
-                if (plugins.ProcessVariable(input, out result, out cacheable))
-                {
-                    // It's a plugin variable.
-                    return (string variable, RPMVesselComputer comp) =>
-                        {
-                            object o;
-                            bool b;
-                            // Ignore return value - we already checked it
-                            plugins.ProcessVariable(variable, out o, out b);
-                            return o;
-                        };
-                }
-            }
-            catch { }
 
             return (string variable, RPMVesselComputer comp) => { return variable; };
         }
