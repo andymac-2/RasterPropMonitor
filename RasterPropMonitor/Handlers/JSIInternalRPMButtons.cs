@@ -156,7 +156,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                comp.electricalSystem.SetEnableGenerators(state);
+                comp.SetEnableGenerators(state);
             }
         }
 
@@ -169,7 +169,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                return comp.electricalSystem.generatorsActive;
+                return comp.generatorsActive;
             }
 
             return false;
@@ -922,7 +922,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                return comp.electricalSystem.solarPanelsDeployable;
+                return comp.solarPanelsDeployable;
             }
             return false;
         }
@@ -936,7 +936,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                return comp.electricalSystem.solarPanelsRetractable;
+                return comp.solarPanelsRetractable;
             }
             return false;
         }
@@ -951,7 +951,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                return (double)comp.electricalSystem.solarPanelMovement;
+                return (double)comp.solarPanelMovement;
             }
             return -1.0;
         }
@@ -965,7 +965,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                comp.electricalSystem.SetDeploySolarPanels(state);
+                comp.SetDeploySolarPanels(state);
             }
         }
 
@@ -978,7 +978,7 @@ namespace JSI
             if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                return comp.electricalSystem.solarPanelsState;
+                return comp.solarPanelsState;
             }
             return true;
         }

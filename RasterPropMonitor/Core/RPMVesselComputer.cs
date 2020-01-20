@@ -660,8 +660,6 @@ namespace JSI
                 return;
             }
 
-			electricalSystem = new ElectricalSystem(vessel);
-
             //JUtil.LogMessage(this, "OnStart for vessel {0} ({1})", (string.IsNullOrEmpty(vessel.vesselName)) ? "(no name)" : vessel.vesselName, vessel.id);
             if (instances.ContainsKey(vessel.id))
             {

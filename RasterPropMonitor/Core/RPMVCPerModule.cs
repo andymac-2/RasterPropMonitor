@@ -93,8 +93,22 @@ namespace JSI
         internal bool anyParachutesDeployed;
         internal bool allParachutesSafe;
 
-		//--- Power production
-		internal ElectricalSystem electricalSystem;
+        //--- Power production
+        internal List<ModuleAlternator> availableAlternators = new List<ModuleAlternator>();
+        internal List<ModuleResourceConverter> availableFuelCells = new List<ModuleResourceConverter>();
+        internal List<float> availableFuelCellOutput = new List<float>();
+        internal List<ModuleGenerator> availableGenerators = new List<ModuleGenerator>();
+        internal List<float> availableGeneratorOutput = new List<float>();
+        internal List<ModuleDeployableSolarPanel> availableSolarPanels = new List<ModuleDeployableSolarPanel>();
+        internal bool generatorsActive; // Returns true if at least one generator or fuel cell is active that can be otherwise switched off
+        internal bool solarPanelsDeployable;
+        internal bool solarPanelsRetractable;
+        internal bool solarPanelsState; // Returns false if the solar panels are extendable or are retracting
+        internal int solarPanelMovement;
+        internal float alternatorOutput;
+        internal float fuelcellOutput;
+        internal float generatorOutput;
+        internal float solarOutput;
 
         //--- Radar
         internal List<JSIRadar> availableRadars = new List<JSIRadar>();
@@ -121,17 +135,22 @@ namespace JSI
 
             availableAblators.Clear();
             availableAirIntakes.Clear();
+            availableAlternators.Clear();
             availableDeployableWheels.Clear();
             availableEngines.Clear();
+            availableFuelCells.Clear();
+            availableFuelCellOutput.Clear();
+            availableGenerators.Clear();
+            availableGeneratorOutput.Clear();
             availableGimbals.Clear();
             availableMultiModeEngines.Clear();
             availableParachutes.Clear();
             availableRadars.Clear();
             availableRealChutes.Clear();
+            availableSolarPanels.Clear();
             availableThrustReverser.Clear();
             availableWheelBrakes.Clear();
             availableWheelDamage.Clear();
-			electricalSystem.Clear();
 
             mainDockingNode = null;
         }
@@ -189,10 +208,54 @@ namespace JSI
                                         JUtil.LogMessage(this, "intake resource is {0}?", (module as ModuleResourceIntake).resourceName);
                                     }
                                 }
-								else if (electricalSystem.ConsiderModule(module))
-								{
-									// handled
-								}
+                                else if (module is ModuleAlternator)
+                                {
+                                    ModuleAlternator alt = module as ModuleAlternator;
+                                    for (int i = 0; i < alt.resHandler.outputResources.Count; ++i)
+                                    {
+                                        if (alt.resHandler.outputResources[i].name == "ElectricCharge")
+                                        {
+                                            availableAlternators.Add(alt);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (module is ModuleGenerator)
+                                {
+                                    ModuleGenerator gen = module as ModuleGenerator;
+                                    for (int i = 0; i < gen.resHandler.outputResources.Count; ++i)
+                                    {
+                                        if (gen.resHandler.outputResources[i].name == "ElectricCharge")
+                                        {
+                                            availableGenerators.Add(gen);
+                                            availableGeneratorOutput.Add((float)gen.resHandler.outputResources[i].rate);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (module is ModuleResourceConverter)
+                                {
+                                    ModuleResourceConverter gen = module as ModuleResourceConverter;
+                                    ConversionRecipe recipe = gen.Recipe;
+                                    for (int i = 0; i < recipe.Outputs.Count; ++i)
+                                    {
+                                        if (recipe.Outputs[i].ResourceName == "ElectricCharge")
+                                        {
+                                            availableFuelCells.Add(gen);
+                                            availableFuelCellOutput.Add((float)recipe.Outputs[i].Ratio);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (module is ModuleDeployableSolarPanel)
+                                {
+                                    ModuleDeployableSolarPanel sp = module as ModuleDeployableSolarPanel;
+
+                                    if (sp.resourceName == "ElectricCharge")
+                                    {
+                                        availableSolarPanels.Add(sp);
+                                    }
+                                }
                                 else if (module is ModuleGimbal)
                                 {
                                     availableGimbals.Add(module as ModuleGimbal);
@@ -285,6 +348,95 @@ namespace JSI
 
             // Convert airflow from U to g/s, same as fuel flow.
             currentAirFlow *= IntakeAir_U_to_grams;
+        }
+
+        /// <summary>
+        /// Refresh electric data - generators active, solar panels deployable
+        /// and retractable, output of each category of power production
+        /// (generator, fuel cell/resource converter, alternator, and solar).
+        /// </summary>
+        private void FetchElectricData()
+        {
+            if (availableAlternators.Count > 0)
+            {
+                alternatorOutput = 0.0f;
+            }
+            else
+            {
+                alternatorOutput = -1.0f;
+            }
+            if (availableFuelCells.Count > 0)
+            {
+                fuelcellOutput = 0.0f;
+            }
+            else
+            {
+                fuelcellOutput = -1.0f;
+            }
+            if (availableGenerators.Count > 0)
+            {
+                generatorOutput = 0.0f;
+            }
+            else
+            {
+                generatorOutput = -1.0f;
+            }
+            if (availableSolarPanels.Count > 0)
+            {
+                solarOutput = 0.0f;
+            }
+            else
+            {
+                solarOutput = -1.0f;
+            }
+
+            generatorsActive = false;
+            solarPanelsDeployable = solarPanelsRetractable = solarPanelsState = false;
+            solarPanelMovement = -1;
+
+            for (int i = 0; i < availableGenerators.Count; ++i)
+            {
+                generatorsActive |= (availableGenerators[i].generatorIsActive && !availableGenerators[i].isAlwaysActive);
+
+                if (availableGenerators[i].generatorIsActive)
+                {
+                    float output = availableGenerators[i].efficiency * availableGeneratorOutput[i];
+                    if (availableGenerators[i].isThrottleControlled)
+                    {
+                        output *= availableGenerators[i].throttle;
+                    }
+                    generatorOutput += output;
+                }
+            }
+
+            for (int i = 0; i < availableFuelCells.Count; ++i)
+            {
+                generatorsActive |= (availableFuelCells[i].IsActivated && !availableFuelCells[i].AlwaysActive);
+
+                if (availableFuelCells[i].IsActivated)
+                {
+                    fuelcellOutput += (float)availableFuelCells[i].lastTimeFactor * availableFuelCellOutput[i];
+                }
+            }
+
+            for (int i = 0; i < availableAlternators.Count; ++i)
+            {
+                // I assume there's only one ElectricCharge output in a given ModuleAlternator
+                alternatorOutput += availableAlternators[i].outputRate;
+            }
+
+            for (int i = 0; i < availableSolarPanels.Count; ++i)
+            {
+                solarOutput += availableSolarPanels[i].flowRate;
+                solarPanelsRetractable |= (availableSolarPanels[i].useAnimation && availableSolarPanels[i].retractable && availableSolarPanels[i].deployState == ModuleDeployableSolarPanel.DeployState.EXTENDED);
+                solarPanelsDeployable |= (availableSolarPanels[i].useAnimation && availableSolarPanels[i].deployState == ModuleDeployableSolarPanel.DeployState.RETRACTED);
+                solarPanelsState |= (availableSolarPanels[i].useAnimation && (availableSolarPanels[i].deployState == ModuleDeployableSolarPanel.DeployState.EXTENDED || availableSolarPanels[i].deployState == ModuleDeployableSolarPanel.DeployState.EXTENDING));
+
+                if ((solarPanelMovement == -1 || solarPanelMovement == (int)ModuleDeployableSolarPanel.DeployState.BROKEN) && availableSolarPanels[i].useAnimation)
+                {
+                    solarPanelMovement = (int)availableSolarPanels[i].deployState;
+                }
+            }
         }
 
         /// <summary>
@@ -633,8 +785,8 @@ namespace JSI
             FetchAblatorData();
             FetchAirIntakeData();
             FetchDockingNodeData();
-			electricalSystem.Update();
-			requestReset |= FetchEngineData();
+            FetchElectricData();
+            requestReset |= FetchEngineData();
             FetchGimbalData();
             FetchParachuteData();
             FetchRadarData();
@@ -674,6 +826,72 @@ namespace JSI
                         {
                             availableEngines[i].Shutdown();
                         }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Toggle the state of any generators or resource converters that can
+        /// be toggled.
+        /// </summary>
+        /// <param name="state"></param>
+        internal void SetEnableGenerators(bool state)
+        {
+            for (int i = 0; i < availableGenerators.Count; ++i)
+            {
+                if (!availableGenerators[i].isAlwaysActive)
+                {
+                    if (state)
+                    {
+                        availableGenerators[i].Activate();
+                    }
+                    else
+                    {
+                        availableGenerators[i].Shutdown();
+                    }
+                }
+            }
+
+            for (int i = 0; i < availableFuelCells.Count; ++i)
+            {
+                if (!availableFuelCells[i].AlwaysActive)
+                {
+                    if (state)
+                    {
+                        availableFuelCells[i].StartResourceConverter();
+                    }
+                    else
+                    {
+                        availableFuelCells[i].StopResourceConverter();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deploy and retract (where applicable) deployable solar panels.
+        /// </summary>
+        /// <param name="state"></param>
+        internal void SetDeploySolarPanels(bool state)
+        {
+            if (state)
+            {
+                for (int i = 0; i < availableSolarPanels.Count; ++i)
+                {
+                    if (availableSolarPanels[i].useAnimation && availableSolarPanels[i].deployState == ModuleDeployablePart.DeployState.RETRACTED)
+                    {
+                        availableSolarPanels[i].Extend();
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < availableSolarPanels.Count; ++i)
+                {
+                    if (availableSolarPanels[i].useAnimation && availableSolarPanels[i].retractable && availableSolarPanels[i].deployState == ModuleDeployablePart.DeployState.EXTENDED)
+                    {
+                        availableSolarPanels[i].Retract();
                     }
                 }
             }

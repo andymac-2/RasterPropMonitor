@@ -814,13 +814,13 @@ namespace JSI
 
                 // Power production rates
                 case "ELECOUTPUTALTERNATOR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.electricalSystem.alternatorOutput; };
+                    return (string variable, RPMVesselComputer comp) => { return comp.alternatorOutput; };
                 case "ELECOUTPUTFUELCELL":
-                    return (string variable, RPMVesselComputer comp) => { return comp.electricalSystem.fuelcellOutput; };
+                    return (string variable, RPMVesselComputer comp) => { return comp.fuelcellOutput; };
                 case "ELECOUTPUTGENERATOR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.electricalSystem.generatorOutput; };
+                    return (string variable, RPMVesselComputer comp) => { return comp.generatorOutput; };
                 case "ELECOUTPUTSOLAR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.electricalSystem.solarOutput; };
+                    return (string variable, RPMVesselComputer comp) => { return comp.solarOutput; };
 
                 // Maneuvers
                 case "MNODETIMESECS":
