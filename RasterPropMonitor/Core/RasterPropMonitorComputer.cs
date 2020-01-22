@@ -376,6 +376,8 @@ namespace JSI
         {
             if (!HighLogic.LoadedSceneIsEditor)
             {
+				SCANsat.PatchMaterial();
+
                 vid = vessel.id;
                 refreshDataRate = RPMGlobals.defaultRefreshRate;
 
