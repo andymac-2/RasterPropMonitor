@@ -31,6 +31,10 @@ namespace JSI
         private GameObject cameraTransform;
         private Part cameraPart;
         private readonly int fxCameraIndex = 6;
+		private readonly int farCameraIndex = 4;
+		private readonly bool skipFarCamera =
+			SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D") && 
+			(Versioning.fetch.versionMinor >= 9 || Versioning.fetch.versionMajor > 1);
         private readonly string[] knownCameraNames = 
         {
             "GalaxyCamera",
@@ -242,7 +246,7 @@ namespace JSI
                 // or 750:1 Far/Near ratio.  Changing this to 8192:1 brings the
                 // near plane to 37cm or so, which hopefully is close enough to
                 // see nearby details without creating z-fighting artifacts.
-                if (index == 5 || index == 6)
+                if (!skipFarCamera && (index == 5 || index == 6))
                 {
                     cameraObject[index].nearClipPlane = cameraObject[index].farClipPlane / 8192.0f;
                 }
@@ -348,6 +352,11 @@ namespace JSI
 
             for (int i = 0; i < cameraObject.Length; i++)
             {
+				if (skipFarCamera && i == farCameraIndex)
+				{
+					continue;
+				}
+
                 if (cameraObject[i] != null)
                 {
                     // ScaledSpace camera and its derived cameras from Visual Enhancements mod are special - they don't move.
