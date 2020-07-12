@@ -97,8 +97,7 @@ namespace JSI
         //        return (vessel == null) ? Guid.Empty : vessel.id;
         //    }
         //}
-        private NavBall navBall;
-        internal LinearAtmosphereGauge linearAtmosGauge;
+        // internal LinearAtmosphereGauge linearAtmosGauge;
 
         // Data refresh
         private int dataUpdateCountdown;
@@ -188,7 +187,10 @@ namespace JSI
             }
         }
 
-        internal Quaternion rotationVesselSurface;
+		public Quaternion AttitudeGymbal { get; private set; }
+		public Quaternion RelativeGymbal { get; private set; }
+
+		internal Quaternion rotationVesselSurface;
         public Quaternion RotationVesselSurface
         {
             get
@@ -670,25 +672,6 @@ namespace JSI
                 instances.Add(vessel.id, this);
                 //JUtil.LogMessage(this, "Awake for vessel {0} ({1}).", (string.IsNullOrEmpty(vessel.vesselName)) ? "(no name)" : vessel.vesselName, vessel.id);
             }
-            try
-            {
-                navBall = UnityEngine.Object.FindObjectOfType<KSP.UI.Screens.Flight.NavBall>();
-            }
-            catch (Exception e)
-            {
-                JUtil.LogErrorMessage(this, "Failed to fetch the NavBall: {0}", e);
-                navBall = new NavBall();
-            }
-
-            try
-            {
-                linearAtmosGauge = UnityEngine.Object.FindObjectOfType<KSP.UI.Screens.Flight.LinearAtmosphereGauge>();
-            }
-            catch (Exception e)
-            {
-                JUtil.LogErrorMessage(this, "Failed to fetch the LinearAtmosphereGauge: {0}", e);
-                linearAtmosGauge = new LinearAtmosphereGauge();
-            }
 
             IntakeAir_U_to_grams = 1000000.0f * PartResourceLibrary.Instance.GetDefinition("IntakeAir").density;
 
@@ -734,7 +717,6 @@ namespace JSI
             }
 
             //vid = Guid.Empty;
-            navBall = null;
 
             target = null;
             targetDockingNode = null;
@@ -1123,11 +1105,17 @@ namespace JSI
                     surfaceRight = Vector3.Cross(surfaceForward, up);
                 }
 
-                // This happens if we update right away, before navBall has been fetched.
-                // Like, at load time.
-                if (navBall != null)
+                if (FlightGlobals.ready)
                 {
-                    rotationVesselSurface = Quaternion.Inverse(navBall.relativeGymbal);
+					Vector3 rotationOffset = new Vector3(90f, 0f, 0f);
+					CelestialBody currentMainBody = FlightGlobals.currentMainBody;
+					Transform target = FlightGlobals.ActiveVessel.ReferenceTransform;
+					Quaternion offsetGymbal = Quaternion.Euler(rotationOffset);
+
+					AttitudeGymbal = offsetGymbal * Quaternion.Inverse(target.rotation);
+					RelativeGymbal = AttitudeGymbal * Quaternion.LookRotation(Vector3.ProjectOnPlane(currentMainBody.position + (Vector3d)currentMainBody.transform.up * currentMainBody.Radius - target.position, (target.position - currentMainBody.position).normalized).normalized, (target.position - currentMainBody.position).normalized);
+
+					rotationVesselSurface = Quaternion.Inverse(RelativeGymbal);
                 }
                 else
                 {

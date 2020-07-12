@@ -79,7 +79,6 @@ namespace JSI
 
         private readonly Quaternion rotateNavBall = Quaternion.Euler(0.0f, 180.0f, 0.0f);
 
-        private NavBall stockNavBall;
         private GameObject cameraBody;
         private Camera ballCamera;
 
@@ -215,20 +214,21 @@ namespace JSI
 
             ballCamera.targetTexture = screen;
 
-            // Navball is rotated around the Y axis 180 degrees since the
-            // original implementation had the camera positioned differently.
-            // We still need MirrorX since KSP does something odd with the
-            // gimbal
-            navBall.transform.rotation = (rotateNavBall * MirrorX(stockNavBall.relativeGymbal));
+			RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
 
-            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+			// Navball is rotated around the Y axis 180 degrees since the
+			// original implementation had the camera positioned differently.
+			// We still need MirrorX since KSP does something odd with the
+			// gimbal
+			navBall.transform.rotation = (rotateNavBall * MirrorX(comp.RelativeGymbal));
+            
             if (heading != null)
             {
                 heading.GetComponent<Renderer>().material.SetTextureOffset("_MainTex",
                     new Vector2(JUtil.DualLerp(0f, 1f, 0f, 360f, comp.RotationVesselSurface.eulerAngles.y) - headingSpan / 2f, 0));
             }
 
-            Quaternion gymbal = stockNavBall.attitudeGymbal;
+            Quaternion gymbal = comp.AttitudeGymbal;
 
             if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
             {
@@ -431,17 +431,6 @@ namespace JSI
                 }
 
                 Shader displayShader = JUtil.LoadInternalShader("RPM/DisplayShader");
-
-                try
-                {
-                    stockNavBall = UnityEngine.Object.FindObjectOfType<KSP.UI.Screens.Flight.NavBall>();
-                }
-                catch (Exception e)
-                {
-                    JUtil.LogErrorMessage(this, "Unable to fetch the NavBall object: {0}", e);
-                    // Set up a bogus one so there's no null derefs.
-                    stockNavBall = new NavBall();
-                }
 
                 // Non-moving parts...
                 cameraBody = new GameObject();

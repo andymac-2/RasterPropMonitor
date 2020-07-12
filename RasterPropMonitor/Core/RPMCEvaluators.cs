@@ -638,18 +638,7 @@ namespace JSI
                     {
                         if (vessel.mainBody.atmosphere)
                         {
-                            float depth;
-                            try
-                            {
-                                depth = comp.linearAtmosGauge.gauge.Value.Clamp(0.0f, 1.0f);
-                            }
-                            catch
-                            {
-                                depth = (float)((RPMGlobals.upperAtmosphereLimit + Math.Log(FlightGlobals.getAtmDensity(vessel.staticPressurekPa * PhysicsGlobals.KpaToAtmospheres, FlightGlobals.Bodies[1].atmosphereTemperatureSeaLevel) /
-                                FlightGlobals.getAtmDensity(FlightGlobals.currentMainBody.atmospherePressureSeaLevel, FlightGlobals.currentMainBody.atmosphereTemperatureSeaLevel))) / RPMGlobals.upperAtmosphereLimit).Clamp(0.0f, 1.0f);
-                            }
-
-                            return depth;
+                            return FlightGlobals.ActiveVessel.atmDensity / vessel.mainBody.GetDensity(vessel.mainBody.GetPressure(0.0), vessel.mainBody.GetTemperature(0.0));
                         }
                         else
                         {
