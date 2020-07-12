@@ -105,6 +105,8 @@ Plugins RasterPropMonitor can interact with, enhancing the IVA experience even m
 * Mk1 Lander Can by alexustas
 * Mk1-2 Pod by alexustas (Note this is the old one)
 * DE_IVAExtension (all pods!) by DemonEin
+* ASET IVA for Making History pods by HonkHogan
+* Kermantech-MK3-IVA by luizopiloto
 
 ### Other IVAs:
 
@@ -113,7 +115,9 @@ Plugins RasterPropMonitor can interact with, enhancing the IVA experience even m
 * CST-100 7-seat crew vehicle by xxhansonmaxx
 * Falcon Command Cockpit cockpit
 * Home Grown Rockets
-* B9 Aerospace by @blowfish
+* B9 Aerospace by blowfish
+* Mark IV Spaceplane System by Nertea
+* OPT Space Plane by K.Yeon
 
 ### Other suggested mods for IVA playing:
 
