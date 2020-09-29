@@ -210,17 +210,25 @@ namespace JSI
         }
 
         /// <summary>
-        /// Force the SAS mode buttons on the flight view to update when we
-        /// update modes under the hood.  Code from
-        /// http://forum.kerbalspaceprogram.com/threads/105074-Updating-the-auto-pilot-UI?p=1633958&viewfull=1#post1633958
+        /// returns a boolean indicating whether the specified SAS mode is active
         /// </summary>
-        /// <param name="newMode">The new autopilot mode</param>
-        private void ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode newMode)
+        /// <param name="mode"></param>
+        /// <returns></returns>
+        private bool ButtonSASModeState(VesselAutopilot.AutopilotMode mode)
         {
-            // find the UI object on screen
-            UIStateToggleButton[] SASbtns = UnityEngine.Object.FindObjectOfType<VesselAutopilotUI>().modeButtons;
-            // set our mode, note it takes the mode as an int, generally top to bottom, left to right, as seen on the screen. Maneuver node being the exception, it is 9
-            SASbtns.ElementAt<UIStateToggleButton>((int)newMode).SetState(true);
+            return vessel != null && vessel.Autopilot.GetActualMode() == mode;
+        }
+
+        /// <summary>
+        /// Common function for setting the autopilot mode
+        /// </summary>
+        /// <param name="mode"></param>
+        private void ButtonSASModeClick(VesselAutopilot.AutopilotMode mode)
+        {
+            if (vessel != null)
+            {
+                vessel.Autopilot.SetActualMode(mode);
+            }
         }
 
         /// <summary>
@@ -230,11 +238,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeStabilityAssist(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.StabilityAssist))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.StabilityAssist);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.StabilityAssist);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.StabilityAssist);
         }
 
         /// <summary>
@@ -243,7 +247,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Stability Assist</returns>
         public bool ButtonSASModeStabilityAssistState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.StabilityAssist);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.StabilityAssist);
         }
 
         /// <summary>
@@ -253,11 +257,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModePrograde(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Prograde))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Prograde);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Prograde);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Prograde);
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Prograde</returns>
         public bool ButtonSASModeProgradeState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Prograde);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Prograde);
         }
 
         /// <summary>
@@ -276,11 +276,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeRetrograde(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Retrograde))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Retrograde);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Retrograde);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Retrograde);
         }
 
         /// <summary>
@@ -289,7 +285,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Retrograde</returns>
         public bool ButtonSASModeRetrogradeState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Retrograde);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Retrograde);
         }
 
         /// <summary>
@@ -299,11 +295,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeNormal(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Normal))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Normal);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Normal);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Normal);
         }
 
         /// <summary>
@@ -312,7 +304,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Normal</returns>
         public bool ButtonSASModeNormalState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Normal);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Normal);
         }
 
         /// <summary>
@@ -322,11 +314,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeAntiNormal(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Antinormal))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Antinormal);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Antinormal);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Antinormal);
         }
 
         /// <summary>
@@ -335,7 +323,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Antinormal</returns>
         public bool ButtonSASModeAntiNormalState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Antinormal);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Antinormal);
         }
 
         /// <summary>
@@ -345,11 +333,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeRadialIn(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.RadialIn))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.RadialIn);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.RadialIn);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.RadialIn);
         }
 
         /// <summary>
@@ -358,7 +342,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for RadialIn</returns>
         public bool ButtonSASModeRadialInState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.RadialIn);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.RadialIn);
         }
 
         /// <summary>
@@ -368,11 +352,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeRadialOut(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.RadialOut))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.RadialOut);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.RadialOut);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.RadialOut);
         }
 
         /// <summary>
@@ -381,7 +361,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for RadialOut</returns>
         public bool ButtonSASModeRadialOutState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.RadialOut);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.RadialOut);
         }
 
         /// <summary>
@@ -391,11 +371,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeTarget(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Target))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Target);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Target);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Target);
         }
 
         /// <summary>
@@ -404,7 +380,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Target</returns>
         public bool ButtonSASModeTargetState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Target);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Target);
         }
 
         /// <summary>
@@ -414,11 +390,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeAntiTarget(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.AntiTarget))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.AntiTarget);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.AntiTarget);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.AntiTarget);
         }
 
         /// <summary>
@@ -427,7 +399,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for AntiTarget</returns>
         public bool ButtonSASModeAntiTargetState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.AntiTarget);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.AntiTarget);
         }
 
         /// <summary>
@@ -437,11 +409,7 @@ namespace JSI
         // Analysis disable once UnusedParameter
         public void ButtonSASModeManeuver(bool ignored)
         {
-            if (vessel != null && vessel.Autopilot.CanSetMode(VesselAutopilot.AutopilotMode.Maneuver))
-            {
-                vessel.Autopilot.SetMode(VesselAutopilot.AutopilotMode.Maneuver);
-                ForceUpdateSASModeToggleButtons(VesselAutopilot.AutopilotMode.Maneuver);
-            }
+            ButtonSASModeClick(VesselAutopilot.AutopilotMode.Maneuver);
         }
 
         /// <summary>
@@ -450,7 +418,7 @@ namespace JSI
         /// <returns>true if SAS is currently set for Maneuver</returns>
         public bool ButtonSASModeManeuverState()
         {
-            return ((vessel != null) && vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Maneuver);
+            return ButtonSASModeState(VesselAutopilot.AutopilotMode.Maneuver);
         }
 
         /**
@@ -1075,7 +1043,7 @@ namespace JSI
                 return 0.0; // StabilityAssist
             }
             double mode;
-            switch (vessel.Autopilot.Mode)
+            switch (vessel.Autopilot.GetActualMode())
             {
                 case VesselAutopilot.AutopilotMode.StabilityAssist:
                     mode = 0.0;
@@ -1155,10 +1123,9 @@ namespace JSI
                     return;
             }
 
-            if (vessel != null && vessel.Autopilot.CanSetMode(autopilotMode))
+            if (vessel != null)
             {
-                vessel.Autopilot.SetMode(autopilotMode);
-                ForceUpdateSASModeToggleButtons(autopilotMode);
+                vessel.Autopilot.SetActualMode(autopilotMode);
             }
         }
 

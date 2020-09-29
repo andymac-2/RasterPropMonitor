@@ -2391,60 +2391,42 @@ namespace JSI
                 case "SASMODESTABILITY":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if(vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.StabilityAssist) ? 1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.StabilityAssist) ? 1.0 : 0.0;
                     };
                 case "SASMODEPROGRADE":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if (vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Prograde) ? 1.0 :
-                            (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Retrograde) ? -1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.Prograde) ? 1.0 :
+                            (sasMode == VesselAutopilot.AutopilotMode.Retrograde) ? -1.0 : 0.0;
                     };
                 case "SASMODENORMAL":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if (vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Normal) ? 1.0 :
-                            (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Antinormal) ? -1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.Normal) ? 1.0 :
+                            (sasMode == VesselAutopilot.AutopilotMode.Antinormal) ? -1.0 : 0.0;
                     };
                 case "SASMODERADIAL":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if (vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.RadialOut) ? 1.0 :
-                            (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.RadialIn) ? -1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.RadialOut) ? 1.0 :
+                            (sasMode == VesselAutopilot.AutopilotMode.RadialIn) ? -1.0 : 0.0;
                     };
                 case "SASMODETARGET":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if (vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Target) ? 1.0 :
-                            (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.AntiTarget) ? -1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.Target) ? 1.0 :
+                            (sasMode == VesselAutopilot.AutopilotMode.AntiTarget) ? -1.0 : 0.0;
                     };
                 case "SASMODEMANEUVER":
                     return (string variable, RPMVesselComputer comp) =>
                     {
-                        //if (vessel.Autopilot == null)
-                        //{
-                        //    return 0.0;
-                        //}
-                        return (vessel.Autopilot.Mode == VesselAutopilot.AutopilotMode.Maneuver) ? 1.0 : 0.0;
+						var sasMode = vessel.Autopilot.GetActualMode();
+						return (sasMode == VesselAutopilot.AutopilotMode.Maneuver) ? 1.0 : 0.0;
                     };
 
 
