@@ -638,11 +638,11 @@ namespace JSI
                     {
                         if (vessel.mainBody.atmosphere)
                         {
-                            return FlightGlobals.ActiveVessel.atmDensity / vessel.mainBody.GetDensity(vessel.mainBody.GetPressure(0.0), vessel.mainBody.GetTemperature(0.0));
-                        }
+							return Math.Pow(FlightGlobals.ActiveVessel.atmDensity / vessel.mainBody.GetDensity(vessel.mainBody.GetPressure(0.0), vessel.mainBody.GetTemperature(0.0)), 0.25);
+						}
                         else
                         {
-                            return 0.0f;
+                            return 0.0;
                         }
                     };
 
