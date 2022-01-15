@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -166,7 +166,14 @@ namespace JSI
             try
             {
                 GameObject buttonObject;
-                buttonObject = thatModel == null ? thatProp.FindModelTransform(buttonName).gameObject : thatModel.FindModelTransform(buttonName).gameObject;
+                if (buttonName.IndexOf('/') == -1)
+                {
+                    buttonObject = thatModel == null ? thatProp.FindModelTransform(buttonName).gameObject : thatModel.FindModelTransform(buttonName).gameObject;
+                }
+                else
+                {
+                    buttonObject = thatModel == null ? thatProp.transform.Find(buttonName).gameObject : thatModel.transform.Find(buttonName).gameObject;
+                }
                 SmarterButton thatComponent = buttonObject.GetComponent<SmarterButton>() ?? buttonObject.AddComponent<SmarterButton>();
                 return thatComponent;
             }
