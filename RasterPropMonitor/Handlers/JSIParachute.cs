@@ -191,9 +191,12 @@ namespace JSI
 
                     for (int i = 0; i < comp.availableParachutes.Count; ++i)
                     {
-                        if (comp.availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.ACTIVE)
+                        var chute = comp.availableParachutes[i];
+
+                        if (chute.deploymentState == ModuleParachute.deploymentStates.ACTIVE)
                         {
-                            comp.availableParachutes[i].Disarm();
+                            chute.Disarm();
+                            chute.deploymentSafeState = ModuleParachute.deploymentSafeStates.SAFE;
                         }
                     }
                 }
@@ -269,8 +272,10 @@ namespace JSI
 
                 for (int i = 0; i < comp.availableParachutes.Count; ++i)
                 {
-                    comp.availableParachutes[i].automateSafeDeploy = (int)ModuleParachute.deploymentSafeStates.UNSAFE;
-                    comp.availableParachutes[i].Deploy();
+                    var chute = comp.availableParachutes[i];
+                    chute.automateSafeDeploy = (int)ModuleParachute.deploymentSafeStates.UNSAFE;
+                    chute.minAirPressureToOpen = chute.clampMinAirPressure;
+                    chute.Deploy();
                 }
             }
         }
