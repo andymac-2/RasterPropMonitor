@@ -1199,5 +1199,94 @@ namespace JSI
         {
             FlightInputHandler.state.yawTrim = (float)(trimPercent.Clamp(-100.0, 100.0)) / 100.0f;
         }
+
+        public void ButtonIncreaseWarpLevel(bool ignored)
+        {
+            TimeWarp.SetRate(TimeWarp.CurrentRateIndex + 1, false);
+        }
+
+        public bool ButtonIncreaseWarpLevelState()
+        {
+            return TimeWarp.CurrentRateIndex < TimeWarp.fetch.warpRates.Length - 1;
+        }
+
+        public void ButtonDecreaseWarpLevel(bool ignored)
+        {
+            TimeWarp.SetRate(TimeWarp.CurrentRateIndex - 1, false);
+        }
+
+        public bool ButtonDecreaseWarpLevelState()
+        {
+            return TimeWarp.CurrentRateIndex > 0;
+        }
+
+        public void ButtonCancelWarp(bool ignored)
+        {
+            TimeWarp.fetch.CancelAutoWarp();
+            TimeWarp.SetRate(0, false);
+        }
+
+        public bool ButtonCancelWarpState()
+        {
+            return TimeWarp.CurrentRateIndex > 0;
+        }
+
+        public void ButtonSetWarpRailsMode(bool railsMode)
+        {
+            TimeWarp.fetch.Mode = railsMode ? TimeWarp.Modes.HIGH: TimeWarp.Modes.LOW;
+            TimeWarp.SetRate(0, true);
+        }
+
+        public bool ButtonSetWarpRailsModeState()
+        {
+            return TimeWarp.fetch.Mode == TimeWarp.Modes.HIGH;
+        }
+
+        // Warps to a maneuver node, SOI change, AP or PE
+        double GetNextWarpEventTime()
+        {
+            double targetUT = -1;
+
+            double peTime = vessel.orbit.GetNextPeriapsisTime(Planetarium.GetUniversalTime());
+            if (peTime < Planetarium.GetUniversalTime()) peTime = double.MaxValue;
+
+            if (vessel.patchedConicSolver != null && vessel.patchedConicSolver.maneuverNodes.Count > 0)
+            {
+                targetUT = vessel.patchedConicSolver.maneuverNodes[0].startBurnIn + Planetarium.GetUniversalTime() - GameSettings.WARP_TO_MANNODE_MARGIN;
+            }
+            else if (vessel.orbit.nextPatch != null && vessel.orbit.nextPatch.activePatch)
+            {
+                targetUT = Math.Min(peTime, vessel.orbit.EndUT) - GameSettings.WARP_TO_MANNODE_MARGIN;
+            }
+            else
+            {
+                double apTime = vessel.orbit.eccentricity < 1 ? vessel.orbit.GetNextApoapsisTime(Planetarium.GetUniversalTime()) : double.MaxValue;
+
+                double nextApsideTime = Math.Min(apTime, peTime);
+
+                if (nextApsideTime != double.MaxValue)
+                {
+                    targetUT = nextApsideTime - GameSettings.WARP_TO_MANNODE_MARGIN;
+                }
+            }
+
+            return targetUT;
+        }
+
+        public void ButtonWarpToNextEvent(bool ignored)
+        {
+            double targetUT = GetNextWarpEventTime();
+
+            if (targetUT > 0)
+            {
+                TimeWarp.fetch.WarpTo(targetUT);
+            }
+        }
+
+        public bool ButtonWarpToNextEventState()
+        {
+            return GetNextWarpEventTime() > 0;
+        }
+
     }
 }
