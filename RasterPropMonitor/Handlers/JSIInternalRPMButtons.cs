@@ -1256,7 +1256,8 @@ namespace JSI
             }
             else if (vessel.orbit.nextPatch != null && vessel.orbit.nextPatch.activePatch)
             {
-                targetUT = Math.Min(peTime, vessel.orbit.EndUT) - GameSettings.WARP_TO_MANNODE_MARGIN;
+                // note we ADD the margin so that we end up inside the target SOI
+                targetUT = Math.Min(peTime - GameSettings.WARP_TO_MANNODE_MARGIN, vessel.orbit.EndUT + GameSettings.WARP_TO_MANNODE_MARGIN) ;
             }
             else
             {
