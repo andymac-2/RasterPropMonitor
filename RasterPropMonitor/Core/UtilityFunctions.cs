@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -626,7 +626,7 @@ namespace JSI
                     currentPart = thatKerbal.InPart;
                 }
 
-                if (currentPart == null)
+                if (currentPart == null && CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
                 {
                     Transform internalCameraTransform = InternalCamera.Instance.transform;
                     foreach (Part thisPart in InternalModelParts(vessel))
