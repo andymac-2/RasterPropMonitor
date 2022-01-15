@@ -164,7 +164,7 @@ namespace JSI
 
         public void ArmParachutes(bool state)
         {
-            if (rcFound && vessel != null)
+            if (vessel != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 if (state)
@@ -173,12 +173,28 @@ namespace JSI
                     {
                         armChute(comp.availableRealChutes[i]);
                     }
+
+                    for (int i = 0; i < comp.availableParachutes.Count; ++i)
+                    {
+                        if (comp.availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.STOWED)
+                        {
+                            comp.availableParachutes[i].Deploy();
+                        }
+                    }
                 }
                 else
                 {
                     for (int i = 0; i < comp.availableRealChutes.Count; ++i)
                     {
                         disarmChute(comp.availableRealChutes[i]);
+                    }
+
+                    for (int i = 0; i < comp.availableParachutes.Count; ++i)
+                    {
+                        if (comp.availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.ACTIVE)
+                        {
+                            comp.availableParachutes[i].Disarm();
+                        }
                     }
                 }
             }
@@ -191,10 +207,12 @@ namespace JSI
                 return false; // early
             }
 
-            bool anyArmed = false;
-            if (rcFound)
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+
+            bool anyArmed = comp.anyParachutesArmed;
+
+            if (!anyArmed)
             {
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 for (int i = 0; i < comp.availableRealChutes.Count; ++i)
                 {
                     if ((bool)rcArmed.GetValue(comp.availableRealChutes[i]) == true)
@@ -219,12 +237,9 @@ namespace JSI
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
 
-                if (rcFound)
+                for (int i = 0; i < comp.availableRealChutes.Count; ++i)
                 {
-                    for (int i = 0; i < comp.availableRealChutes.Count; ++i)
-                    {
-                        cutChute(comp.availableRealChutes[i]);
-                    }
+                    cutChute(comp.availableRealChutes[i]);
                 }
 
                 for(int i=0; i<comp.availableParachutes.Count; ++i)
@@ -238,7 +253,7 @@ namespace JSI
         }
 
         /// <summary>
-        /// Deploys stowed parachutes.
+        /// Deploys stowed parachutes, regardless of safe state
         /// </summary>
         /// <param name="state"></param>
         public void DeployParachutes(bool state)
@@ -247,20 +262,15 @@ namespace JSI
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
 
-                if (rcFound)
+                for (int i = 0; i < comp.availableRealChutes.Count; ++i)
                 {
-                    for (int i = 0; i < comp.availableRealChutes.Count; ++i)
-                    {
-                        deployChute(comp.availableRealChutes[i]);
-                    }
+                    deployChute(comp.availableRealChutes[i]);
                 }
 
                 for (int i = 0; i < comp.availableParachutes.Count; ++i)
                 {
-                    if (comp.availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.STOWED)
-                    {
-                        comp.availableParachutes[i].Deploy();
-                    }
+                    comp.availableParachutes[i].automateSafeDeploy = (int)ModuleParachute.deploymentSafeStates.UNSAFE;
+                    comp.availableParachutes[i].Deploy();
                 }
             }
         }
@@ -279,7 +289,7 @@ namespace JSI
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
             bool anyDeployed = comp.anyParachutesDeployed;
 
-            if (rcFound && !anyDeployed)
+            if (!anyDeployed)
             {
                 for (int i = 0; i < comp.availableRealChutes.Count; ++i)
                 {
@@ -334,7 +344,7 @@ namespace JSI
 
             for (int i = 0; i < comp.availableParachutes.Count; ++i)
             {
-                if (comp.availableParachutes[i].deploySafe != "Safe")
+                if (comp.availableParachutes[i].deploymentSafeState != ModuleParachute.deploymentSafeStates.SAFE)
                 {
                     allSafe = false;
                 }

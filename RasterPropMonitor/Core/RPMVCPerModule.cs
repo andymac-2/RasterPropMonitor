@@ -92,6 +92,7 @@ namespace JSI
         internal List<PartModule> availableRealChutes = new List<PartModule>();
         internal bool anyParachutesDeployed;
         internal bool allParachutesSafe;
+        internal bool anyParachutesArmed;
 
         //--- Power production
         internal List<ModuleAlternator> availableAlternators = new List<ModuleAlternator>();
@@ -678,18 +679,25 @@ namespace JSI
         {
             anyParachutesDeployed = false;
             allParachutesSafe = true;
+            anyParachutesArmed = false;
 
             for (int i = 0; i < availableParachutes.Count; ++i)
             {
+                if (availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.ACTIVE)
+                {
+                    anyParachutesArmed = true;
+                }
+
                 if (availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.SEMIDEPLOYED || availableParachutes[i].deploymentState == ModuleParachute.deploymentStates.DEPLOYED)
                 {
                     anyParachutesDeployed = true;
                 }
 
-                if (availableParachutes[i].deploySafe != "Safe")
+                if (availableParachutes[i].deploymentSafeState != ModuleParachute.deploymentSafeStates.SAFE)
                 {
                     allParachutesSafe = false;
                 }
+
             }
         }
 
