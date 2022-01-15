@@ -564,13 +564,13 @@ namespace JSI
                 {
                     throw new NotImplementedException("mjFuelFlowSimulation_t");
                 }
-                // MuMech.FuelFlowSimulation.Stats
-                Type mjFuelFlowSimulationStats_t = mjFuelFlowSimulation_t.GetNestedType("Stats");
+                // MuMech.FuelFlowSimulation.Stats OR MuMech.FuelFlowSimulation.FuelStats
+                Type mjFuelFlowSimulationStats_t = mjFuelFlowSimulation_t.GetNestedType("Stats") ?? mjFuelFlowSimulation_t.GetNestedType("FuelStats");
                 if (mjFuelFlowSimulationStats_t == null)
                 {
                     throw new NotImplementedException("mjFuelFlowSimulationStats_t");
                 }
-                mjStageDv = mjFuelFlowSimulationStats_t.GetField("deltaV", BindingFlags.Instance | BindingFlags.Public);
+                mjStageDv = mjFuelFlowSimulationStats_t.GetField("deltaV", BindingFlags.Instance | BindingFlags.Public) ?? mjFuelFlowSimulationStats_t.GetField("DeltaV", BindingFlags.Instance | BindingFlags.Public);
                 if (mjStageDv == null)
                 {
                     throw new NotImplementedException("mjStageDv");
@@ -838,7 +838,7 @@ namespace JSI
             catch (Exception e)
             {
                 mjMechJebCore_t = null;
-                JUtil.LogMessage(null, "Exception initializing JSIMechJeb: {0}", e);
+                JUtil.LogErrorMessage(null, "Exception initializing JSIMechJeb: {0}", e);
             }
 
             if (mjMechJebCore_t != null && getMasterMechJeb != null)
@@ -854,7 +854,7 @@ namespace JSI
         public JSIMechJeb(Vessel myVessel)
         {
             vessel = myVessel;
-            JUtil.LogMessage(this, "A supported version of MechJeb is {0}", (mjFound) ? "present" : "not available");
+            JUtil.LogInfo(this, "A supported version of MechJeb is {0}", (mjFound) ? "present" : "not available");
         }
 
         #region Internal Methods
