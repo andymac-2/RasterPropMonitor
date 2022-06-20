@@ -249,6 +249,6 @@
     <None Include="Shaders\RPM-FontShader.shader" />
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) $(SolutionDir)GameData\JSI\RasterPropMonitor\Plugins\$(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetDir)$(TargetName).* $(SolutionDir)GameData\JSI\RasterPropMonitor\Plugins\$(TargetName).*</PostBuildEvent>
   </PropertyGroup>
 </Project>
