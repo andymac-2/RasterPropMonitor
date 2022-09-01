@@ -1815,62 +1815,32 @@ namespace JSI
                 throw new Exception("RPMShaderLoader: GameDatabase is not ready.  Unable to continue.");
             }
 
-            ConfigNode rpmSettings = ConfigNode.Load(KSPUtil.ApplicationRootPath + RPMGlobals.configFileName);
-            // rpmSettings points at the base node.  I need to step into that node to access my settings.
-            if (rpmSettings != null && rpmSettings.CountNodes > 0)
-            {
-                rpmSettings = rpmSettings.GetNode("RasterPropMonitorSettings");
-            }
-            else
-            {
-                rpmSettings = null;
-            }
+            ConfigNode rpmSettings = GameDatabase.Instance.GetConfigNodes("RasterPropMonitorSettings").FirstOrDefault();
 
             if (rpmSettings != null)
             {
-                bool enableLogging = false;
-                if (rpmSettings.TryGetValue("DebugLogging", ref enableLogging))
+                if (rpmSettings.TryGetValue("DebugLogging", ref RPMGlobals.debugLoggingEnabled))
                 {
-                    RPMGlobals.debugLoggingEnabled = enableLogging;
-                    JUtil.LogInfo(this, "Set debugLoggingEnabled to {0}", enableLogging);
-                }
-                else
-                {
-                    RPMGlobals.debugLoggingEnabled = false;
+                    JUtil.LogInfo(this, "Set debugLoggingEnabled to {0}", RPMGlobals.debugLoggingEnabled);
                 }
 
-                bool showVariableCallCount = false;
-                if (rpmSettings.TryGetValue("ShowCallCount", ref showVariableCallCount))
+                if (rpmSettings.TryGetValue("ShowCallCount", ref RPMGlobals.debugShowVariableCallCount))
                 {
                     // call count doesn't write anything if enableLogging is false
-                    RPMGlobals.debugShowVariableCallCount = showVariableCallCount && RPMGlobals.debugLoggingEnabled;
-                }
-                else
-                {
-                    RPMGlobals.debugShowVariableCallCount = false;
+                    RPMGlobals.debugShowVariableCallCount = RPMGlobals.debugShowVariableCallCount && RPMGlobals.debugLoggingEnabled;
                 }
 
-                int defaultRefresh = RPMGlobals.defaultRefreshRate;
-                if (rpmSettings.TryGetValue("DefaultRefreshRate", ref defaultRefresh))
+                if (rpmSettings.TryGetValue("DefaultRefreshRate", ref RPMGlobals.defaultRefreshRate))
                 {
-                    RPMGlobals.defaultRefreshRate = Math.Max(defaultRefresh, 1);
+                    RPMGlobals.defaultRefreshRate = Math.Max(RPMGlobals.defaultRefreshRate, 1);
                 }
 
-                int minRefresh = RPMGlobals.minimumRefreshRate;
-                if (rpmSettings.TryGetValue("MinimumRefreshRate", ref minRefresh))
+                if (rpmSettings.TryGetValue("MinimumRefreshRate", ref RPMGlobals.minimumRefreshRate))
                 {
-                    RPMGlobals.minimumRefreshRate = Math.Max(minRefresh, 1);
+                    RPMGlobals.minimumRefreshRate = Math.Max(RPMGlobals.minimumRefreshRate, 1);
                 }
 
-                bool useNewVariableAnimator = false;
-                if (rpmSettings.TryGetValue("UseNewVariableAnimator", ref useNewVariableAnimator))
-                {
-                    RPMGlobals.useNewVariableAnimator = useNewVariableAnimator;
-                }
-                else
-                {
-                    RPMGlobals.useNewVariableAnimator = false;
-                }
+                rpmSettings.TryGetValue("UseNewVariableAnimator", ref RPMGlobals.useNewVariableAnimator);
 
                 RPMGlobals.debugShowOnly.Clear();
                 string showOnlyConcat = string.Empty;
