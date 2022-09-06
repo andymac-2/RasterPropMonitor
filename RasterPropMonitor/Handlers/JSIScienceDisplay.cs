@@ -43,8 +43,7 @@ namespace JSI.Handlers
 
             if (scienceData != null)
             {
-                var subject = ResearchAndDevelopment.GetSubjectByID(scienceData.subjectID);
-                Util.WordWrap(subject.title, menuString, width);
+                Util.WordWrap(scienceData.title, menuString, width);
 
 				// Some experiment results have multiple flavor texts, and GetResults returns a random one
 				// So cache the subjectID and results string and only update results if the subject changes.
