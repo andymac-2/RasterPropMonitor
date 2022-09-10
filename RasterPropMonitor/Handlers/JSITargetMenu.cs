@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -73,6 +73,7 @@ namespace JSI
         private readonly TextMenu topMenu = new TextMenu();
         private TextMenu activeMenu;
         private TextMenu.Item clearTarget;
+        private TextMenu.Item removeNode;
         private TextMenu.Item undockMenuItem;
         private TextMenu.Item grappleMenuItem;
         private int refreshMenuCountdown;
@@ -83,6 +84,7 @@ namespace JSI
         private const string undockItemText = "Undock";
         private const string armGrappleText = "Arm Grapple";
         private const string crewEvaText = "Crew EVA";
+        private const string removeNodeItemText = "Remove Node";
         private readonly List<string> rootMenu = new List<string> {
             "Celestials",
             "Vessels",
@@ -93,6 +95,7 @@ namespace JSI
             "Filters",
             clearTargetItemText,
             crewEvaText,
+            removeNodeItemText,
         };
         private readonly Dictionary<VesselType, bool> vesselFilter = new Dictionary<VesselType, bool> {
             { VesselType.Ship,true },
@@ -126,8 +129,8 @@ namespace JSI
 
         private enum SortMode
         {
-            Alphabetic,
             Distance,
+            Alphabetic,
         }
 
         private ITargetable currentTarget;
@@ -196,6 +199,7 @@ namespace JSI
                     grappleMenuItem.isDisabled = UpdateReferencePartAsClaw();
                     clearTarget.isDisabled = (currentTarget == null);
                     undockMenuItem.isDisabled = (undockablesList.Count == 0);
+                    removeNode.isDisabled = vessel.patchedConicSolver == null || vessel.patchedConicSolver.maneuverNodes.Count == 0;
                     break;
                 case MenuList.Filters:
                     activeMenu.menuTitle = string.Format(fp, menuTitleFormatString, "Vessel filtering");
@@ -734,6 +738,7 @@ namespace JSI
             menuActions.Add(ShowFiltersMenu);
             menuActions.Add(ClearTarget);
             menuActions.Add(ShowCrewEVA);
+            menuActions.Add(RemoveNode);
 
             for (int i = 0; i < rootMenu.Count; ++i)
             {
@@ -757,6 +762,10 @@ namespace JSI
                         bool evaUnlocked = GameVariables.Instance.UnlockedEVA(acLevel);
                         menuitem.isDisabled = !GameVariables.Instance.EVAIsPossible(evaUnlocked, vessel);
                         break;
+                    case removeNodeItemText:
+                        removeNode = topMenu[i];
+                        break;
+
                 }
             }
 
@@ -1001,6 +1010,14 @@ namespace JSI
         private static void ClearTarget(int index, TextMenu.Item ti)
         {
             FlightGlobals.fetch.SetVesselTarget((ITargetable)null);
+        }
+
+        private void RemoveNode(int index, TextMenu.Item ti)
+        {
+            if (vessel.patchedConicSolver != null && vessel.patchedConicSolver.maneuverNodes.Count > 0)
+            {
+                vessel.patchedConicSolver.RemoveManeuverNode(vessel.patchedConicSolver.maneuverNodes[0]);
+            }
         }
 
         private void ArmGrapple(int index, TextMenu.Item ti)
