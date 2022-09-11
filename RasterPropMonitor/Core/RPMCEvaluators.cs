@@ -2032,6 +2032,10 @@ namespace JSI
                     return (string variable, RPMVesselComputer comp) => { return vessel.ctrlState.Z; };
                 case "PRECISIONCONTROL":
                     return (string variable, RPMVesselComputer comp) => { return (FlightInputHandler.fetch.precisionMode).GetHashCode(); };
+                case "WHEELSTEER":
+                    return (string variable, RPMVesselComputer comp) => { return vessel.ctrlState.wheelSteer; };
+                case "WHEELTHROTTLE":
+                    return (string variable, RPMVesselComputer comp) => { return vessel.ctrlState.wheelThrottle; };
 
                 // Staging and other stuff
                 case "STAGE":
