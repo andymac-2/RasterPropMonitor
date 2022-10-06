@@ -24,6 +24,7 @@ using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace JSI
@@ -1289,5 +1290,45 @@ namespace JSI
             return GetNextWarpEventTime() > 0;
         }
 
+        public void RevertToLaunch(bool ignored)
+        {
+            if (CanRevert())
+            {
+                FlightDriver.RevertToLaunch();
+            }
+        }
+
+        public bool CanRevert()
+        {
+            return FlightDriver.CanRevert;
+        }
+
+        public void QuickSave(bool ignored)
+        {
+            if (CanQuickSave())
+            {
+                QuickSaveLoad.QuickSave();
+            }
+        }
+
+        public bool CanQuickSave()
+        {
+            // TODO: the stock game does a lot of extra logic here to test if quicksaving is allowed - see QuickSaveClearToSave
+            return InputLockManager.IsUnlocked(ControlTypes.QUICKSAVE) && HighLogic.CurrentGame.Parameters.Flight.CanQuickSave;
+        }
+
+        public void QuickLoad(bool ignored)
+        {
+            if (CanQuickLoad())
+            {
+                var methodinfo = typeof(QuickSaveLoad).GetMethod("quickLoad", BindingFlags.Instance | BindingFlags.NonPublic);
+                methodinfo.Invoke(QuickSaveLoad.fetch, new object[] { "quicksave", HighLogic.SaveFolder });
+            }
+        }
+
+        public bool CanQuickLoad()
+        {
+            return InputLockManager.IsUnlocked(ControlTypes.QUICKLOAD) && HighLogic.CurrentGame.Parameters.Flight.CanQuickLoad;
+        }
     }
 }
