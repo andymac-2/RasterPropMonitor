@@ -101,6 +101,7 @@ namespace JSI
             }
             catch
             {
+                JUtil.LogErrorMessage(this, $"{internalProp.propName} - {variableName}");
                 JUtil.AnnoyUser(this);
                 enabled = false;
                 throw;
