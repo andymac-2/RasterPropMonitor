@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -401,7 +401,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localRotationStart") && node.HasValue("localRotationEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialRotation = controlledTransform.localRotation;
                 if (node.HasValue("longPath"))
                 {
@@ -434,7 +434,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localTranslationStart") && node.HasValue("localTranslationEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialPosition = controlledTransform.localPosition;
                 if (reverse)
                 {
@@ -450,7 +450,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localScaleStart") && node.HasValue("localScaleEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialScale = controlledTransform.localScale;
                 if (reverse)
                 {
@@ -466,7 +466,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureShiftStart") && node.HasValue("textureShiftEnd"))
             {
-                affectedMaterial = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -487,7 +487,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureScaleStart") && node.HasValue("textureScaleEnd"))
             {
-                affectedMaterial = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -1086,7 +1086,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localRotationStart") && node.HasValue("localRotationEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialRotation = controlledTransform.localRotation;
                 if (node.HasValue("longPath"))
                 {
@@ -1119,7 +1119,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localTranslationStart") && node.HasValue("localTranslationEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialPosition = controlledTransform.localPosition;
                 if (reverse)
                 {
@@ -1135,7 +1135,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localScaleStart") && node.HasValue("localScaleEnd"))
             {
-                controlledTransform = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialScale = controlledTransform.localScale;
                 if (reverse)
                 {
@@ -1151,7 +1151,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureShiftStart") && node.HasValue("textureShiftEnd"))
             {
-                affectedMaterial = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -1172,7 +1172,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureScaleStart") && node.HasValue("textureScaleEnd"))
             {
-                affectedMaterial = thisProp.FindModelTransform(node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {

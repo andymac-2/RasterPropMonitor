@@ -119,7 +119,7 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
 
-                Transform textObjTransform = internalProp.FindModelTransform(transformName);
+                Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
                 Vector3 localScale = internalProp.transform.localScale;
 
                 Transform offsetTransform = new GameObject().transform;

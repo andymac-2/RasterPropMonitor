@@ -64,7 +64,7 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
 
-                textObjTransform = internalProp.FindModelTransform(labelTransform);
+                textObjTransform = JUtil.FindPropTransform(internalProp, labelTransform);
                 textObj = InternalComponents.Instance.CreateText(fontName, fontSize * 15.5f, textObjTransform, "", Color.green, false, "TopLeft");
                 activeLabel = 0;
 

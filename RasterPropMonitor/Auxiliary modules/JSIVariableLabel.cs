@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -72,7 +72,7 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
 
-                Transform textObjTransform = internalProp.FindModelTransform(transformName);
+                Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
                 textObj = InternalComponents.Instance.CreateText("Arial", fontSize * 15.5f, textObjTransform, "", Color.green, false, "TopLeft");
                 // Force oneshot if there's no variables:
                 oneshot |= !labelText.Contains("$&$");

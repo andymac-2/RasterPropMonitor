@@ -1553,6 +1553,30 @@ namespace JSI
                 return loadedFonts["LiberationSans-Regular"];
             }
         }
+
+        internal static Transform FindPropTransform(InternalProp prop, string nameOrPath)
+        {
+            if (nameOrPath.IndexOf('/') == -1)
+            {
+                return prop.FindModelTransform(nameOrPath);
+            }
+            else
+            {
+                return prop.transform.Find(nameOrPath);
+            }
+        }
+
+        internal static Transform FindInternalTransform(InternalModel model, string nameOrPath)
+        {
+            if (nameOrPath.IndexOf('/') == -1)
+            {
+                return model.FindModelTransform(nameOrPath);
+            }
+            else
+            {
+                return model.transform.Find(nameOrPath);
+            }
+        }
     }
 
     // This, instead, is a static class on it's own because it needs its private static variables.
@@ -1682,7 +1706,7 @@ namespace JSI
     /// a dictionary in JUtil.  In addition, other config assets are parsed
     /// and stored (primarily values found in the RPMVesselComputer).
     /// </summary>
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    [KSPAddon(KSPAddon.Startup.Instantly, true)]
     public class RPMShaderLoader : MonoBehaviour
     {
         private void LoadAssets()
@@ -1804,17 +1828,20 @@ namespace JSI
         /// </summary>
         private void Awake()
         {
-			// I don't want this object destroyed on scene change, since the database
-			// loader coroutine can take a while to run to completion.  Eventually,
-			// I may add smarts so database reloads get handled, too.
 			DontDestroyOnLoad(this);
 
-			if (!GameDatabase.Instance.IsReady())
-            {
-                JUtil.LogErrorMessage(this, "GameDatabase.IsReady is false");
-                throw new Exception("RPMShaderLoader: GameDatabase is not ready.  Unable to continue.");
-            }
+            // this should probably use the official async loading stuff
+            LoadAssets();
+        }
 
+        /// <summary>
+        /// Coroutine for loading the various custom variables used for variables.
+        /// Yield-returns ever 32 or so variables so it's not as costly in a
+        /// given frame.  Also loads all the other various values used by RPM.
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator LoadRasterPropMonitorValues()
+        {
             ConfigNode rpmSettings = GameDatabase.Instance.GetConfigNodes("RasterPropMonitorSettings").FirstOrDefault();
 
             if (rpmSettings != null)
@@ -1852,33 +1879,6 @@ namespace JSI
                         RPMGlobals.debugShowOnly.Add(showOnly[i].Trim());
                     }
                 }
-            }
-
-            LoadAssets();
-
-            //StartCoroutine("LoadRasterPropMonitorValues");
-            WaitCoroutine(LoadRasterPropMonitorValues());
-
-            // Register a callback with ModuleManager so we can get notified
-            // of database reloads.
-            if (!RegisterWithModuleManager())
-            {
-                JUtil.LogErrorMessage(this, "Unable to register with ModuleManager for database reloads");
-            }
-        }
-
-        /// <summary>
-        /// Coroutine for loading the various custom variables used for variables.
-        /// Yield-returns ever 32 or so variables so it's not as costly in a
-        /// given frame.  Also loads all the other various values used by RPM.
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerator LoadRasterPropMonitorValues()
-        {
-            var bodies = FlightGlobals.Bodies;
-            for (int i = 0; i < bodies.Count; ++i)
-            {
-                JUtil.LogMessage(this, "CelestialBody {0} is index {1}", bodies[i].bodyName, bodies[i].flightGlobalsIndex);
             }
 
             RPMGlobals.customVariables.Clear();
@@ -2094,57 +2094,9 @@ namespace JSI
             yield return null;
         }
 
-        public void PostPatchCallback()
+        public void ModuleManagerPostLoad()
         {
-            JUtil.LogMessage(this, "ModuleManager has reloaded - reloading RPM values");
-            //StartCoroutine("LoadRasterPropMonitorValues");
             WaitCoroutine(LoadRasterPropMonitorValues());
-        }
-
-        private bool RegisterWithModuleManager()
-        {
-            Type mmPatchLoader = null;
-            AssemblyLoader.loadedAssemblies.TypeOperation(t =>
-            {
-                if (t.FullName == "ModuleManager.MMPatchLoader")
-                {
-                    mmPatchLoader = t;
-                }
-            });
-
-            if (mmPatchLoader == null)
-            {
-                return false;
-            }
-
-            MethodInfo addPostPatchCallback = mmPatchLoader.GetMethod("addPostPatchCallback", BindingFlags.Static | BindingFlags.Public);
-
-            if (addPostPatchCallback == null)
-            {
-                return false;
-            }
-
-            try
-            {
-                var parms = addPostPatchCallback.GetParameters();
-                if (parms.Length < 1)
-                {
-                    return false;
-                }
-
-                Delegate callback = Delegate.CreateDelegate(parms[0].ParameterType, this, "PostPatchCallback");
-
-                object[] args = new object[] { callback };
-
-                addPostPatchCallback.Invoke(null, args);
-            }
-            catch (Exception e)
-            {
-                JUtil.LogMessage(this, "addPostPatchCallback threw {0}", e);
-                return false;
-            }
-
-            return true;
         }
     }
 }
