@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +19,46 @@ namespace JSI
         private const string formatPrefixBAR = "BAR";
         private const string formatPrefixU2K = "U2K";
         private const string formatPrefixU2M = "U2M";
+
+        private static List<string> formatTokens = new List<string>();
+
+        static int FindTokenEndChar(string format, int startIndex)
+        {
+            char quoteChar = '\0';
+
+            int index = startIndex;
+            while (index < format.Length)
+            {
+                switch (format[index])
+                {
+                    // entering or leaving quotes
+                    case '\'': quoteChar = quoteChar == '\'' ? '\0' : '\''; break;
+                    case '"': quoteChar = quoteChar == '"' ? '\0' : '"'; break;
+                    case ';': if (quoteChar == '\0') return index; break;
+                        // case '\\': ++index; break; // advance an extra character so that the next one is ignored (if it's a semicolon or quote)
+                }
+                ++index;
+            }
+
+            return Math.Min(index, format.Length);
+        }
+
+        // something is wrong with the below code, but this didn't seem to improve things
+        private static List<string> SplitByColon_New(string format)
+        {
+            formatTokens.Clear();
+
+            // Need to split the string by semicolons, but ignore semicolons that are inside quotes or after a backslash
+            int startIndex = 0;
+            while (startIndex < format.Length)
+            {
+                int tokenEndChar = FindTokenEndChar(format, startIndex);
+                formatTokens.Add(format.Substring(startIndex, tokenEndChar - startIndex));
+                startIndex = tokenEndChar + 1; // +1 to skip the semicolon
+            }
+
+            return formatTokens;
+        }
 
         private static string[] SplitByColon(string input)
         {
