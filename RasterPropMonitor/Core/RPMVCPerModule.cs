@@ -135,6 +135,16 @@ namespace JSI
         internal List<ModuleDataTransmitter> availableTransmitters = new List<ModuleDataTransmitter>();
         internal bool antennasReady; // true if at least one non-internal antenna is ready to use (not broken and nondeployable or deployed)
 
+        // --- Radiators
+        internal List<ModuleDeployableRadiator> availableDeployableRadiators = new List<ModuleDeployableRadiator>();
+        internal List<ModuleActiveRadiator> availableActiveRadiators = new List<ModuleActiveRadiator>();
+        internal bool radiatorsDeployed;
+        internal bool radiatorsDeployable;
+        internal bool radiatorsDeployedOrDeploying;
+        internal bool radiatorsBroken;
+        internal bool radiatorsActive;
+
+
         #region List Management
         /// <summary>
         /// Flag the lists as invalid due to craft changes / destruction.
@@ -163,6 +173,8 @@ namespace JSI
             availableWheelDamage.Clear();
             availableAntennas.Clear();
             availableTransmitters.Clear();
+            availableDeployableRadiators.Clear();
+            availableActiveRadiators.Clear();
 
             mainDockingNode = null;
         }
@@ -303,6 +315,14 @@ namespace JSI
                                 else if (module is ModuleDataTransmitter)
                                 {
                                     availableTransmitters.Add(module as ModuleDataTransmitter);
+                                }
+                                else if (module is ModuleDeployableRadiator)
+                                {
+                                    availableDeployableRadiators.Add(module as ModuleDeployableRadiator);
+                                }
+                                else if (module is ModuleActiveRadiator)
+                                {
+                                    availableActiveRadiators.Add(module as ModuleActiveRadiator);
                                 }
                             }
                         }
@@ -478,6 +498,28 @@ namespace JSI
             foreach (var transmitter in availableTransmitters)
             {
                 antennasReady |= (transmitter.antennaType != AntennaType.INTERNAL && transmitter.CanComm());
+            }
+        }
+
+        private void FetchRadiatorData()
+        {
+            radiatorsBroken = false;
+            radiatorsDeployable = false;
+            radiatorsDeployed = false;
+            radiatorsDeployedOrDeploying = false;
+            radiatorsActive = false;
+
+            foreach (var radiator in availableDeployableRadiators)
+            {
+                radiatorsDeployedOrDeploying |= radiator.useAnimation && (radiator.deployState == ModuleDeployablePart.DeployState.EXTENDED || radiator.deployState == ModuleDeployablePart.DeployState.EXTENDING);
+                radiatorsDeployable |= radiator.useAnimation && radiator.deployState == ModuleDeployablePart.DeployState.RETRACTED;
+                radiatorsDeployed |= radiator.useAnimation && radiator.deployState == ModuleDeployablePart.DeployState.EXTENDED;
+                radiatorsBroken |= radiator.deployState == ModuleDeployablePart.DeployState.BROKEN;
+            }
+
+            foreach (var radiator in availableActiveRadiators)
+            {
+                radiatorsActive |= radiator.IsCooling;
             }
         }
 
@@ -843,6 +885,7 @@ namespace JSI
             FetchRadarData();
             FetchWheelData();
             FetchAntennaData();
+            FetchRadiatorData();
 
             if (requestReset)
             {
@@ -969,6 +1012,34 @@ namespace JSI
                     {
                         antenna.Retract();
                     }
+                }
+            }
+        }
+
+        internal void SetRadiatorsActive(bool state)
+        {
+            if (state)
+            {
+                foreach (var radiator in availableDeployableRadiators)
+                {
+                    radiator.Extend();
+                }
+
+                foreach (var radiator in availableActiveRadiators)
+                {
+                    radiator.Activate();
+                }
+            }
+            else
+            {
+                foreach (var radiator in availableDeployableRadiators)
+                {
+                    radiator.Retract();
+                }
+
+                foreach (var radiator in availableActiveRadiators)
+                {
+                    radiator.Shutdown();
                 }
             }
         }

@@ -952,6 +952,8 @@ namespace JSI
             return true;
         }
 
+        // ----- antennas
+
         public bool AntennasDeployable()
         {
             if (vessel != null)
@@ -1007,6 +1009,67 @@ namespace JSI
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 return comp.antennasDeployedOrDeploying;
+            }
+            return false;
+        }
+
+        // ----- radiators
+
+        public bool RadiatorsDeployable()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.radiatorsDeployable;
+            }
+            return false;
+        }
+
+        public bool RadiatorsDeployed()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.radiatorsDeployed;
+            }
+            return false;
+        }
+
+        public bool RadiatorsBroken()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.radiatorsBroken;
+            }
+            return false;
+        }
+
+        public bool RadiatorsActive()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.radiatorsActive;
+            }
+            return false;
+        }
+
+        public void SetRadiatorsActive(bool state)
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                comp.SetRadiatorsActive(state);
+            }
+        }
+
+        public bool GetRadiatorActiveState()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.radiatorsActive || comp.radiatorsDeployedOrDeploying;
             }
             return false;
         }
