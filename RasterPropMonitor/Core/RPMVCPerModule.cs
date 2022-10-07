@@ -126,6 +126,15 @@ namespace JSI
         internal int gearState;
         internal float gearPosition;
 
+        //--- Antennas
+        internal List<ModuleDeployableAntenna> availableAntennas = new List<ModuleDeployableAntenna>();
+        internal bool antennasDeployed; // true if at least one deployable antenna is deployed
+        internal bool antennasDeployable; // true if at least one deployable antenna can be deployed
+        internal bool antennasDeployedOrDeploying; // true if at least one deployable antenna is deployed or deploying
+        internal bool antennasBroken; // true if at least one antenna is broken
+        internal List<ModuleDataTransmitter> availableTransmitters = new List<ModuleDataTransmitter>();
+        internal bool antennasReady; // true if at least one non-internal antenna is ready to use (not broken and nondeployable or deployed)
+
         #region List Management
         /// <summary>
         /// Flag the lists as invalid due to craft changes / destruction.
@@ -152,6 +161,8 @@ namespace JSI
             availableThrustReverser.Clear();
             availableWheelBrakes.Clear();
             availableWheelDamage.Clear();
+            availableAntennas.Clear();
+            availableTransmitters.Clear();
 
             mainDockingNode = null;
         }
@@ -284,6 +295,14 @@ namespace JSI
                                 else if (JSIParachute.rcFound && module.GetType() == JSIParachute.rcModuleRealChute)
                                 {
                                     availableRealChutes.Add(module);
+                                }
+                                else if (module is ModuleDeployableAntenna)
+                                {
+                                    availableAntennas.Add(module as ModuleDeployableAntenna);
+                                }
+                                else if (module is ModuleDataTransmitter)
+                                {
+                                    availableTransmitters.Add(module as ModuleDataTransmitter);
                                 }
                             }
                         }
@@ -437,6 +456,28 @@ namespace JSI
                 {
                     solarPanelMovement = (int)availableSolarPanels[i].deployState;
                 }
+            }
+        }
+
+        private void FetchAntennaData()
+        {
+            antennasBroken = false;
+            antennasDeployable = false;
+            antennasDeployed = false;
+            antennasDeployedOrDeploying = false;
+            antennasReady = false;
+
+            foreach (var antenna in availableAntennas)
+            {
+                antennasDeployedOrDeploying |= antenna.useAnimation && (antenna.deployState == ModuleDeployablePart.DeployState.EXTENDED || antenna.deployState == ModuleDeployablePart.DeployState.EXTENDING);
+                antennasDeployable |= antenna.useAnimation && antenna.deployState == ModuleDeployablePart.DeployState.RETRACTED;
+                antennasDeployed |= antenna.useAnimation && antenna.deployState == ModuleDeployablePart.DeployState.EXTENDED;
+                antennasBroken |= antenna.deployState == ModuleDeployablePart.DeployState.BROKEN;
+            }
+
+            foreach (var transmitter in availableTransmitters)
+            {
+                antennasReady |= (transmitter.antennaType != AntennaType.INTERNAL && transmitter.CanComm());
             }
         }
 
@@ -801,6 +842,7 @@ namespace JSI
             FetchParachuteData();
             FetchRadarData();
             FetchWheelData();
+            FetchAntennaData();
 
             if (requestReset)
             {
@@ -902,6 +944,30 @@ namespace JSI
                     if (availableSolarPanels[i].useAnimation && availableSolarPanels[i].retractable && availableSolarPanels[i].deployState == ModuleDeployablePart.DeployState.EXTENDED)
                     {
                         availableSolarPanels[i].Retract();
+                    }
+                }
+            }
+        }
+
+        internal void SetDeployAntennas(bool state)
+        {
+            if (state)
+            {
+                foreach (var antenna in availableAntennas)
+                {
+                    if (antenna.useAnimation && antenna.deployState == ModuleDeployablePart.DeployState.RETRACTED)
+                    {
+                        antenna.Extend();
+                    }
+                }
+            }
+            else
+            {
+                foreach (var antenna in availableAntennas)
+                {
+                    if (antenna.useAnimation && antenna.retractable && antenna.deployState == ModuleDeployablePart.DeployState.EXTENDED)
+                    {
+                        antenna.Retract();
                     }
                 }
             }

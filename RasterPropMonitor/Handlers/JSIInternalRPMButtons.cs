@@ -952,6 +952,65 @@ namespace JSI
             return true;
         }
 
+        public bool AntennasDeployable()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.antennasDeployable;
+            }
+            return false;
+        }
+
+        public bool AntennasDeployed()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.antennasDeployed;
+            }
+            return false;
+        }
+
+        public bool AntennasBroken()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.antennasBroken;
+            }
+            return false;
+        }
+
+        public bool AntennasReady()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.antennasReady;
+            }
+            return false;
+        }
+
+        public void SetAntennasDeployed(bool state)
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                comp.SetDeployAntennas(state);
+            }
+        }
+
+        public bool GetAntennaDeployState()
+        {
+            if (vessel != null)
+            {
+                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+                return comp.antennasDeployedOrDeploying;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Sets multi-mode engines to run in primary mode (true) or secondary
         /// mode (false).
