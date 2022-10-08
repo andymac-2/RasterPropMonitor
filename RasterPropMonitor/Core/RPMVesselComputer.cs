@@ -1148,7 +1148,7 @@ namespace JSI
                         lastRadius = vessel.orbit.PeR;
 
                         // First estimate
-                        double nextUt = vessel.orbit.NextTimeOfRadius(Planetarium.GetUniversalTime(), lastRadius);
+                        double nextUt = vessel.orbit.GetNextTimeOfRadius(Planetarium.GetUniversalTime(), lastRadius);
                         Vector3d pos = vessel.orbit.getPositionAtUT(nextUt);
                         estLandingLatitude = vessel.mainBody.GetLatitude(pos);
                         estLandingLongitude = vessel.mainBody.GetLongitude(pos);
@@ -1177,7 +1177,7 @@ namespace JSI
                     else
                     {
                         double nextRadius = Math.Max(vessel.orbit.PeR, lastRadius);
-                        double nextUt = vessel.orbit.NextTimeOfRadius(Planetarium.GetUniversalTime(), nextRadius);
+                        double nextUt = vessel.orbit.GetNextTimeOfRadius(Planetarium.GetUniversalTime(), nextRadius);
                         Vector3d pos = vessel.orbit.getPositionAtUT(nextUt);
                         estLandingLatitude = vessel.mainBody.GetLatitude(pos);
                         estLandingLongitude = vessel.mainBody.GetLongitude(pos);
@@ -1417,7 +1417,7 @@ namespace JSI
             double impactTime = 0;
             try
             {
-                impactTime = orbit.NextTimeOfRadius(Planetarium.GetUniversalTime(), terrainRadius);
+                impactTime = orbit.GetNextTimeOfRadius(Planetarium.GetUniversalTime(), terrainRadius);
             }
             catch (ArgumentException)
             {

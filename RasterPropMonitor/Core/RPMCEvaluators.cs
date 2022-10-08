@@ -881,7 +881,7 @@ namespace JSI
                         {
                             Vector3d burnVector = node.GetBurnVector(vessel.orbit);
                             // NormalPlus seems to be backwards...
-                            return -Vector3d.Dot(burnVector, vessel.orbit.NormalPlus(node.UT));
+                            return -Vector3d.Dot(burnVector, vessel.orbit.Normal(node.UT));
                         }
                         return 0.0;
                     };
@@ -891,7 +891,7 @@ namespace JSI
                         if (node != null)
                         {
                             Vector3d burnVector = node.GetBurnVector(vessel.orbit);
-                            return Vector3d.Dot(burnVector, vessel.orbit.RadialPlus(node.UT));
+                            return Vector3d.Dot(burnVector, vessel.orbit.Radial(node.UT));
                         }
                         return 0.0;
                     };
@@ -972,7 +972,7 @@ namespace JSI
                         {
                             return comp.targetOrbit.referenceBody != node.nextPatch.referenceBody ?
                                 -1d :
-                                Math.Abs(Vector3d.Angle(node.nextPatch.SwappedOrbitNormal(), comp.targetOrbit.SwappedOrbitNormal()));
+                                node.nextPatch.RelativeInclination_DEG(comp.targetOrbit);
                         }
                     };
 
@@ -1130,7 +1130,7 @@ namespace JSI
                             try
                             {
                                 double now = Planetarium.GetUniversalTime();
-                                timeToAtm = vessel.orbit.NextTimeOfRadius(now, vessel.orbit.referenceBody.atmosphereDepth + vessel.orbit.referenceBody.Radius) - now;
+                                timeToAtm = vessel.orbit.GetNextTimeOfRadius(now, vessel.orbit.referenceBody.atmosphereDepth + vessel.orbit.referenceBody.Radius) - now;
                                 timeToAtm = Math.Max(timeToAtm, 0.0);
                             }
                             catch
@@ -1532,7 +1532,7 @@ namespace JSI
                         {
                             return comp.targetOrbit.referenceBody != vessel.orbit.referenceBody ?
                                 -1d :
-                                Math.Abs(Vector3d.Angle(vessel.GetOrbit().SwappedOrbitNormal(), comp.targetOrbit.SwappedOrbitNormal()));
+                                vessel.GetOrbit().RelativeInclination_DEG(comp.targetOrbit);
                         }
                         return double.NaN;
                     };

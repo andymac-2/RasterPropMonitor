@@ -183,7 +183,7 @@ namespace JSI
                 // Early return: There is no apoapsis on a hyperbolic orbit
                 return;
             }
-            double nextApTime = o.NextApoapsisTime(referenceTime);
+            double nextApTime = o.GetNextApoapsisTime(referenceTime);
 
             if (nextApTime < o.EndUT || (o.patchEndTransition == Orbit.PatchTransitionType.FINAL))
             {
@@ -220,7 +220,7 @@ namespace JSI
             }
              */
 
-            double nextPeTime = o.NextPeriapsisTime(referenceTime);
+            double nextPeTime = o.GetNextPeriapsisTime(referenceTime);
             if (nextPeTime < o.EndUT || (o.patchEndTransition == Orbit.PatchTransitionType.FINAL))
             {
                 Vector3d relativePosition = o.SwappedRelativePositionAtUT(nextPeTime) + o.referenceBody.getTruePositionAtUT(nextPeTime) - referenceBody.getTruePositionAtUT(nextPeTime);
@@ -276,7 +276,7 @@ namespace JSI
             // the planet's center) into screen space.
             Matrix4x4 screenTransform = Matrix4x4.identity;
             double now = Planetarium.GetUniversalTime();
-            double timeAtPe = vessel.orbit.NextPeriapsisTime(now);
+            double timeAtPe = vessel.orbit.GetNextPeriapsisTime(now);
 
             // Get the 3 direction vectors, based on Pe being on the right of the screen
             // OrbitExtensions provides handy utilities to get these.
@@ -353,7 +353,7 @@ namespace JSI
             {
                 if (targetVessel.mainBody == vessel.mainBody)
                 {
-                    double tgtPe = targetVessel.orbit.NextPeriapsisTime(now);
+                    double tgtPe = targetVessel.orbit.GetNextPeriapsisTime(now);
 
                     vesselPos = screenTransform.MultiplyPoint3x4(targetVessel.orbit.SwappedRelativePositionAtUT(tgtPe));
                     maxX = Math.Max(maxX, vesselPos.x);
@@ -363,7 +363,7 @@ namespace JSI
 
                     if (targetVessel.orbit.eccentricity < 1.0)
                     {
-                        vesselPos = screenTransform.MultiplyPoint3x4(targetVessel.orbit.SwappedRelativePositionAtUT(targetVessel.orbit.NextApoapsisTime(now)));
+                        vesselPos = screenTransform.MultiplyPoint3x4(targetVessel.orbit.SwappedRelativePositionAtUT(targetVessel.orbit.GetNextApoapsisTime(now)));
                         maxX = Math.Max(maxX, vesselPos.x);
                         minX = Math.Min(minX, vesselPos.x);
                         maxY = Math.Max(maxY, vesselPos.y);
@@ -405,7 +405,7 @@ namespace JSI
 
             if (node != null)
             {
-                double nodePe = node.nextPatch.NextPeriapsisTime(now);
+                double nodePe = node.nextPatch.GetNextPeriapsisTime(now);
                 vesselPos = screenTransform.MultiplyPoint3x4(node.nextPatch.SwappedRelativePositionAtUT(nodePe));
                 maxX = Math.Max(maxX, vesselPos.x);
                 minX = Math.Min(minX, vesselPos.x);
@@ -414,7 +414,7 @@ namespace JSI
 
                 if (node.nextPatch.eccentricity < 1.0)
                 {
-                    double nodeAp = node.nextPatch.NextApoapsisTime(now);
+                    double nodeAp = node.nextPatch.GetNextApoapsisTime(now);
                     vesselPos = screenTransform.MultiplyPoint3x4(node.nextPatch.SwappedRelativePositionAtUT(nodeAp));
                     maxX = Math.Max(maxX, vesselPos.x);
                     minX = Math.Min(minX, vesselPos.x);

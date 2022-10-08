@@ -701,10 +701,10 @@ namespace JSI
             switch (tmi.id)
             {
                 case (int)JSIMechJeb.TimeReference.APOAPSIS:
-                    UT = vessel.orbit.NextApoapsisTime(Planetarium.GetUniversalTime());
+                    UT = vessel.orbit.GetNextApoapsisTime(Planetarium.GetUniversalTime());
                     break;
                 case (int)JSIMechJeb.TimeReference.PERIAPSIS:
-                    UT = vessel.orbit.NextPeriapsisTime(Planetarium.GetUniversalTime());
+                    UT = vessel.orbit.GetNextPeriapsisTime(Planetarium.GetUniversalTime());
                     break;
                 case (int)JSIMechJeb.TimeReference.X_FROM_NOW:
                     UT = Planetarium.GetUniversalTime() + 15.0;

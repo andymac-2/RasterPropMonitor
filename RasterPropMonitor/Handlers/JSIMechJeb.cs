@@ -1446,7 +1446,7 @@ namespace JSI
             if (GetMechJebAvailable() && altitude >= vessel.orbit.PeA && altitude <= vessel.orbit.ApA)
             {
                 // Add validation
-                double UT = vessel.orbit.NextTimeOfRadius(Planetarium.GetUniversalTime(), vessel.orbit.referenceBody.Radius + altitude);
+                double UT = vessel.orbit.GetNextTimeOfRadius(Planetarium.GetUniversalTime(), vessel.orbit.referenceBody.Radius + altitude);
 
                 Vector3d dV;
 
@@ -1462,7 +1462,7 @@ namespace JSI
         {
             if (GetMechJebAvailable() && altitude >= vessel.orbit.PeA)
             {
-                double UT = vessel.orbit.NextPeriapsisTime(Planetarium.GetUniversalTime());
+                double UT = vessel.orbit.GetNextPeriapsisTime(Planetarium.GetUniversalTime());
 
                 Vector3d dV;
 
@@ -1478,7 +1478,7 @@ namespace JSI
         {
             if (GetMechJebAvailable() && altitude <= vessel.orbit.ApA)
             {
-                double UT = vessel.orbit.NextApoapsisTime(Planetarium.GetUniversalTime());
+                double UT = vessel.orbit.GetNextApoapsisTime(Planetarium.GetUniversalTime());
 
                 Vector3d dV;
 
@@ -1839,7 +1839,7 @@ namespace JSI
                     return false;
                 }
 
-                if (o.RelativeInclination(targetOrbit) > 30.0 && o.RelativeInclination(targetOrbit) < 150.0)
+                if (o.RelativeInclination_DEG(targetOrbit) > 30.0 && o.RelativeInclination_DEG(targetOrbit) < 150.0)
                 {
                     // Target is in a drastically different orbital plane.
                     return false;
@@ -1857,7 +1857,7 @@ namespace JSI
                 {
                     return false;
                 }
-                if (o.referenceBody.orbit.RelativeInclination(targetOrbit) > 30.0)
+                if (o.referenceBody.orbit.RelativeInclination_DEG(targetOrbit) > 30.0)
                 {
                     // Can't handle highly inclined targets
                     return false;

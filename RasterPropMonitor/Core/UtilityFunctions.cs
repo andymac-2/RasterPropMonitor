@@ -1050,6 +1050,13 @@ namespace JSI
                 return angle + 2 * Math.PI;
             return angle;
         }
+
+        public static double ClampRadiansPi(double angle)
+        {
+            angle = ClampRadiansTwoPi(angle);
+            if (angle > Math.PI) angle -= 2.0f * Math.PI;
+            return angle;
+        }
         //acosh(x) = log(x + sqrt(x^2 - 1))
         public static double Acosh(double x)
         {
