@@ -3344,30 +3344,33 @@ namespace JSI
 
         private double TimeToImpact(RPMVesselComputer comp)
         {
-            if (evaluateTimeToImpactReady == false)
-            {
-                Func<double> accessor = null;
+            double timeToImpact = double.NaN;
 
-                if (accessor == null)
+            if (JSIMechJeb.IsInstalled)
+            {
+                if (evaluateTimeToImpactReady == false)
                 {
-                    accessor = (Func<double>)GetInternalMethod("JSIMechJeb:GetLandingTime", typeof(Func<double>));
-                    double value = accessor();
-                    if (double.IsNaN(value))
+                    Func<double> accessor = null;
+
+                    if (accessor == null)
                     {
-                        accessor = null;
+                        accessor = (Func<double>)GetInternalMethod("JSIMechJeb:GetLandingTime", typeof(Func<double>));
+                        double value = accessor();
+                        if (double.IsNaN(value))
+                        {
+                            accessor = null;
+                        }
                     }
+
+                    evaluateTimeToImpact = accessor;
+
+                    evaluateTimeToImpactReady = true;
                 }
 
-                evaluateTimeToImpact = accessor;
-
-                evaluateTimeToImpactReady = true;
-            }
-
-            double timeToImpact;
-
-            if (evaluateTimeToImpact != null)
-            {
-                timeToImpact = evaluateTimeToImpact();
+                if (evaluateTimeToImpact != null)
+                {
+                    timeToImpact = evaluateTimeToImpact();
+                }
             }
             else
             {

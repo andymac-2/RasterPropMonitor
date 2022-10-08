@@ -851,6 +851,8 @@ namespace JSI
             }
         }
 
+        static public bool IsInstalled => mjFound;
+
         public JSIMechJeb(Vessel myVessel)
         {
             vessel = myVessel;
