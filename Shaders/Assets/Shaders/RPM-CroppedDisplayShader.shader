@@ -1,4 +1,6 @@
-﻿
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+
 Shader "RPM/CroppedDisplayShader"
 {
 	Properties
@@ -55,7 +57,7 @@ Shader "RPM/CroppedDisplayShader"
 			v2f_cropped vert (appdata_t v)
 			{
 				v2f_cropped o;
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
 				o.pixelPos = float2(o.vertex.xy / o.vertex.w);
 				return o;

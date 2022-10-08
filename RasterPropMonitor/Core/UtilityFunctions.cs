@@ -1712,21 +1712,7 @@ namespace JSI
         private void LoadAssets()
         {
             String assetsPath = KSPUtil.ApplicationRootPath + "GameData/JSI/RasterPropMonitor/";
-            String shaderAssetBundleName = "rasterpropmonitor";
-            if (Application.platform == RuntimePlatform.WindowsPlayer)
-            {
-                shaderAssetBundleName += "-windows";
-            }
-            else if (Application.platform == RuntimePlatform.LinuxPlayer)
-            {
-                shaderAssetBundleName += "-linux";
-            }
-            else if (Application.platform == RuntimePlatform.OSXPlayer)
-            {
-                shaderAssetBundleName += "-osx";
-            }
-            shaderAssetBundleName += ".assetbundle";
-
+            String shaderAssetBundleName = "rasterpropmonitor-shaders.assetbundle";
             WWW www = new WWW("file://" + assetsPath + shaderAssetBundleName);
 
             if (!string.IsNullOrEmpty(www.error))

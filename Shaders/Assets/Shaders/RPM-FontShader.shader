@@ -1,4 +1,6 @@
-﻿Shader "RPM/FontShader"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "RPM/FontShader"
 {
 	Properties
 	{
@@ -51,7 +53,7 @@
 				// both DX and OGL paths.
 				dataOut.color = fixed4(v.color.rgb, v.color.a * 2.0);
 
-				dataOut.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				dataOut.vertex = UnityObjectToClipPos(v.vertex);
 				dataOut.texcoord = v.texcoord;
 				
 				return dataOut;
