@@ -932,8 +932,9 @@ namespace JSI
                 {
                     JUtil.LogErrorMessage(this, "FetchPerPartData(): vessel.part[{0}].Resources is null", thatPart.partInfo.title);
                 }
-                foreach (PartResource resource in thatPart.Resources)
+                for (int resourceIndex = 0; resourceIndex < thatPart.Resources.Count; resourceIndex++)
                 {
+                    var resource = thatPart.Resources[resourceIndex];
                     // This is redundant.
                     //resources.Add(resource);
 
@@ -961,12 +962,15 @@ namespace JSI
 
                 foreach (IScienceDataContainer container in thatPart.FindModulesImplementing<IScienceDataContainer>())
                 {
-                    foreach (ScienceData datapoint in container.GetData())
+                    if (container.GetScienceCount() > 0)
                     {
-                        if (datapoint != null)
+                        foreach (ScienceData datapoint in container.GetData())
                         {
-                            totalDataAmount += datapoint.dataAmount;
-                            totalExperimentCount += 1.0f;
+                            if (datapoint != null)
+                            {
+                                totalDataAmount += datapoint.dataAmount;
+                                totalExperimentCount += 1.0f;
+                            }
                         }
                     }
                 }
