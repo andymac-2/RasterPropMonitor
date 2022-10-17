@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -465,9 +465,8 @@ namespace JSI
 			Profiler.EndSample();
         }
 
-        public override void OnUpdate()
+        public void LateUpdate()
         {
-
             if (HighLogic.LoadedSceneIsEditor)
             {
                 return;
@@ -509,7 +508,7 @@ namespace JSI
                 return;
             }
 
-			Profiler.BeginSample("RasterPropMonitor.OnUpdate");
+			Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
 
 			if (!activePage.isMutable)
 			{
