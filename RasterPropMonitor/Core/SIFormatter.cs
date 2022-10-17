@@ -43,8 +43,7 @@ namespace JSI
             return Math.Min(index, format.Length);
         }
 
-        // something is wrong with the below code, but this didn't seem to improve things
-        private static List<string> SplitByColon_New(string format)
+        private static List<string> SplitByColon(string format)
         {
             formatTokens.Clear();
 
@@ -58,21 +57,6 @@ namespace JSI
             }
 
             return formatTokens;
-        }
-
-        private static string[] SplitByColon(string input)
-        {
-            var result = input.Replace("\\;", "ESCAPIDCOLON").Split('"')
-                .Select((element, index) => index % 2 == 0
-                    ? element.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)  // Split the item
-                    : new[] { element })  // Keep the entire item
-                .SelectMany(element => element).ToList();
-            var output = new List<string>();
-            foreach (string token in result)
-            {
-                output.Add(token.Replace("ESCAPIDCOLON", ";"));
-            }
-            return output.ToArray();
         }
 
         public string Format(string format, object arg, IFormatProvider formatProvider)
@@ -122,7 +106,7 @@ namespace JSI
                 // String.format spec says that the colon section separator takes into account if the 
                 // result became zero after formatting according to the subsequent format strings.
                 // Which actually complicates things annoyingly, because I can't figure out how to test for it.
-                switch (tokens.Length)
+                switch (tokens.Count)
                 {
                     case 2:
                         splitformat = inputValue >= 0 ? tokens[0] : tokens[1];
