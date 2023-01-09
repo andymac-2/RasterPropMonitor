@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace JSI
 {
@@ -66,7 +67,7 @@ namespace JSI
             internal VariableOrNumber value;
             internal event Action<float> onChangeCallbacks;
             internal event Action<bool> onResourceDepletedCallbacks;
-            internal bool cacheable;
+            internal bool cacheable; // cacheable variables are updated once per frame in RasterPropMonitorComputer.FixedUpdate
 
             internal void FireCallbacks(float newValue)
             {
@@ -603,10 +604,10 @@ namespace JSI
                     }
                 }
 
-                for (int i = 0; i < updatableVariables.Count; ++i)
+                foreach (var vc in updatableVariables)
                 {
-                    VariableCache vc = updatableVariables[i];
-                    float oldVal = vc.value.AsFloat();
+                    Profiler.BeginSample(vc.value.variableName);
+                    double oldVal = vc.value.AsDouble();
                     double newVal;
 
                     object evaluant = vc.evaluator(vc.value.variableName, comp);
@@ -623,10 +624,11 @@ namespace JSI
                     }
                     vc.value.numericValue = newVal;
 
-                    if (!Mathf.Approximately(oldVal, (float)newVal) || forceCallbackRefresh == true)
+                    if (Math.Abs(oldVal - newVal) > 1e-5 || forceCallbackRefresh)
                     {
                         vc.FireCallbacks((float)newVal);
                     }
+                    Profiler.EndSample();
                 }
 
                 ++debug_fixedUpdates;
