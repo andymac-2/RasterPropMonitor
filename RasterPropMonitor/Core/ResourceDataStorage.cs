@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -225,39 +225,53 @@ namespace JSI
             "DEPLETED"
         };
 
-        public object ListElement(string resourceQuery)
+        internal enum ResourceProperty
         {
-            object v = 0.0;
+            VAL,
+            DENSITY,
+            DELTA,
+            DELTAINV,
+            MAXMASS,
+            MASS,
+            PERCENT,
+            DEPLETED
+        }
+
+        /// <summary>
+        /// Given a string in the form XXXYYYZZZ where YYY may be "STAGE" or null, and ZZZ is one of the keywords above, sets the valueType to the keyword, sets the stage param to whether "STAGE" was present, returns XXX
+        /// </summary>
+        /// <param name="resourceQuery"></param>
+        /// <param name="valueType"></param>
+        /// <param name="stage"></param>
+        public static string ParseResourceQuery(string resourceQuery, out string valueType, out bool stage)
+        {
+            valueType = "VAL";
+            stage = false;
+
+            foreach (var keyword in keywords)
+            {
+                if (resourceQuery.EndsWith(keyword))
+                {
+                    valueType = keyword;
+                    resourceQuery = resourceQuery.Substring(resourceQuery.Length - keyword.Length);
+                    break;
+                }
+            }
+
+            if (resourceQuery.EndsWith("STAGE"))
+            {
+                stage = true;
+                resourceQuery = resourceQuery.Substring(resourceQuery.Length - "STAGE".Length);
+            }
+
+            return resourceQuery;
+        }
+
+        public object ListSYSElement(string resourceName, string valueType, bool stage)
+        {
+            double v = 0.0;
             try
             {
-                int i = 0;
-                for (; i < keywords.Length; ++i)
-                {
-                    if (resourceQuery.EndsWith(keywords[i], StringComparison.Ordinal))
-                    {
-                        break;
-                    }
-                }
-                int substringLength = resourceQuery.Length - "SYSR_".Length;
-                string valueType;
-                if (i == keywords.Length)
-                {
-                    valueType = "VAL";
-                }
-                else
-                {
-                    substringLength -= keywords[i].Length;
-                    valueType = keywords[i];
-                }
-
-                string resourceName = resourceQuery.Substring("SYSR_".Length, substringLength);
-                bool stage = false;
-                if (resourceName.EndsWith("STAGE"))
-                {
-                    stage = true;
-                    resourceName = resourceName.Substring(0, resourceName.Length - "STAGE".Length);
-                }
-
                 ResourceData resource = sysrResources[resourceName];
                 switch (valueType)
                 {
@@ -310,8 +324,8 @@ namespace JSI
             }
             catch (Exception e)
             {
-                JUtil.LogErrorMessage(this, "ListElement({1}) threw trapped exception {0}", e, resourceQuery);
-                v = null;
+                JUtil.LogErrorMessage(this, "ListElement({1}) threw trapped exception {0}", e, resourceName);
+                return null;
             }
             return v;
         }

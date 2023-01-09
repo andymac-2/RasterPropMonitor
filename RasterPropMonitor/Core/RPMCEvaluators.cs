@@ -105,53 +105,44 @@ namespace JSI
                         }
 
                     case "SYSR":
-                        foreach (KeyValuePair<string, string> resourceType in RPMGlobals.systemNamedResources)
                         {
-                            if (tokens[1].StartsWith(resourceType.Key, StringComparison.Ordinal))
-                            {
-                                try
-                                {
-                                    RPMVesselComputer vc = RPMVesselComputer.Instance(vessel);
-                                    object o = vc.resources.ListElement(input);
-                                    if (o == null)
-                                    {
-                                        throw new ArgumentException();
-                                    }
+                            string resourceName = ResourceDataStorage.ParseResourceQuery(tokens[1], out string valueType, out bool stage);
 
-                                    return (string variable, RPMVesselComputer comp) =>
-                                    {
-                                        return comp.resources.ListElement(variable);
-                                    };
-                                }
-                                catch
-                                {
-                                    return (string variable, RPMVesselComputer comp) => { return variable; };
-                                }
-                            }
-                        }
-                        return (string variable, RPMVesselComputer comp) => { return variable; };
-
-                    case "LISTR":
-                        return (string variable, RPMVesselComputer comp) =>
-                        {
-                            string[] toks = variable.Split('_');
-                            ushort resourceID = Convert.ToUInt16(toks[1]);
-                            string resourceName = comp.resources.GetActiveResourceByIndex(resourceID);
-                            if (toks[2] == "NAME")
+                            if (RPMGlobals.systemNamedResources.ContainsKey(resourceName))
                             {
-                                return resourceName;
-                            }
-                            if (string.IsNullOrEmpty(resourceName))
-                            {
-                                return 0d;
+                                return (string variable, RPMVesselComputer comp) => comp.resources.ListSYSElement(resourceName, valueType, stage);
                             }
                             else
                             {
-                                return toks[2].StartsWith("STAGE", StringComparison.Ordinal) ?
-                                    comp.resources.ListElement(resourceName, toks[2].Substring("STAGE".Length), true) :
-                                    comp.resources.ListElement(resourceName, toks[2], false);
+                                return (string variable, RPMVesselComputer comp) => { return variable; };
                             }
-                        };
+                        }
+
+                    case "LISTR":
+                        {
+                            ushort resourceID = Convert.ToUInt16(tokens[1]);
+                            if (tokens[2] == "NAME")
+                            {
+                                return (string variable, RPMVesselComputer comp) => comp.resources.GetActiveResourceByIndex(resourceID);
+                            }
+
+                            bool stage = tokens[2].StartsWith("STAGE", StringComparison.Ordinal);
+                            string valueType = stage ? tokens[2].Substring("STAGE".Length) : tokens[2];
+
+                            return (string variable, RPMVesselComputer comp) =>
+                            {
+                                string resourceName = comp.resources.GetActiveResourceByIndex(resourceID);
+
+                                if (string.IsNullOrEmpty(resourceName))
+                                {
+                                    return 0d;
+                                }
+                                else
+                                {
+                                    return comp.resources.ListElement(resourceName, valueType, stage);
+                                }
+                            };
+                        }
 
                     case "CREWLOCAL":
                         int crewSeatID = Convert.ToInt32(tokens[1]);

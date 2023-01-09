@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -22,6 +22,10 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace JSI
 {
+    /// <summary>
+    /// This is the class that individual modules use to access the variable
+    /// It's owned by the VariableCache instances inside the RasterPropMonitorComputer
+    /// </summary>
     public class VariableOrNumber
     {
         internal readonly string variableName;
