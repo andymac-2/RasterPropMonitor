@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using JSI;
 
 namespace JSI
 {
@@ -1365,6 +1366,28 @@ namespace JSI
             return TimeWarp.fetch.Mode == TimeWarp.Modes.HIGH;
         }
 
+        double GetBurnDuration(float dv)
+        {
+            var vesselDeltaV = FlightGlobals.ActiveVessel.VesselDeltaV;
+            double totalDuration = 0;
+
+            foreach (var stageInfo in vesselDeltaV.OperatingStageInfo)
+            {
+                bool enoughDv = stageInfo.deltaVinVac >= dv;
+                float dvForThisStage = enoughDv ? dv : stageInfo.deltaVinVac;
+                
+                totalDuration += stageInfo.CalculateTimeRequiredDV(false, dvForThisStage);
+                dv -= dvForThisStage;
+
+                if (enoughDv)
+                {
+                    break;
+                }
+            }
+
+            return totalDuration;
+        }
+
         // Warps to a maneuver node, SOI change, AP or PE
         double GetNextWarpEventTime()
         {
@@ -1375,7 +1398,8 @@ namespace JSI
 
             if (vessel.patchedConicSolver != null && vessel.patchedConicSolver.maneuverNodes.Count > 0)
             {
-                targetUT = vessel.patchedConicSolver.maneuverNodes[0].startBurnIn + Planetarium.GetUniversalTime() - GameSettings.WARP_TO_MANNODE_MARGIN;
+                double halfBurnDuration = GetBurnDuration((float)vessel.patchedConicSolver.maneuverNodes[0].DeltaV.magnitude * 0.5f);
+                targetUT = Planetarium.GetUniversalTime() + halfBurnDuration - GameSettings.WARP_TO_MANNODE_MARGIN;
             }
             else if (vessel.orbit.nextPatch != null && vessel.orbit.nextPatch.activePatch)
             {
@@ -1451,6 +1475,19 @@ namespace JSI
         public bool CanQuickLoad()
         {
             return InputLockManager.IsUnlocked(ControlTypes.QUICKLOAD) && HighLogic.CurrentGame.Parameters.Flight.CanQuickLoad;
+        }
+    }
+
+    static class StageInfoExtension
+    {
+        static MethodInfo CalculateTimeRequiredDV_Method = typeof(DeltaVStageInfo).GetMethod("CalculateTimeRequiredDV", BindingFlags.Instance | BindingFlags.NonPublic);
+        static object[] CalculateTimeRequiredDV_Params = new object[] { false, 0.0f };
+
+        internal static double CalculateTimeRequiredDV(this DeltaVStageInfo stageInfo, bool runningActive, float deltaVRequested)
+        {
+            CalculateTimeRequiredDV_Params[0] = runningActive;
+            CalculateTimeRequiredDV_Params[1] = deltaVRequested;
+            return (double)CalculateTimeRequiredDV_Method.Invoke(stageInfo, CalculateTimeRequiredDV_Params);
         }
     }
 }
