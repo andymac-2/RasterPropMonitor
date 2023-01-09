@@ -334,7 +334,7 @@ namespace JSI
 
                         if (propToUse == null)
                         {
-                            JUtil.LogErrorMessage(this, "Tried to look for method with propToUse still null?");
+                            JUtil.LogErrorMessage(this, $"Could not find InternalModule for {tokens[1]}");
                             return (string variable, RPMVesselComputer comp) => { return -1; };
                         }
                         else
