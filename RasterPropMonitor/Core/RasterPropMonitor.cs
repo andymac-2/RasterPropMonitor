@@ -510,7 +510,14 @@ namespace JSI
 
 			Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
 
-			if (!activePage.isMutable)
+            if (resourceDepleted || noCommConnection)
+            {
+                // this is a bit wasteful since we could just store the blanked texture, but at least it's not going to do any string processing
+                RenderScreen();
+                firstRenderComplete = false;
+                textRefreshRequired = true;
+            }
+			else if (!activePage.isMutable)
 			{
                 // In case the page is empty and has no camera, the screen is treated as turned off and blanked once.
                 if (!firstRenderComplete)
@@ -519,10 +526,6 @@ namespace JSI
                     RenderScreen();
                     firstRenderComplete = true;
                     textRefreshRequired = false;
-                }
-                else
-                {
-                    RenderScreen();
                 }
             }
             else

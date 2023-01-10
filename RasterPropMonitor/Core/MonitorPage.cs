@@ -173,6 +173,10 @@ namespace JSI
                         spf = null;
                         outputLines = null;
                     }
+                    else
+                    {
+                        isMutable = true;
+                    }
                 }
             }
         }
@@ -360,11 +364,6 @@ namespace JSI
                 if (node.HasValue("text"))
                 {
                     text = JUtil.LoadPageDefinition(node.GetValue("text"));
-                    isMutable |= text.IndexOf("$&$", StringComparison.Ordinal) != -1;
-                    if (!isMutable)
-                    {
-                        processedText = text;
-                    }
                 }
                 else
                 {
