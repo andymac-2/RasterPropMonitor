@@ -253,7 +253,7 @@ namespace JSI
                 if (resourceQuery.EndsWith(keyword))
                 {
                     valueType = keyword;
-                    resourceQuery = resourceQuery.Substring(resourceQuery.Length - keyword.Length);
+                    resourceQuery = resourceQuery.Substring(0, resourceQuery.Length - keyword.Length);
                     break;
                 }
             }
@@ -261,7 +261,7 @@ namespace JSI
             if (resourceQuery.EndsWith("STAGE"))
             {
                 stage = true;
-                resourceQuery = resourceQuery.Substring(resourceQuery.Length - "STAGE".Length);
+                resourceQuery = resourceQuery.Substring(0, resourceQuery.Length - "STAGE".Length);
             }
 
             return resourceQuery;
