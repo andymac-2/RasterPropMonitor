@@ -63,9 +63,10 @@ namespace JSI
 
         #region evaluator
         //static // uncomment this to make sure there's no non-static methods being generated
-        internal VariableEvaluator GetEvaluator(string input, out bool cacheable)
+        internal VariableEvaluator GetEvaluator(string input, out bool cacheable, out bool isConstant)
         {
             cacheable = true;
+            isConstant = false;
 
 			// If we've made it clear down here, maybe it's one of the plugin variables ... ?
 			try
@@ -94,6 +95,8 @@ namespace JSI
                 {
                     case "ISLOADED":
                         string assemblyname = input.Substring(input.IndexOf("_", StringComparison.Ordinal) + 1);
+
+                        isConstant = true;
 
                         if (RPMGlobals.knownLoadedAssemblies.Contains(assemblyname))
                         {
@@ -227,16 +230,14 @@ namespace JSI
 
                     case "STOREDSTRING":
                         int storedStringNumber;
-                        if (int.TryParse(tokens[1], out storedStringNumber) && storedStringNumber >= 0)
+                        isConstant = true;
+                        if (int.TryParse(tokens[1], out storedStringNumber))
                         {
-                            return (string variable, RPMVesselComputer comp) =>
+                            return (string variable, RPMVesselComputer comp) => 
                             {
-                                string[] toks = variable.Split('_');
-                                int storedNumber;
-                                int.TryParse(toks[1], out storedNumber);
-                                if (storedNumber < storedStringsArray.Count)
+                                if (storedStringNumber >= 0 && storedStringNumber < storedStringsArray.Count)
                                 {
-                                    return storedStringsArray[storedNumber];
+                                    return storedStringsArray[storedStringNumber];
                                 }
                                 else
                                 {
@@ -246,34 +247,24 @@ namespace JSI
                         }
                         else
                         {
-                            return (string variable, RPMVesselComputer comp) =>
-                            {
-                                string[] toks = variable.Split('_');
-                                int stringNumber;
-                                if (int.TryParse(toks[1], out stringNumber) && stringNumber >= 0 && stringNumber < storedStringsArray.Count)
-                                {
-                                    return storedStrings[stringNumber];
-                                }
-                                else
-                                {
-                                    return "";
-                                }
-                            };
+                            return (string variable, RPMVesselComputer comp) => "";
                         }
 
                     case "PERSISTENT":
-                        return (string variable, RPMVesselComputer comp) =>
                         {
-                            string substring = variable.Substring("PERSISTENT".Length + 1);
-                            if (HasPersistentVariable(substring, false))
+                            string substring = input.Substring("PERSISTENT".Length + 1);
+                            return (string variable, RPMVesselComputer comp) =>
                             {
-                                return GetPersistentVariable(substring, 0.0f, false).MassageToFloat();
-                            }
-                            else
-                            {
-                                return -1.0f;
-                            }
-                        };
+                                if (HasPersistentVariable(substring, false))
+                                {
+                                    return GetPersistentVariable(substring, 0.0f, false).MassageToFloat();
+                                }
+                                else
+                                {
+                                    return -1.0f;
+                                }
+                            };
+                        }
 
                     case "PLUGIN":
                         Delegate pluginMethod = GetInternalMethod(tokens[1]);
@@ -354,36 +345,44 @@ namespace JSI
 
             if (input.StartsWith("AGMEMO", StringComparison.Ordinal))
             {
-                return (string variable, RPMVesselComputer comp) =>
+                isConstant = true;
+                if (uint.TryParse(input.Substring("AGMEMO".Length), out uint groupID))
                 {
-                    uint groupID;
-                    if (uint.TryParse(variable.Substring(6), out groupID) && groupID < 10)
+                    RPMVesselComputer vesselComputer = RPMVesselComputer.Instance(vessel);
+                    // if the memo contains a pipe character, the string changes depending on the state of the action group
+                    string[] tokens;
+                    if (vesselComputer.actionGroupMemo[groupID].IndexOf('|') > 1 && (tokens = vesselComputer.actionGroupMemo[groupID].Split('|')).Length == 2)
                     {
-                        string[] tokens;
-                        if (comp.actionGroupMemo[groupID].IndexOf('|') > 1 && (tokens = comp.actionGroupMemo[groupID].Split('|')).Length == 2)
+                        return (string variable, RPMVesselComputer comp) =>
                         {
-                            if (vessel.ActionGroups.groups[RPMVesselComputer.actionGroupID[groupID]])
-                                return tokens[0];
-                            return tokens[1];
-                        }
-                        return comp.actionGroupMemo[groupID];
+                            return vessel.ActionGroups.groups[RPMVesselComputer.actionGroupID[groupID]]
+                                ? tokens[0]
+                                : tokens[1];
+                        };
                     }
-                    return input;
-                };
+                    else
+                    {
+                        return (string variable, RPMVesselComputer comp) => comp.actionGroupMemo[groupID];
+                    }
+                }
+                else
+                {
+                    return (string variable, RPMVesselComputer comp) => variable;
+                }
             }
 
             // Action group state.
             if (input.StartsWith("AGSTATE", StringComparison.Ordinal))
             {
-                return (string variable, RPMVesselComputer comp) =>
+                uint groupID;
+                if (uint.TryParse(input.Substring("AGSTATE".Length), out groupID) && groupID < 10)
                 {
-                    uint groupID;
-                    if (uint.TryParse(variable.Substring(7), out groupID) && groupID < 10)
-                    {
-                        return (vessel.ActionGroups.groups[RPMVesselComputer.actionGroupID[groupID]]).GetHashCode();
-                    }
-                    return input;
-                };
+                    return (string variable, RPMVesselComputer comp) => vessel.ActionGroups.groups[RPMVesselComputer.actionGroupID[groupID]].GetHashCode();
+                }
+                else
+                {
+                    return (string variable, RPMVesselComputer comp) => variable;
+                }
             }
 
             // Handle many/most variables
@@ -391,32 +390,17 @@ namespace JSI
             {
                 // Speeds.
                 case "VERTSPEED":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.speedVertical;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.speedVertical;
                 case "VERTSPEEDLOG10":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return JUtil.PseudoLog10(comp.speedVertical);
-                    };
+                    return (string variable, RPMVesselComputer comp) => JUtil.PseudoLog10(comp.speedVertical);
                 case "VERTSPEEDROUNDED":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.speedVerticalRounded;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.speedVerticalRounded;
                 case "RADARALTVERTSPEED":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.radarAltitudeRate;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.radarAltitudeRate;
                 case "TERMINALVELOCITY":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return TerminalVelocity(comp);
-                    };
+                    return (string variable, RPMVesselComputer comp) => TerminalVelocity(comp);
                 case "SURFSPEED":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.srfSpeed; };
+                    return (string variable, RPMVesselComputer comp) => vessel.srfSpeed;
                 case "SURFSPEEDMACH":
                     // Mach number wiggles around 1e-7 when sitting in launch
                     // clamps before launch, so pull it down to zero if it's close.
@@ -424,28 +408,16 @@ namespace JSI
                 case "ORBTSPEED":
                     return (string variable, RPMVesselComputer comp) => { return vessel.orbit.GetVel().magnitude; };
                 case "TRGTSPEED":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.velocityRelativeTarget.magnitude;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.velocityRelativeTarget.magnitude;
                 case "HORZVELOCITY":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.speedHorizontal;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.speedHorizontal;
                 case "HORZVELOCITYFORWARD":
                     // Negate it, since this is actually movement on the Z axis,
                     // and we want to treat it as a 2D projection on the surface
                     // such that moving "forward" has a positive value.
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return -Vector3d.Dot(vessel.srf_velocity, comp.SurfaceForward);
-                    };
+                    return (string variable, RPMVesselComputer comp) => -Vector3d.Dot(vessel.srf_velocity, comp.SurfaceForward);
                 case "HORZVELOCITYRIGHT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return Vector3d.Dot(vessel.srf_velocity, comp.SurfaceRight);
-                    };
+                    return (string variable, RPMVesselComputer comp) => Vector3d.Dot(vessel.srf_velocity, comp.SurfaceRight);
                 case "EASPEED":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -460,10 +432,7 @@ namespace JSI
                         return vessel.srfSpeed * Math.Sqrt(densityRatio) * pressureRatio;
                     };
                 case "APPROACHSPEED":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.approachSpeed;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.approachSpeed;
                 case "SELECTEDSPEED":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -517,17 +486,11 @@ namespace JSI
                     };
 
                 case "TIMETOIMPACTSECS":
-                    return (string variable, RPMVesselComputer comp) => { return TimeToImpact(comp); };
+                    return (string variable, RPMVesselComputer comp) => TimeToImpact(comp);
                 case "SPEEDATIMPACT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.SpeedAtImpact(comp.totalCurrentThrust);
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.SpeedAtImpact(comp.totalCurrentThrust);
                 case "BESTSPEEDATIMPACT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.SpeedAtImpact(comp.totalLimitedMaximumThrust);
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.SpeedAtImpact(comp.totalLimitedMaximumThrust);
                 case "SUICIDEBURNSTARTSECS":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -555,25 +518,13 @@ namespace JSI
 
                 // Altitudes
                 case "ALTITUDE":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.altitudeASL;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.altitudeASL;
                 case "ALTITUDELOG10":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return JUtil.PseudoLog10(comp.altitudeASL);
-                    };
+                    return (string variable, RPMVesselComputer comp) => JUtil.PseudoLog10(comp.altitudeASL);
                 case "RADARALT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.altitudeTrue;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.altitudeTrue;
                 case "RADARALTLOG10":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return JUtil.PseudoLog10(comp.altitudeTrue);
-                    };
+                    return (string variable, RPMVesselComputer comp) => JUtil.PseudoLog10(comp.altitudeTrue);
                 case "RADARALTOCEAN":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -593,35 +544,23 @@ namespace JSI
                         return JUtil.PseudoLog10(comp.altitudeTrue);
                     };
                 case "ALTITUDEBOTTOM":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.altitudeBottom;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.altitudeBottom;
                 case "ALTITUDEBOTTOMLOG10":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return JUtil.PseudoLog10(comp.altitudeBottom);
-                    };
+                    return (string variable, RPMVesselComputer comp) => JUtil.PseudoLog10(comp.altitudeBottom);
                 case "TERRAINHEIGHT":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.terrainAltitude; };
+                    return (string variable, RPMVesselComputer comp) => vessel.terrainAltitude;
                 case "TERRAINDELTA":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.terrainDelta;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.terrainDelta;
                 case "TERRAINHEIGHTLOG10":
-                    return (string variable, RPMVesselComputer comp) => { return JUtil.PseudoLog10(vessel.terrainAltitude); };
+                    return (string variable, RPMVesselComputer comp) => JUtil.PseudoLog10(vessel.terrainAltitude);
                 case "DISTTOATMOSPHERETOP":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return vessel.orbit.referenceBody.atmosphereDepth - comp.altitudeASL;
-                    };
+                    return (string variable, RPMVesselComputer comp) => vessel.orbit.referenceBody.atmosphereDepth - comp.altitudeASL;
 
                 // Atmospheric values
                 case "ATMPRESSURE":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.staticPressurekPa * PhysicsGlobals.KpaToAtmospheres; };
+                    return (string variable, RPMVesselComputer comp) => vessel.staticPressurekPa * PhysicsGlobals.KpaToAtmospheres;
                 case "ATMDENSITY":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.atmDensity; };
+                    return (string variable, RPMVesselComputer comp) => vessel.atmDensity;
                 case "DYNAMICPRESSURE":
                     return DynamicPressure();
                 case "ATMOSPHEREDEPTH":
@@ -639,30 +578,15 @@ namespace JSI
 
                 // Masses.
                 case "MASSDRY":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalShipDryMass;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalShipDryMass;
                 case "MASSWET":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalShipWetMass;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalShipWetMass;
                 case "MASSRESOURCES":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalShipWetMass - comp.totalShipDryMass;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalShipWetMass - comp.totalShipDryMass;
                 case "MASSPROPELLANT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.resources.PropellantMass(false);
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.resources.PropellantMass(false);
                 case "MASSPROPELLANTSTAGE":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.resources.PropellantMass(true);
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.resources.PropellantMass(true);
 
                 // The delta V calculation.
                 case "DELTAV":
@@ -672,20 +596,11 @@ namespace JSI
 
                 // Thrust and related
                 case "THRUST":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalCurrentThrust;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalCurrentThrust;
                 case "THRUSTMAX":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalLimitedMaximumThrust;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalLimitedMaximumThrust;
                 case "THRUSTMAXRAW":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.totalRawMaximumThrust;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.totalRawMaximumThrust;
                 case "THRUSTLIMIT":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -712,14 +627,11 @@ namespace JSI
                         return (comp.totalLimitedMaximumThrust / comp.totalShipWetMass);
                     };
                 case "GFORCE":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.geeForce_immediate; };
+                    return (string variable, RPMVesselComputer comp) => vessel.geeForce_immediate;
                 case "EFFECTIVEACCEL":
-                    return (string variable, RPMVesselComputer comp) => { return vessel.acceleration.magnitude; };
+                    return (string variable, RPMVesselComputer comp) => vessel.acceleration.magnitude;
                 case "REALISP":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.actualAverageIsp;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.actualAverageIsp;
                 case "MAXISP":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -2224,8 +2136,10 @@ namespace JSI
 
                 // Meta.
                 case "RPMVERSION":
+                    isConstant = true;
                     return (string variable, RPMVesselComputer comp) => { return FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion; };
                 case "MECHJEBAVAILABLE":
+                    isConstant = true;
                     return MechJebAvailable();
                 case "TIMEWARPPHYSICS":
                     return (string variable, RPMVesselComputer comp) => { return (TimeWarp.CurrentRate > 1.0f && TimeWarp.WarpMode == TimeWarp.Modes.LOW).GetHashCode(); };

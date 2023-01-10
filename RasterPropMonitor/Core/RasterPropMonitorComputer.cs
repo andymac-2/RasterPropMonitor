@@ -296,8 +296,8 @@ namespace JSI
         private void AddVariable(string variableName)
         {
             VariableCache vc = new VariableCache();
-            bool cacheable;
-            vc.evaluator = GetEvaluator(variableName, out cacheable);
+            bool cacheable, isConstant;
+            vc.evaluator = GetEvaluator(variableName, out cacheable, out isConstant);
             vc.value = new VariableOrNumber(variableName, cacheable, this);
             vc.cacheable = cacheable;
 
@@ -310,6 +310,11 @@ namespace JSI
                     vc.value.stringValue = value as string;
                     vc.value.isNumeric = false;
                     vc.value.numericValue = 0.0;
+
+                    if (isConstant)
+                    {
+                        vc.value.variableType = VariableOrNumber.VoNType.ConstantString;
+                    }
 
                     // If the evaluator returns the variableName, then we
                     // have an unknown variable.  Change the VoN type to
@@ -326,6 +331,11 @@ namespace JSI
                 {
                     vc.value.numericValue = value.MassageToDouble();
                     vc.value.isNumeric = true;
+
+                    if (isConstant)
+                    {
+                        vc.value.variableType = VariableOrNumber.VoNType.ConstantNumeric;
+                    }
                 }
             }
 
