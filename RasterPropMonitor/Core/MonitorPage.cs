@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -33,8 +33,10 @@ namespace JSI
         public readonly int pageNumber;
         public readonly string name = string.Empty;
         public readonly bool unlocker;
-        private readonly string text;
+        private string text;
         private StringProcessorFormatter[] spf;
+        private string[] outputLines;
+        bool allTextConstant;
         private string processedText = string.Empty;
 
         public string Text
@@ -106,44 +108,73 @@ namespace JSI
 
             if (pageHandlerMethod != null)
             {
-                processedText = pageHandlerMethod(screenWidth, screenHeight);
+                string newText = pageHandlerMethod(screenWidth, screenHeight);
 
-                if (processedText.IndexOf("$&$", StringComparison.Ordinal) != -1)
+                // if the text changed, we may need to recreate formatters
+                if (newText != text)
                 {
-                    // There are processed variables in here?
-                    StringBuilder bf = new StringBuilder();
-                    string[] linesArray = processedText.Split(JUtil.LineSeparator, StringSplitOptions.None);
-                    for (int i = 0; i < linesArray.Length; i++)
-                    {
-                        bf.AppendLine(StringProcessor.ProcessString(linesArray[i], rpmComp));
-                    }
-                    processedText = bf.ToString();
+                    spf = null;
+                    allTextConstant = false;
+                    text = newText;
                 }
             }
-            else
+
+            if (!allTextConstant)
             {
-                if (isMutable)
+                allTextConstant = true;
+
+                if (text == null)
                 {
-                    if (spf == null)
+                    text = string.Empty;
+                }
+
+                if (text.IndexOf(JUtil.VariableListSeparator[0]) == -1)
+                {
+                    processedText = text;
+                    spf = null;
+                    outputLines = null;
+                }
+                // create the formatters if necessary
+                else if (spf == null)
+                {
+                    string[] linesArray = text.Split(JUtil.LineSeparator, StringSplitOptions.None);
+                    spf = new StringProcessorFormatter[linesArray.Length];
+                    outputLines = new string[linesArray.Length];
+                    for (int i = 0; i < linesArray.Length; ++i)
                     {
-                        string[] linesArray = text.Split(JUtil.LineSeparator, StringSplitOptions.None);
-                        spf = new StringProcessorFormatter[linesArray.Length];
-                        for (int i = 0; i < linesArray.Length; ++i)
+                        spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
+                            
+                        if (!spf[i].usesComp)
                         {
-                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
+                            outputLines[i] = spf[i].formatString;
+                            spf[i] = null;
+                        }
+                        else
+                        {
+                            allTextConstant = false;
+                        }
+                    }
+                }
+
+                if (spf != null)
+                {
+                    for (int i = 0; i < spf.Length; i++)
+                    {
+                        if (spf[i] != null)
+                        {
+                            outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
                         }
                     }
 
-                    StringBuilder bf = new StringBuilder();
-                    for (int i = 0; i < spf.Length; i++)
-                    {
-                        bf.AppendLine(StringProcessor.ProcessString(spf[i], rpmComp));
-                    }
+                    processedText = string.Join(Environment.NewLine, outputLines);
 
-                    processedText = bf.ToString();
+                    if (allTextConstant)
+                    {
+                        spf = null;
+                        outputLines = null;
+                    }
                 }
             }
-
         }
 
         public bool SwitchingPermitted(string destination)

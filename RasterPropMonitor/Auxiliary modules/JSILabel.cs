@@ -539,9 +539,9 @@ namespace JSI
 
         internal JSILabelSet(string labelText, RasterPropMonitorComputer rpmComp, bool isOneshot)
         {
-            oneshot = isOneshot;
             oneshotComplete = false;
             spf = new StringProcessorFormatter(labelText, rpmComp);
+            oneshot = isOneshot || !spf.usesComp;
         }
     }
 

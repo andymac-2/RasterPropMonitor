@@ -75,7 +75,6 @@ namespace JSI
                 Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
                 textObj = InternalComponents.Instance.CreateText("Arial", fontSize * 15.5f, textObjTransform, "", Color.green, false, "TopLeft");
                 // Force oneshot if there's no variables:
-                oneshot |= !labelText.Contains("$&$");
                 string sourceString = labelText.UnMangleConfigText();
 
                 if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
@@ -87,6 +86,7 @@ namespace JSI
                     }
                 }
                 spf = new StringProcessorFormatter(sourceString, rpmComp);
+                oneshot = !spf.usesComp;
 
                 if (!oneshot)
                 {

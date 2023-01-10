@@ -25,6 +25,7 @@ namespace JSI
     /// <summary>
     /// This is the class that individual modules use to access the variable
     /// It's owned by the VariableCache instances inside the RasterPropMonitorComputer
+    /// This architecture is kind of strange; this could probably be unified with VariableCache
     /// </summary>
     public class VariableOrNumber
     {
@@ -32,15 +33,8 @@ namespace JSI
         internal double numericValue;
         internal string stringValue;
         internal bool isNumeric;
+        internal bool isConstant;
         private readonly RasterPropMonitorComputer rpmComp;
-        internal VoNType variableType = VoNType.Invalid;
-        internal enum VoNType
-        {
-            Invalid,
-            ConstantNumeric,
-            ConstantString,
-            VariableValue,
-        }
 
         /// <summary>
         /// Initialize a VariableOrNumber
@@ -48,49 +42,22 @@ namespace JSI
         /// <param name="input">The name of the variable</param>
         /// <param name="cacheable">Whether the variable is cacheable</param>
         /// <param name="rpmComp">The RasterPropMonitorComputer that owns the variable</param>
-        internal VariableOrNumber(string input, bool cacheable, RasterPropMonitorComputer rpmComp_)
+        internal VariableOrNumber(string input, object value, bool constant, RasterPropMonitorComputer rpmComp_)
         {
-            string varName = input.Trim();
-            if (varName == "MetersToFeet")
-            {
-                varName = RPMGlobals.MetersToFeet.ToString();
-            }
-            else if (varName == "MetersPerSecondToKnots")
-            {
-                varName = RPMGlobals.MetersPerSecondToKnots.ToString();
-            }
-            else if (varName == "MetersPerSecondToFeetPerMinute")
-            {
-                varName = RPMGlobals.MetersPerSecondToFeetPerMinute.ToString();
-            }
+            variableName = input;
+            isConstant = constant;
+            rpmComp = rpmComp_;
 
-            float realValue;
-            if (float.TryParse(varName, out realValue))
+            if (value is string str)
             {
-                // If it's a numeric value, let's canonicalize it using
-                // ToString, so we don't have duplicates that evaluate to the
-                // same value (eg, 1.0, 1, 1.00, etc).
-                variableName = realValue.ToString();
-                numericValue = realValue;
-                isNumeric = true;
-                variableType = VoNType.ConstantNumeric;
-            }
-            else if (input[0] == '$')
-            {
-                variableName = input;
-                stringValue = input.Substring(1).Trim();
+                stringValue = str;
                 isNumeric = false;
-                variableType = VoNType.ConstantString;
             }
             else
             {
-                variableName = varName;
-                variableType = VoNType.VariableValue;
-
-                if (!cacheable)
-                {
-                    rpmComp = rpmComp_;
-                }
+                stringValue = value.ToString();
+                numericValue = value.MassageToDouble();
+                isNumeric = true;
             }
         }
 

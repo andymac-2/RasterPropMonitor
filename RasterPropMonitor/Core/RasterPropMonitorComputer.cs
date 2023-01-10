@@ -298,50 +298,21 @@ namespace JSI
             VariableCache vc = new VariableCache();
             bool cacheable, isConstant;
             vc.evaluator = GetEvaluator(variableName, out cacheable, out isConstant);
-            vc.value = new VariableOrNumber(variableName, cacheable, this);
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+            object value = vc.evaluator == null ? variableName : vc.evaluator(variableName, comp);
+            isConstant = isConstant || vc.evaluator == null;
+            vc.value = new VariableOrNumber(variableName, value, isConstant, cacheable ? null : this);
             vc.cacheable = cacheable;
 
-            if (vc.value.variableType == VariableOrNumber.VoNType.VariableValue)
+            if (vc.evaluator == null && !unrecognizedVariables.Contains(variableName))
             {
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                object value = vc.evaluator(variableName, comp);
-                if (value is string)
-                {
-                    vc.value.stringValue = value as string;
-                    vc.value.isNumeric = false;
-                    vc.value.numericValue = 0.0;
-
-                    if (isConstant)
-                    {
-                        vc.value.variableType = VariableOrNumber.VoNType.ConstantString;
-                    }
-
-                    // If the evaluator returns the variableName, then we
-                    // have an unknown variable.  Change the VoN type to
-                    // ConstantString so we don't waste cycles on update to
-                    // reevaluate it.
-                    if (vc.value.stringValue == variableName && !unrecognizedVariables.Contains(variableName))
-                    {
-                        vc.value.variableType = VariableOrNumber.VoNType.ConstantString;
-                        unrecognizedVariables.Add(variableName);
-                        JUtil.LogInfo(this, "Unrecognized variable {0}", variableName);
-                    }
-                }
-                else
-                {
-                    vc.value.numericValue = value.MassageToDouble();
-                    vc.value.isNumeric = true;
-
-                    if (isConstant)
-                    {
-                        vc.value.variableType = VariableOrNumber.VoNType.ConstantNumeric;
-                    }
-                }
+                unrecognizedVariables.Add(variableName);
+                JUtil.LogErrorMessage(this, "Unrecognized variable {0}", variableName);
             }
 
             variableCache.Add(variableName, vc);
 
-            if (vc.value.variableType == VariableOrNumber.VoNType.VariableValue)
+            if (!isConstant)
             {
                 // Only variables that are really variable need to be checked
                 // during FixedUpdate.

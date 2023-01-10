@@ -232,9 +232,9 @@ namespace JSI
             {
                 string labelText = node.GetValue("labelText").Trim().UnMangleConfigText();
                 hasText = true;
-                oneShot = !labelText.Contains("$&$");
                 rpmComp = RasterPropMonitorComputer.Instantiate(part, true);
                 label = new StringProcessorFormatter(labelText, rpmComp);
+                oneShot = !label.usesComp;
             }
             else
             {

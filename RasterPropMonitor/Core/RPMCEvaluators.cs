@@ -68,7 +68,20 @@ namespace JSI
             cacheable = true;
             isConstant = false;
 
-			// If we've made it clear down here, maybe it's one of the plugin variables ... ?
+            // handle literals
+            if (float.TryParse(input, out float value))
+            {
+                isConstant = true;
+                return (string variable, RPMVesselComputer comp) => value;
+            }
+            else if (input[0] == '$')
+            {
+                isConstant = true;
+                input = input.Substring(1).Trim();
+                return (string variable, RPMVesselComputer comp) => input;
+            }
+
+			// plugins get first crack at variables
 			try
 			{
 				object result;
@@ -117,7 +130,7 @@ namespace JSI
                             }
                             else
                             {
-                                return (string variable, RPMVesselComputer comp) => { return variable; };
+                                return null;
                             }
                         }
 
@@ -178,7 +191,7 @@ namespace JSI
                         }
                         else
                         {
-                            return (string variable, RPMVesselComputer comp) => { return variable; };
+                            return null;
                         }
 
                     case "PERIOD":
@@ -198,11 +211,10 @@ namespace JSI
 
                                     return (remainder > invPeriod * 0.5).GetHashCode();
                                 };
-
                             }
                         }
 
-                        return (string variable, RPMVesselComputer comp) => { return variable; };
+                        return null;
 
                     case "CUSTOM":
                     case "MAPPED":
@@ -225,7 +237,7 @@ namespace JSI
                         }
                         else
                         {
-                            return (string variable, RPMVesselComputer comp) => { return variable; };
+                            return null;
                         }
 
                     case "STOREDSTRING":
@@ -247,7 +259,7 @@ namespace JSI
                         }
                         else
                         {
-                            return (string variable, RPMVesselComputer comp) => "";
+                            return null;
                         }
 
                     case "PERSISTENT":
@@ -289,7 +301,7 @@ namespace JSI
                             else
                             {
                                 JUtil.LogErrorMessage(this, "Unable to create a plugin handler for return type {0}", mi.ReturnType);
-                                return (string variable, RPMVesselComputer comp) => { return variable; };
+                                return null;
 
                             }
                         }
@@ -298,7 +310,7 @@ namespace JSI
                         if (internalModule.Length != 2)
                         {
                             JUtil.LogErrorMessage(this, "Badly-formed plugin name in {0}", input);
-                            return (string variable, RPMVesselComputer comp) => { return variable; };
+                            return null;
                         }
 
                         InternalProp propToUse = null;
@@ -316,6 +328,7 @@ namespace JSI
 
                         if (propToUse == null)
                         {
+                            isConstant = true;
                             JUtil.LogErrorMessage(this, $"Could not find InternalModule for {tokens[1]}");
                             return (string variable, RPMVesselComputer comp) => { return -1; };
                         }
@@ -331,6 +344,7 @@ namespace JSI
                                 }
                                 else
                                 {
+                                    isConstant = true;
                                     // Doesn't exist -- return nothing
                                     return (string variable, RPMVesselComputer comp) => { return -1; };
                                 }
@@ -367,7 +381,7 @@ namespace JSI
                 }
                 else
                 {
-                    return (string variable, RPMVesselComputer comp) => variable;
+                    return null;
                 }
             }
 
@@ -381,13 +395,24 @@ namespace JSI
                 }
                 else
                 {
-                    return (string variable, RPMVesselComputer comp) => variable;
+                    return null;
                 }
             }
 
             // Handle many/most variables
             switch (input)
             {
+                // Conversion constants
+                case "MetersToFeet":
+                    isConstant = true;
+                    return (string variable, RPMVesselComputer comp) => RPMGlobals.MetersToFeet;
+                case "MetersPerSecondToKnots":
+                    isConstant = true;
+                    return (string variable, RPMVesselComputer comp) => RPMGlobals.MetersPerSecondToKnots;
+                case "MetersPerSecondToFeetPerMinute":
+                    isConstant = true;
+                    return (string variable, RPMVesselComputer comp) => RPMGlobals.MetersPerSecondToFeetPerMinute;
+
                 // Speeds.
                 case "VERTSPEED":
                     return (string variable, RPMVesselComputer comp) => comp.speedVertical;
@@ -633,35 +658,17 @@ namespace JSI
                 case "REALISP":
                     return (string variable, RPMVesselComputer comp) => comp.actualAverageIsp;
                 case "MAXISP":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.actualMaxIsp;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.actualMaxIsp;
                 case "ACTIVEENGINECOUNT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.activeEngineCount;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.activeEngineCount;
                 case "ENGINECOUNT":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.currentEngineCount;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.currentEngineCount;
                 case "CURRENTINTAKEAIRFLOW":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.currentAirFlow;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.currentAirFlow;
                 case "CURRENTENGINEFUELFLOW":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.currentEngineFuelFlow;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.currentEngineFuelFlow;
                 case "MAXENGINEFUELFLOW":
-                    return (string variable, RPMVesselComputer comp) =>
-                    {
-                        return comp.maxEngineFuelFlow;
-                    };
+                    return (string variable, RPMVesselComputer comp) => comp.maxEngineFuelFlow;
                 case "HOVERPOINT":
                     return (string variable, RPMVesselComputer comp) =>
                     {
@@ -725,13 +732,13 @@ namespace JSI
 
                 // Power production rates
                 case "ELECOUTPUTALTERNATOR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.alternatorOutput; };
+                    return (string variable, RPMVesselComputer comp) => comp.alternatorOutput;
                 case "ELECOUTPUTFUELCELL":
-                    return (string variable, RPMVesselComputer comp) => { return comp.fuelcellOutput; };
+                    return (string variable, RPMVesselComputer comp) => comp.fuelcellOutput;
                 case "ELECOUTPUTGENERATOR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.generatorOutput; };
+                    return (string variable, RPMVesselComputer comp) => comp.generatorOutput;
                 case "ELECOUTPUTSOLAR":
-                    return (string variable, RPMVesselComputer comp) => { return comp.solarOutput; };
+                    return (string variable, RPMVesselComputer comp) => comp.solarOutput;
 
                 // Maneuvers
                 case "MNODETIMESECS":

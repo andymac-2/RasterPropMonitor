@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -19,6 +19,7 @@
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 using System;
+using UnityEngine.Profiling;
 
 namespace JSI
 {
@@ -51,16 +52,30 @@ namespace JSI
                 }
                 else
                 {
+                    bool allVariablesConstant = true;
+
                     string[] sourceVarStrings = tokens[1].Split(JUtil.VariableSeparator, StringSplitOptions.RemoveEmptyEntries);
                     sourceVariables = new VariableOrNumber[sourceVarStrings.Length];
                     for (int i = 0; i < sourceVarStrings.Length; ++i )
                     {
                         sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(sourceVarStrings[i]);
+                        allVariablesConstant = allVariablesConstant && sourceVariables[i].isConstant;
                     }
                     sourceValues = new object[sourceVariables.Length];
                     formatString = tokens[0].TrimEnd();
 
-                    usesComp = true;
+                    // if every variable is a constant, we can run the format once and cache the result
+                    if (allVariablesConstant)
+                    {
+                        UpdateValues();
+                        formatString = string.Format(StringProcessor.fp, formatString, sourceValues);
+                        sourceVariables = null;
+                        sourceValues = null;
+                    }
+                    else
+                    {
+                        usesComp = true;
+                    }
                 }
             }
             else
@@ -69,25 +84,31 @@ namespace JSI
                 usesComp = false;
             }
         }
+
+        public void UpdateValues()
+        {
+            for (int i = 0; i < sourceVariables.Length; ++i)
+            {
+                sourceValues[i] = sourceVariables[i].Get();
+            }
+        }
     }
 
     public static class StringProcessor
     {
-        private static readonly SIFormatProvider fp = new SIFormatProvider();
+        internal static readonly SIFormatProvider fp = new SIFormatProvider();
 
         public static string ProcessString(StringProcessorFormatter formatter, RasterPropMonitorComputer rpmComp)
         {
+            Profiler.BeginSample("ProcessString_cached");
+            string result = formatter.formatString;
             if (formatter.usesComp)
             {
                 try
                 {
-                    RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                    for (int i = 0; i < formatter.sourceVariables.Length; ++i)
-                    {
-                        formatter.sourceValues[i] = formatter.sourceVariables[i].Get();
-                    }
+                    formatter.UpdateValues();
 
-                    return string.Format(fp, formatter.formatString, formatter.sourceValues);
+                    result = string.Format(fp, formatter.formatString, formatter.sourceValues);
                 }
                 catch(Exception e)
                 {
@@ -95,11 +116,14 @@ namespace JSI
                 }
             }
 
-            return formatter.formatString;
+            Profiler.EndSample();
+            return result;
         }
 
         public static string ProcessString(string input, RasterPropMonitorComputer rpmComp)
         {
+            Profiler.BeginSample("ProcessString_raw");
+            string result = input;
             try
             {
                 if (input.IndexOf(JUtil.VariableListSeparator[0], StringComparison.Ordinal) >= 0)
@@ -107,7 +131,7 @@ namespace JSI
                     string[] tokens = input.Split(JUtil.VariableListSeparator, StringSplitOptions.RemoveEmptyEntries);
                     if (tokens.Length != 2)
                     {
-                        return "FORMAT ERROR";
+                        result = "FORMAT ERROR";
                     }
                     else
                     {
@@ -119,18 +143,20 @@ namespace JSI
                         {
                             variables[i] = rpmComp.ProcessVariable(vars[i].Trim(), comp);
                         }
-                        string output = string.Format(fp, tokens[0], variables);
-                        return output.TrimEnd();
+                        result = string.Format(fp, tokens[0], variables);
                     }
                 }
-
             }
             catch (Exception e)
             {
                 JUtil.LogErrorMessage(rpmComp, "Bad format on string {0}: {1}", input, e);
             }
 
-            return input.TrimEnd();
+            result = result.TrimEnd();
+
+            Profiler.EndSample();
+
+            return result;
         }
     }
 }
