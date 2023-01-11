@@ -95,7 +95,7 @@ namespace JSI
             }
         }
 
-        public void Update(bool forceCallbackRefresh, RPMVesselComputer comp)
+        public void Update(RPMVesselComputer comp)
         {
             object evaluant = evaluator(variableName, comp);
 
@@ -110,7 +110,7 @@ namespace JSI
                 double newVal = evaluant.MassageToDouble();
                 isNumeric = true;
 
-                if (Math.Abs(oldVal - newVal) > 1e-5 || forceCallbackRefresh)
+                if (Math.Abs(oldVal - newVal) > 1e-5)
                 {
                     FireCallbacks((float)newVal);
                 }

@@ -60,11 +60,10 @@ namespace JSI
         private List<ProtoCrewMember> localCrew = new List<ProtoCrewMember>();
         private List<kerbalExpressionSystem> localCrewMedical = new List<kerbalExpressionSystem>();
 
-        private readonly Dictionary<string, VariableOrNumber> variableCache = new Dictionary<string, VariableOrNumber>();
-        private readonly List<VariableOrNumber> updatableVariables = new List<VariableOrNumber>();
+        private readonly VariableCollection variableCollection = new VariableCollection();
         private readonly List<IJSIModule> installedModules = new List<IJSIModule>();
         private readonly HashSet<string> unrecognizedVariables = new HashSet<string>();
-        private Dictionary<string, IComplexVariable> customVariables = new Dictionary<string, IComplexVariable>();
+        private readonly Dictionary<string, IComplexVariable> customVariables = new Dictionary<string, IComplexVariable>();
 
         private class PeriodicRandomValue
         {
@@ -85,7 +84,6 @@ namespace JSI
         private int dataUpdateCountdown;
         private int refreshDataRate = 60;
         private bool timeToUpdate = false;
-        private bool forceCallbackRefresh = false;
 
         // Diagnostics
         private int debug_fixedUpdates = 0;
@@ -155,13 +153,7 @@ namespace JSI
         /// <param name="cb"></param>
         public void RegisterVariableCallback(string variableName, Action<float> cb)
         {
-            variableName = variableName.Trim();
-            if (!variableCache.ContainsKey(variableName))
-            {
-                AddVariable(variableName);
-            }
-
-            VariableOrNumber vc = variableCache[variableName];
+            var vc = InstantiateVariableOrNumber(variableName);
             vc.onChangeCallbacks += cb;
             cb((float)vc.numericValue);
         }
@@ -173,11 +165,8 @@ namespace JSI
         /// <param name="cb"></param>
         public void UnregisterVariableCallback(string variableName, Action<float> cb)
         {
-            variableName = variableName.Trim();
-            if (variableCache.ContainsKey(variableName))
-            {
-                variableCache[variableName].onChangeCallbacks -= cb;
-            }
+            var vc = InstantiateVariableOrNumber(variableName);
+            vc.onChangeCallbacks -= cb;
         }
 
         /// <summary>
@@ -188,13 +177,7 @@ namespace JSI
         /// <param name="cb"></param>
         public void RegisterResourceCallback(string variableName, Action<bool> cb)
         {
-            variableName = variableName.Trim();
-            if (!variableCache.ContainsKey(variableName))
-            {
-                AddVariable(variableName);
-            }
-
-            VariableOrNumber vc = variableCache[variableName];
+            var vc = InstantiateVariableOrNumber(variableName);
             vc.onResourceDepletedCallbacks += cb;
             cb(vc.numericValue < 0.01);
         }
@@ -206,11 +189,8 @@ namespace JSI
         /// <param name="cb"></param>
         public void UnregisterResourceCallback(string variableName, Action<bool> cb)
         {
-            variableName = variableName.Trim();
-            if (variableCache.ContainsKey(variableName))
-            {
-                variableCache[variableName].onResourceDepletedCallbacks -= cb;
-            }
+            var vc = InstantiateVariableOrNumber(variableName);
+            vc.onResourceDepletedCallbacks -= cb;
         }
 
         /// <summary>
@@ -224,22 +204,26 @@ namespace JSI
             if (string.IsNullOrWhiteSpace(variableName)) return null;
 
             variableName = variableName.Trim();
-            if (!variableCache.ContainsKey(variableName))
+            var variable = variableCollection.GetVariable(variableName);
+            if (variable == null)
             {
-                AddVariable(variableName);
+                // TODO: eventually we will check the vessel computer's variable collection here
+                variable = AddVariable(variableName);
             }
 
-            return variableCache[variableName];
+            return variable;
         }
 
         /// <summary>
         /// Add a variable to the VariableOrNumber
         /// </summary>
         /// <param name="variableName"></param>
-        private void AddVariable(string variableName)
+        private VariableOrNumber AddVariable(string variableName)
         {
             var evaluator = GetEvaluator(variableName, out bool cacheable, out bool isConstant);
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+
+            // TODO: eventually we will see if the vessel computer can find an evaluator
 
             var vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
 
@@ -249,14 +233,9 @@ namespace JSI
                 JUtil.LogErrorMessage(this, "Unrecognized variable {0}", variableName);
             }
 
-            variableCache.Add(variableName, vc);
+            variableCollection.AddVariable(vc);
 
-            if (!isConstant)
-            {
-                // Only variables that are really variable need to be checked
-                // during FixedUpdate.
-                updatableVariables.Add(vc);
-            }
+            return vc;
         }
 
         /// <summary>
@@ -284,8 +263,8 @@ namespace JSI
             sideSlipEvaluator = null;
             angleOfAttackEvaluator = null;
 
-            forceCallbackRefresh = true;
-            //VariableOrNumber.Clear();
+            //forceCallbackRefresh = true;
+            //variableCache.Clear();
             timeToUpdate = true;
         }
 
@@ -524,16 +503,10 @@ namespace JSI
                     }
                 }
 
-                foreach (var vc in updatableVariables)
-                {
-                    Profiler.BeginSample(vc.variableName);
-                    vc.Update(forceCallbackRefresh, comp);
-                    Profiler.EndSample();
-                }
+                variableCollection.Update(comp);
 
                 ++debug_fixedUpdates;
 
-                forceCallbackRefresh = false;
                 timeToUpdate = false;
 
                 Vessel v = vessel;
@@ -600,8 +573,8 @@ namespace JSI
                     JUtil.LogMessage(this, "{0} queried {1} times {2:0.0} calls/FixedUpdate", l[i].Key, l[i].Value, (float)(l[i].Value) / (float)(debug_fixedUpdates));
                 }
 
-                JUtil.LogMessage(this, "{0} total variables were instantiated in this part", variableCache.Count);
-                JUtil.LogMessage(this, "{0} variables were polled every {1} updates in the VariableOrNumber", updatableVariables.Count, refreshDataRate);
+                JUtil.LogMessage(this, "{0} total variables were instantiated in this part", variableCollection.Count);
+                JUtil.LogMessage(this, "{0} variables were polled every {1} updates in the VariableOrNumber", variableCollection.UpdatableCount, refreshDataRate);
             }
 
             localCrew.Clear();
@@ -612,7 +585,7 @@ namespace JSI
                 installedModules[i].vessel = null;
             }
 
-            variableCache.Clear();
+            variableCollection.Clear();
             ClearVariables();
         }
 
