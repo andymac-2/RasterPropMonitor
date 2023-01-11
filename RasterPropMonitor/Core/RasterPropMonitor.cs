@@ -480,7 +480,7 @@ namespace JSI
                 return;
             }
 			
-            if (!JUtil.RasterPropMonitorShouldUpdate(vessel) && !JUtil.UserIsInPod(part))
+            if (!JUtil.RasterPropMonitorShouldUpdate(part))
             {
                 return;
             }

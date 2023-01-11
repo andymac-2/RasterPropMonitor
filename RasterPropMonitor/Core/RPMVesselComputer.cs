@@ -793,7 +793,7 @@ namespace JSI
                 return;
             }
 
-            if (JUtil.RasterPropMonitorShouldUpdate(vessel))
+            if (JUtil.VesselIsInIVA(vessel) || JUtil.StockOverlayCamIsOn())
             {
                 UpdateVariables();
             }

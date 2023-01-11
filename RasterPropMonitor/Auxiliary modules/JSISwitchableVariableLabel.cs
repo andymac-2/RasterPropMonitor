@@ -181,7 +181,7 @@ namespace JSI
 
         public override void OnUpdate()
         {
-            if (JUtil.RasterPropMonitorShouldUpdate(vessel) && UpdateCheck())
+            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
             {
                 textObj.text.text = StringProcessor.ProcessString(labelsEx[activeLabel].label, rpmComp);
             }

@@ -680,13 +680,13 @@ namespace JSI
             }
         }
 
-        public static bool RasterPropMonitorShouldUpdate(Vessel thatVessel)
+        public static bool RasterPropMonitorShouldUpdate(Part part)
         {
             if (HighLogic.LoadedSceneIsFlight)
             {
-                if (IsActiveVessel(thatVessel))
+                if (IsActiveVessel(part.vessel))
                 {
-                    return (IsInIVA() || StockOverlayCamIsOn());
+                    return UserIsInPod(part) || StockOverlayCamIsOn();
                 }
                 else
                 {
@@ -748,20 +748,11 @@ namespace JSI
             // There still remains an option of InternalCamera which we will now sort out.
             if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal)
             {
-                // So we're watching through an InternalCamera. Which doesn't record which pod we're in anywhere, like with kerbals.
-                // But we know that if the camera's transform parent is somewhere in our pod, it's us.
-                // InternalCamera.Instance.transform.parent is the transform the camera is attached to that is on either a prop or the internal itself.
-                // The problem is figuring out if it's in our pod, or in an identical other pod.
-                // Unfortunately I don't have anything smarter right now than get a list of all transforms in the internal and cycle through it.
-                // This is a more annoying computation than looking through every kerbal in a pod (there's only a few of those,
-                // but potentially hundreds of transforms) and might not even be working as I expect. It needs testing.
-                Transform[] componentTransforms = thisPart.internalModel.GetComponentsInChildren<Transform>();
-                foreach (Transform thisTransform in componentTransforms)
+                var internalModel = InternalCamera.Instance.GetComponentInParent<InternalModel>();
+
+                if (internalModel != null)
                 {
-                    if (thisTransform == InternalCamera.Instance.transform.parent)
-                    {
-                        return true;
-                    }
+                    return thisPart == internalModel.part;
                 }
             }
 

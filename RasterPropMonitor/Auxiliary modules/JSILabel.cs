@@ -36,6 +36,7 @@ namespace JSI
         [KSPField]
         public string emissive = string.Empty;
         private EmissiveMode emissiveMode = EmissiveMode.always;
+        float lastEmissiveValue = -1;
         enum EmissiveMode
         {
             always,
@@ -413,7 +414,11 @@ namespace JSI
                 emissiveValue = 0.0f;
             }
 
-            textObj.material.SetFloat(emissiveFactorIndex, emissiveValue);
+            if (emissiveValue != lastEmissiveValue)
+            {
+                textObj.material.SetFloat(emissiveFactorIndex, emissiveValue);
+                lastEmissiveValue = emissiveValue;
+            }
         }
 
         /// <summary>
@@ -523,7 +528,7 @@ namespace JSI
                 return;
             }
 
-            if (JUtil.RasterPropMonitorShouldUpdate(vessel) && UpdateCheck())
+            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
             {
                 textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
                 labels[activeLabel].oneshotComplete = true;

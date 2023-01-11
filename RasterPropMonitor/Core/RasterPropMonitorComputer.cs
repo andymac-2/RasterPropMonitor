@@ -484,7 +484,7 @@ namespace JSI
 
         public void FixedUpdate()
         {
-            if (JUtil.RasterPropMonitorShouldUpdate(vessel) && timeToUpdate)
+            if (JUtil.RasterPropMonitorShouldUpdate(part) && timeToUpdate)
             {
                 UpdateLocalVars();
 

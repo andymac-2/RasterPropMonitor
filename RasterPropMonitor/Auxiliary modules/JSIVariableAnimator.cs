@@ -171,7 +171,7 @@ namespace JSI
                 muted = false;
             }
 
-            if ((!alwaysActive && !JUtil.RasterPropMonitorShouldUpdate(vessel)) || !UpdateCheck())
+            if ((!alwaysActive && !JUtil.RasterPropMonitorShouldUpdate(part)) || !UpdateCheck())
             {
                 return;
             }

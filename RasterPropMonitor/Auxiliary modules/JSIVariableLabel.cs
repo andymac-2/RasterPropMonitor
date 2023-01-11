@@ -194,7 +194,7 @@ namespace JSI
                 return;
             }
 
-            if (JUtil.RasterPropMonitorShouldUpdate(vessel) && UpdateCheck())
+            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
             {
                 textObj.text.text = StringProcessor.ProcessString(spf, rpmComp);
                 oneshotComplete = true;
