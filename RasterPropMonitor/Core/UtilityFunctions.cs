@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace JSI
 {
@@ -1821,7 +1822,11 @@ namespace JSI
         /// </summary>
         private void Awake()
         {
-			DontDestroyOnLoad(this);
+#if ENABLE_PROFILER
+            Profiler.enableAllocationCallstacks = true;
+#endif
+
+            DontDestroyOnLoad(this);
 
             // this should probably use the official async loading stuff
             LoadAssets();
