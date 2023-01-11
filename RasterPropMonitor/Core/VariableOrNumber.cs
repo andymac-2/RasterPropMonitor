@@ -109,6 +109,7 @@ namespace JSI
                 double oldVal = numericValue;
                 double newVal = evaluant.MassageToDouble();
                 isNumeric = true;
+                numericValue = newVal;
 
                 if (Math.Abs(oldVal - newVal) > 1e-5)
                 {
