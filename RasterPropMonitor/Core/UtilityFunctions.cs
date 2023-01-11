@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using KSP.UI.Screens.Flight;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -502,11 +503,12 @@ namespace JSI
 
         public static Camera GetCameraByName(string name)
         {
-            for (int i = 0; i < Camera.allCamerasCount; ++i)
+            Camera[] allCameras = Camera.allCameras;
+            for (int i = 0; i < allCameras.Length; ++i)
             {
-                if (Camera.allCameras[i].name == name)
+                if (allCameras[i].name == name)
                 {
-                    return Camera.allCameras[i];
+                    return allCameras[i];
                 }
             }
             return null;
@@ -715,12 +717,10 @@ namespace JSI
             // ... but now it can't because we're doing transparent pods, so we need a more complicated way to find which pod the player is in.
             return HighLogic.LoadedSceneIsFlight && IsActiveVessel(thatVessel) && IsInIVA();
         }
-
+        
         public static bool StockOverlayCamIsOn()
         {
-            Camera stockOverlayCamera = JUtil.GetCameraByName("InternalSpaceOverlay Host");
-
-            return (stockOverlayCamera != null);
+            return KerbalPortraitGallery.isIVAOverlayVisible;
         }
 
         public static bool UserIsInPod(Part thisPart)
