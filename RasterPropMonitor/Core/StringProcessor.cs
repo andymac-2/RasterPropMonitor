@@ -119,44 +119,5 @@ namespace JSI
             Profiler.EndSample();
             return result;
         }
-
-        public static string ProcessString(string input, RasterPropMonitorComputer rpmComp)
-        {
-            Profiler.BeginSample("ProcessString_raw");
-            string result = input;
-            try
-            {
-                if (input.IndexOf(JUtil.VariableListSeparator[0], StringComparison.Ordinal) >= 0)
-                {
-                    string[] tokens = input.Split(JUtil.VariableListSeparator, StringSplitOptions.RemoveEmptyEntries);
-                    if (tokens.Length != 2)
-                    {
-                        result = "FORMAT ERROR";
-                    }
-                    else
-                    {
-                        RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                        string[] vars = tokens[1].Split(JUtil.VariableSeparator, StringSplitOptions.RemoveEmptyEntries);
-
-                        var variables = new object[vars.Length];
-                        for (int i = 0; i < vars.Length; i++)
-                        {
-                            variables[i] = rpmComp.ProcessVariable(vars[i].Trim(), comp);
-                        }
-                        result = string.Format(fp, tokens[0], variables);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                JUtil.LogErrorMessage(rpmComp, "Bad format on string {0}: {1}", input, e);
-            }
-
-            result = result.TrimEnd();
-
-            Profiler.EndSample();
-
-            return result;
-        }
     }
 }

@@ -62,6 +62,8 @@ namespace JSI
         private int refreshDrawCountdown;
         private bool startupComplete;
         private RasterPropMonitorComputer rpmComp;
+        private VariableOrNumber variableInstance;
+        private VariableOrNumber altVariableInstance;
 
         private readonly Dictionary<string, OdometerMode> modeList = new Dictionary<string, OdometerMode> {
 			{ "LINEAR", OdometerMode.LINEAR },
@@ -82,16 +84,14 @@ namespace JSI
             float dT = (float)(thisUpdate - lastUpdate) * odometerRotationScalar;
 
             float value;
-            if (!string.IsNullOrEmpty(perPodPersistenceName))
+            if (altVariableInstance != null)
             {
                 bool state = rpmComp.GetPersistentVariable(perPodPersistenceName, false, false);
-                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                value = rpmComp.ProcessVariable((state) ? altVariable : variable, comp).MassageToFloat();
+                value = (state ? altVariableInstance : variableInstance).AsFloat();
             }
             else
             {
-                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                value = rpmComp.ProcessVariable(variable, comp).MassageToFloat();
+                value = variableInstance.AsFloat();
             }
             // Make sure the value isn't going to be a problem.
             if (float.IsNaN(value))
@@ -457,6 +457,9 @@ namespace JSI
                     JUtil.LogErrorMessage(this, "Both altVariable and perPodPeristenceName must be defined, or neither");
                     return;
                 }
+
+                variableInstance = rpmComp.InstantiateVariableOrNumber(variable);
+                altVariableInstance = rpmComp.InstantiateVariableOrNumber(altVariable);
 
                 // MOARdV: Which one are we using?  HUD uses the latter, OrbitDisplay, the former.
                 Shader unlit = Shader.Find("KSP/Alpha/Unlit Transparent");

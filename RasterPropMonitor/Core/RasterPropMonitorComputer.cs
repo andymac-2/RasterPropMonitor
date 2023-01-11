@@ -60,31 +60,8 @@ namespace JSI
         private List<ProtoCrewMember> localCrew = new List<ProtoCrewMember>();
         private List<kerbalExpressionSystem> localCrewMedical = new List<kerbalExpressionSystem>();
 
-        // Processing cache!
-        private class VariableCache
-        {
-            internal VariableEvaluator evaluator;
-            internal VariableOrNumber value;
-            internal event Action<float> onChangeCallbacks;
-            internal event Action<bool> onResourceDepletedCallbacks;
-            internal bool cacheable; // cacheable variables are updated once per frame in RasterPropMonitorComputer.FixedUpdate
-
-            internal void FireCallbacks(float newValue)
-            {
-                if (onChangeCallbacks != null)
-                {
-                    onChangeCallbacks(newValue);
-                }
-
-                if (onResourceDepletedCallbacks != null)
-                {
-                    onResourceDepletedCallbacks.Invoke(newValue < 0.01f);
-                }
-            }
-        };
-
-        private readonly Dictionary<string, VariableCache> variableCache = new Dictionary<string, VariableCache>();
-        private readonly List<VariableCache> updatableVariables = new List<VariableCache>();
+        private readonly Dictionary<string, VariableOrNumber> variableCache = new Dictionary<string, VariableOrNumber>();
+        private readonly List<VariableOrNumber> updatableVariables = new List<VariableOrNumber>();
         private readonly List<IJSIModule> installedModules = new List<IJSIModule>();
         private readonly HashSet<string> unrecognizedVariables = new HashSet<string>();
         private Dictionary<string, IComplexVariable> customVariables = new Dictionary<string, IComplexVariable>();
@@ -171,42 +148,6 @@ namespace JSI
         }
 
         /// <summary>
-        /// This intermediary will cache the results so that multiple variable
-        /// requests within the frame would not result in duplicated code.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        public object ProcessVariable(string input, RPMVesselComputer comp)
-        {
-            input = input.Trim();
-
-            if (RPMGlobals.debugShowVariableCallCount)
-            {
-                debug_callCount[input] = debug_callCount[input] + 1;
-            }
-
-            if (comp == null)
-            {
-                comp = RPMVesselComputer.Instance(vid);
-            }
-
-            if (!variableCache.ContainsKey(input))
-            {
-                AddVariable(input);
-            }
-
-            VariableCache vc = variableCache[input];
-            if (vc.cacheable)
-            {
-                return vc.value.Get();
-            }
-            else
-            {
-                return vc.evaluator(input, comp);
-            }
-        }
-
-        /// <summary>
         /// Register a callback to receive notifications when a variable has changed.
         /// Used to prevent polling of low-frequency, high-utilization variables.
         /// </summary>
@@ -220,9 +161,9 @@ namespace JSI
                 AddVariable(variableName);
             }
 
-            VariableCache vc = variableCache[variableName];
+            VariableOrNumber vc = variableCache[variableName];
             vc.onChangeCallbacks += cb;
-            cb((float)vc.value.numericValue);
+            cb((float)vc.numericValue);
         }
 
         /// <summary>
@@ -253,9 +194,9 @@ namespace JSI
                 AddVariable(variableName);
             }
 
-            VariableCache vc = variableCache[variableName];
+            VariableOrNumber vc = variableCache[variableName];
             vc.onResourceDepletedCallbacks += cb;
-            cb(vc.value.numericValue < 0.01);
+            cb(vc.numericValue < 0.01);
         }
 
         /// <summary>
@@ -280,29 +221,27 @@ namespace JSI
         /// <returns>The VariableOrNumber</returns>
         public VariableOrNumber InstantiateVariableOrNumber(string variableName)
         {
+            if (string.IsNullOrWhiteSpace(variableName)) return null;
+
             variableName = variableName.Trim();
             if (!variableCache.ContainsKey(variableName))
             {
                 AddVariable(variableName);
             }
 
-            return variableCache[variableName].value;
+            return variableCache[variableName];
         }
 
         /// <summary>
-        /// Add a variable to the variableCache
+        /// Add a variable to the VariableOrNumber
         /// </summary>
         /// <param name="variableName"></param>
         private void AddVariable(string variableName)
         {
-            VariableCache vc = new VariableCache();
-            bool cacheable, isConstant;
-            vc.evaluator = GetEvaluator(variableName, out cacheable, out isConstant);
+            var evaluator = GetEvaluator(variableName, out bool cacheable, out bool isConstant);
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-            object value = vc.evaluator == null ? variableName : vc.evaluator(variableName, comp);
-            isConstant = isConstant || vc.evaluator == null;
-            vc.value = new VariableOrNumber(variableName, value, isConstant, cacheable ? null : this);
-            vc.cacheable = cacheable;
+
+            var vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
 
             if (vc.evaluator == null && !unrecognizedVariables.Contains(variableName))
             {
@@ -338,7 +277,7 @@ namespace JSI
 
         /// <summary>
         /// Clear out variables to force them to be re-evaluated.  TODO: Do
-        /// I clear out the variableCache?
+        /// I clear out the VariableOrNumber?
         /// </summary>
         private void ClearVariables()
         {
@@ -346,7 +285,7 @@ namespace JSI
             angleOfAttackEvaluator = null;
 
             forceCallbackRefresh = true;
-            //variableCache.Clear();
+            //VariableOrNumber.Clear();
             timeToUpdate = true;
         }
 
@@ -587,28 +526,8 @@ namespace JSI
 
                 foreach (var vc in updatableVariables)
                 {
-                    Profiler.BeginSample(vc.value.variableName);
-                    double oldVal = vc.value.AsDouble();
-                    double newVal;
-
-                    object evaluant = vc.evaluator(vc.value.variableName, comp);
-                    if (evaluant is string)
-                    {
-                        vc.value.isNumeric = false;
-                        vc.value.stringValue = evaluant as string;
-                        newVal = 0.0;
-                    }
-                    else
-                    {
-                        newVal = evaluant.MassageToDouble();
-                        vc.value.isNumeric = true;
-                    }
-                    vc.value.numericValue = newVal;
-
-                    if (Math.Abs(oldVal - newVal) > 1e-5 || forceCallbackRefresh)
-                    {
-                        vc.FireCallbacks((float)newVal);
-                    }
+                    Profiler.BeginSample(vc.variableName);
+                    vc.Update(forceCallbackRefresh, comp);
                     Profiler.EndSample();
                 }
 
@@ -682,7 +601,7 @@ namespace JSI
                 }
 
                 JUtil.LogMessage(this, "{0} total variables were instantiated in this part", variableCache.Count);
-                JUtil.LogMessage(this, "{0} variables were polled every {1} updates in the VariableCache", updatableVariables.Count, refreshDataRate);
+                JUtil.LogMessage(this, "{0} variables were polled every {1} updates in the VariableOrNumber", updatableVariables.Count, refreshDataRate);
             }
 
             localCrew.Clear();

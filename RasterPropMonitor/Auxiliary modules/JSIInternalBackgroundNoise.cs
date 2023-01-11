@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace JSI
 {
@@ -12,7 +12,7 @@ namespace JSI
         public bool needsElectricCharge = true;
         [KSPField]
         public string resourceName = "SYSR_ELECTRICCHARGE";
-        private float electricChargeReserve;
+        private VariableOrNumber resourceVariable;
         private FXGroup audioOutput;
         private bool isPlaying;
         private const int soundCheckRate = 60;
@@ -37,8 +37,7 @@ namespace JSI
             if (needsElectricCharge)
             {
                 rpmComp.UpdateDataRefreshRate(soundCheckRate);
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel.id);
-                electricChargeReserve = rpmComp.ProcessVariable(resourceName, comp).MassageToFloat();
+                resourceVariable = rpmComp.InstantiateVariableOrNumber(resourceName);
             }
             audioOutput = new FXGroup("RPM" + internalModel.internalName + vessel.id);
             audioOutput.audio = internalModel.gameObject.AddComponent<AudioSource>();
@@ -67,7 +66,7 @@ namespace JSI
 
         private void StartPlaying()
         {
-            if (!isPlaying && (!needsElectricCharge || electricChargeReserve > 0.01f))
+            if (!isPlaying && (!needsElectricCharge || resourceVariable.AsDouble() > 0.01))
             {
                 audioOutput.audio.Play();
                 isPlaying = true;
@@ -88,9 +87,8 @@ namespace JSI
                 if (soundCheckCountdown <= 0)
                 {
                     soundCheckCountdown = soundCheckRate;
-                    RPMVesselComputer comp = RPMVesselComputer.Instance(vessel.id);
-                    electricChargeReserve = rpmComp.ProcessVariable(resourceName, comp).MassageToFloat();
-                    if (electricChargeReserve < 0.01f)
+                    
+                    if (resourceVariable.AsDouble() < 0.01)
                     {
                         StopPlaying();
                         return;

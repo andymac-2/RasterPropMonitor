@@ -18,8 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static JSI.RasterPropMonitorComputer;
+
 namespace JSI
 {
     /// <summary>
@@ -36,28 +39,81 @@ namespace JSI
         internal bool isConstant;
         private readonly RasterPropMonitorComputer rpmComp;
 
+        internal VariableEvaluator evaluator;
+        internal event Action<float> onChangeCallbacks;
+        internal event Action<bool> onResourceDepletedCallbacks;
+
+        internal void FireCallbacks(float newValue)
+        {
+            if (onChangeCallbacks != null)
+            {
+                onChangeCallbacks(newValue);
+            }
+
+            if (onResourceDepletedCallbacks != null)
+            {
+                onResourceDepletedCallbacks.Invoke(newValue < 0.01f);
+            }
+        }
+
+
         /// <summary>
         /// Initialize a VariableOrNumber
         /// </summary>
         /// <param name="input">The name of the variable</param>
         /// <param name="cacheable">Whether the variable is cacheable</param>
         /// <param name="rpmComp">The RasterPropMonitorComputer that owns the variable</param>
-        internal VariableOrNumber(string input, object value, bool constant, RasterPropMonitorComputer rpmComp_)
+        internal VariableOrNumber(string input, VariableEvaluator evaluator, RPMVesselComputer vesselComp, bool constant, RasterPropMonitorComputer rpmComp_)
         {
             variableName = input;
             isConstant = constant;
-            rpmComp = rpmComp_;
+            rpmComp = rpmComp_; // will be null if this variable is cacheable
+            this.evaluator = evaluator;
 
-            if (value is string str)
+            if (evaluator == null)
             {
-                stringValue = str;
+                isConstant = true;
+                stringValue = input;
                 isNumeric = false;
+                rpmComp = null;
             }
             else
             {
-                stringValue = value.ToString();
-                numericValue = value.MassageToDouble();
+                object value = evaluator(input, vesselComp);
+
+                if (value is string str)
+                {
+                    stringValue = str;
+                    isNumeric = false;
+                }
+                else
+                {
+                    stringValue = value.ToString();
+                    numericValue = value.MassageToDouble();
+                    isNumeric = true;
+                }
+            }
+        }
+
+        public void Update(bool forceCallbackRefresh, RPMVesselComputer comp)
+        {
+            object evaluant = evaluator(variableName, comp);
+
+            if (evaluant is string str)
+            {
+                isNumeric = false;
+                stringValue = str;
+            }
+            else
+            {
+                double oldVal = numericValue;
+                double newVal = evaluant.MassageToDouble();
                 isNumeric = true;
+
+                if (Math.Abs(oldVal - newVal) > 1e-5 || forceCallbackRefresh)
+                {
+                    FireCallbacks((float)newVal);
+                }
             }
         }
 
@@ -69,7 +125,8 @@ namespace JSI
         {
             if (rpmComp != null)
             {
-                return rpmComp.ProcessVariable(variableName, null).MassageToFloat();
+                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                return evaluator(variableName, comp).MassageToFloat();
             }
             else
             {
@@ -85,7 +142,8 @@ namespace JSI
         {
             if (rpmComp != null)
             {
-                return rpmComp.ProcessVariable(variableName, null).MassageToDouble();
+                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                return evaluator(variableName, comp).MassageToDouble();
             }
             else
             {
@@ -101,7 +159,8 @@ namespace JSI
         {
             if (rpmComp != null)
             {
-                return rpmComp.ProcessVariable(variableName, null).MassageToInt();
+                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                return evaluator(variableName, comp).MassageToInt();
             }
             else
             {
@@ -117,7 +176,8 @@ namespace JSI
         {
             if (rpmComp != null)
             {
-                return rpmComp.ProcessVariable(variableName, null);
+                RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                return evaluator(variableName, comp);
             }
             else if (isNumeric)
             {
