@@ -265,6 +265,22 @@ namespace JSI
             timeToUpdate = true;
         }
 
+        // provide a way for internal modules to remove themselves temporarily from InternalProps
+        // this allows modules to "go to sleep" so we don't spend time updating them
+
+        private List<InternalModule> modulesToRemove = new List<InternalModule>();
+        private List<InternalModule> modulesToRestore = new List<InternalModule>();
+
+        public void RemoveInternalModule(InternalModule module)
+        {
+            modulesToRemove.Add(module);
+        }
+
+        public void RestoreInternalModule(InternalModule module)
+        {
+            modulesToRestore.Add(module);
+        }
+
         #region Monobehaviour
         /// <summary>
         /// Configure this computer for operation.
@@ -522,9 +538,9 @@ namespace JSI
             if (HighLogic.LoadedSceneIsEditor)
             {
                 // well, it looks sometimes it might become null..
-                string s = EditorLogic.fetch != null && EditorLogic.fetch.shipDescriptionField != null 
-					? EditorLogic.fetch.shipDescriptionField.text 
-					: string.Empty;
+                string s = EditorLogic.fetch != null && EditorLogic.fetch.shipDescriptionField != null
+                    ? EditorLogic.fetch.shipDescriptionField.text
+                    : string.Empty;
 
                 if (s != lastVesselDescription)
                 {
@@ -533,13 +549,55 @@ namespace JSI
                     vesselDescription = s.Replace(editorNewline, "$$$");
                 }
             }
-            else if (JUtil.IsActiveVessel(vessel))
+            else
             {
-                if (--dataUpdateCountdown < 0)
+                if (JUtil.RasterPropMonitorShouldUpdate(part))
                 {
-                    dataUpdateCountdown = refreshDataRate;
-                    timeToUpdate = true;
+                    if (--dataUpdateCountdown < 0)
+                    {
+                        dataUpdateCountdown = refreshDataRate;
+                        timeToUpdate = true;
+                    }
                 }
+
+                foreach (var module in modulesToRemove)
+                {
+                    module.internalProp.internalModules.Remove(module);
+                }
+                modulesToRemove.Clear();
+
+                foreach (var module in modulesToRestore)
+                {
+                    int insertIndex = 0;
+                    for (; insertIndex < module.internalProp.internalModules.Count; ++insertIndex)
+                    {
+                        InternalModule otherModule = module.internalProp.internalModules[insertIndex];
+                        if (module.moduleID < otherModule.moduleID)
+                        {
+                            break;
+                        }
+                        else if (module.moduleID == otherModule.moduleID)
+                        {
+                            if (module != otherModule)
+                            {
+                                JUtil.LogErrorMessage(this, "Tried to restore internalmodule {0} in prop {1} at index {2} but module {3} is already at that id", module.ClassName, module.internalProp.propName, insertIndex, otherModule.ClassName);
+                            }
+                            else
+                            {
+                                // tried to restore something that was already here
+                                insertIndex = -1;
+                            }
+
+                            break;
+                        }
+                    }
+
+                    if (insertIndex >= 0)
+                    {
+                        module.internalProp.internalModules.Insert(insertIndex, module);
+                    }
+                }
+                modulesToRestore.Clear();
             }
         }
 

@@ -186,15 +186,17 @@ namespace JSI
             {
                 // Shouldn't happen ... but it does, thanks to the quirks of
                 // docking and undocking.
+                rpmComp.RemoveInternalModule(this);
                 return;
             }
 
             if (oneshotComplete && oneshot)
             {
+                rpmComp.RemoveInternalModule(this);
                 return;
             }
 
-            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
+            if (UpdateCheck())
             {
                 textObj.text.text = StringProcessor.ProcessString(spf, rpmComp);
                 oneshotComplete = true;

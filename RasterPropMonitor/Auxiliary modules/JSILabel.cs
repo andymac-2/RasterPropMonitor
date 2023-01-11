@@ -377,6 +377,12 @@ namespace JSI
 
             textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
 
+            // do we need to activate the update loop?
+            if (labels.Count > 1 && !labels[activeLabel].oneshot)
+            {
+                rpmComp.RestoreInternalModule(this);
+            }
+
             // Force an update.
             updateCountdown = 0;
 
@@ -491,6 +497,8 @@ namespace JSI
                 textObj.color = zeroColorValue;
                 variablePositive = false;
             }
+
+            UpdateShader();
         }
 
         /// <summary>
@@ -517,18 +525,17 @@ namespace JSI
             {
                 // Shouldn't happen ... but it does, thanks to the quirks of
                 // docking and undocking.
+                rpmComp.RemoveInternalModule(this);
                 return;
             }
-
-            // Update shader parameters
-            UpdateShader();
 
             if (labels[activeLabel].oneshotComplete && labels[activeLabel].oneshot)
             {
+                rpmComp.RemoveInternalModule(this);
                 return;
             }
 
-            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
+            if (UpdateCheck())
             {
                 textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
                 labels[activeLabel].oneshotComplete = true;
