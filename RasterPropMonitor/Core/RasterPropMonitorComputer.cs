@@ -204,10 +204,9 @@ namespace JSI
             if (string.IsNullOrWhiteSpace(variableName)) return null;
 
             variableName = variableName.Trim();
-            var variable = variableCollection.GetVariable(variableName);
+            var variable = variableCollection.GetVariable(variableName) ?? RPMVesselComputer.Instance(vessel).GetOrCreateVariable(variableName);
             if (variable == null)
             {
-                // TODO: eventually we will check the vessel computer's variable collection here
                 variable = AddVariable(variableName);
             }
 
@@ -222,8 +221,6 @@ namespace JSI
         {
             var evaluator = GetEvaluator(variableName, out bool cacheable, out bool isConstant);
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-
-            // TODO: eventually we will see if the vessel computer can find an evaluator
 
             var vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
 

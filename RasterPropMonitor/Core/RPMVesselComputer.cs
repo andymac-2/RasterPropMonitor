@@ -26,6 +26,7 @@ using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
 using KSP.UI.Screens.Flight;
+using static JSI.RasterPropMonitorComputer;
 
 // MOARdV TODO:
 // Add callbacks for docking, undocking, staging, vessel switching
@@ -98,6 +99,8 @@ namespace JSI
         //    }
         //}
         // internal LinearAtmosphereGauge linearAtmosGauge;
+
+        private readonly VariableCollection variableCollection = new VariableCollection();
 
         // Data refresh
         private int dataUpdateCountdown;
@@ -352,13 +355,31 @@ namespace JSI
             return instances[v.id];
         }
 
-        /// <summary>
-        /// Public interface to fetch values.
-        /// </summary>
-        /// <param name="variableName"></param>
-        /// <returns></returns>
-        public object ProcessVariable(string variableName)
+        public VariableOrNumber GetOrCreateVariable(string variableName)
         {
+            var vc = variableCollection.GetVariable(variableName);
+            if (vc == null)
+            {
+                vc = AddVariable(variableName);
+            }
+            return vc;
+        }
+
+        private VariableOrNumber AddVariable(string variableName)
+        {
+            var evaluator = GetVariableEvaluator(variableName, out bool cacheable, out bool isConstant);
+            if (evaluator == null) return null;
+
+            return new VariableOrNumber(variableName, evaluator, this, isConstant, null); // TODO: how do we handle non-cacheable things?
+        }
+
+        private VariableEvaluator GetVariableEvaluator(string variableName, out bool cacheable, out bool isConstant)
+        {
+            cacheable = true;
+            isConstant = false;
+
+
+
             return null;
         }
 
@@ -800,6 +821,8 @@ namespace JSI
                 FetchAltitudes();
                 FetchVesselData();
                 FetchTargetData();
+
+                variableCollection.Update(this);
             }
         }
 
