@@ -454,11 +454,7 @@ namespace JSI
             return true;
         }
 
-        /**
-         * Render the text.  Assumes screen has already been cleared, so all we have to do here
-         * is prepare the text objects and draw the text.
-         */
-        public void Render(RenderTexture screen, MonitorPage activePage)
+        public bool UpdateText(MonitorPage activePage)
         {
             bool textDirty = (cachedText != activePage.Text) || (cachedOverlayText != activePage.textOverlay);
 
@@ -488,6 +484,15 @@ namespace JSI
                 }
             }
 
+            return textDirty;
+        }
+
+        /**
+         * Render the text.  Assumes screen has already been cleared, so all we have to do here
+         * is prepare the text objects and draw the text.
+         */
+        public void Render(RenderTexture screen)
+        {
             for (int i = 0; i < fontRenderer.Count; ++i)
             {
                 if (fontRenderer[i].mesh.vertexCount > 0)

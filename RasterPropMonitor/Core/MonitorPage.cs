@@ -61,7 +61,7 @@ namespace JSI
         // A page is immutable if and only if it has only unchanging text and unchanging background and no handlers.
         public bool isMutable;
 
-        private enum BackgroundType
+        public enum BackgroundType
         {
             None,
             Texture,
@@ -72,7 +72,7 @@ namespace JSI
         public readonly int pageFont = 0;
         private readonly Texture2D overlayTexture, interlayTexture;
         public readonly Color defaultColor;
-        private readonly BackgroundType background = BackgroundType.None;
+        public readonly BackgroundType background = BackgroundType.None;
         private readonly Texture2D backgroundTexture;
         private readonly Func<int, int, string> pageHandlerMethod;
         private readonly Func<RenderTexture, float, bool> backgroundHandlerMethod;
@@ -121,8 +121,6 @@ namespace JSI
 
             if (!allTextConstant)
             {
-                allTextConstant = true;
-
                 if (text == null)
                 {
                     text = string.Empty;
@@ -133,6 +131,7 @@ namespace JSI
                     processedText = text;
                     spf = null;
                     outputLines = null;
+                    allTextConstant = true;
                 }
                 // create the formatters if necessary
                 else if (spf == null)
@@ -140,13 +139,15 @@ namespace JSI
                     string[] linesArray = text.Split(JUtil.LineSeparator, StringSplitOptions.None);
                     spf = new StringProcessorFormatter[linesArray.Length];
                     outputLines = new string[linesArray.Length];
+                    allTextConstant = true;
                     for (int i = 0; i < linesArray.Length; ++i)
                     {
                         spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
-                            
+
+                        outputLines[i] = spf[i].cachedResult;
+
                         if (spf[i].IsConstant)
                         {
-                            outputLines[i] = spf[i].cachedResult;
                             spf[i] = null;
                         }
                         else
@@ -155,8 +156,7 @@ namespace JSI
                         }
                     }
                 }
-
-                if (spf != null)
+                else
                 {
                     for (int i = 0; i < spf.Length; i++)
                     {
@@ -165,18 +165,18 @@ namespace JSI
                             outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
                         }
                     }
+                }
 
-                    processedText = string.Join(Environment.NewLine, outputLines);
+                processedText = string.Join(Environment.NewLine, outputLines);
 
-                    if (allTextConstant)
-                    {
-                        spf = null;
-                        outputLines = null;
-                    }
-                    else
-                    {
-                        isMutable = true;
-                    }
+                if (allTextConstant)
+                {
+                    spf = null;
+                    outputLines = null;
+                }
+                else
+                {
+                    isMutable = true;
                 }
             }
         }

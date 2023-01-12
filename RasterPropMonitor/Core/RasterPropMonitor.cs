@@ -427,19 +427,22 @@ namespace JSI
             {
                 screenTexture.Create();
             }
-            screenTexture.DiscardContents();
-            RenderTexture.active = screenTexture;
-
+            
 			if (resourceDepleted || noCommConnection)
 			{
-				// If we're out of electric charge, we're drawing a blank screen.
-				GL.Clear(true, true, emptyColorValue);
+                screenTexture.DiscardContents();
+                RenderTexture.active = screenTexture;
+                // If we're out of electric charge, we're drawing a blank screen.
+                GL.Clear(true, true, emptyColorValue);
 			}
-			else
+			else if (textRenderer.UpdateText(activePage) || activePage.background == MonitorPage.BackgroundType.Handler)
 			{
-				// This is the important witchcraft. Without that, DrawTexture does not print where we expect it to.
-				// Cameras don't care because they have their own matrices, but DrawTexture does.
-				GL.PushMatrix();
+                screenTexture.DiscardContents();
+                RenderTexture.active = screenTexture;
+
+                // This is the important witchcraft. Without that, DrawTexture does not print where we expect it to.
+                // Cameras don't care because they have their own matrices, but DrawTexture does.
+                GL.PushMatrix();
 				GL.LoadPixelMatrix(0, screenPixelWidth, screenPixelHeight, 0);
 
 				// Actual rendering of the background is delegated to the page object.
@@ -447,7 +450,7 @@ namespace JSI
 
 				if (!string.IsNullOrEmpty(activePage.Text))
 				{
-					textRenderer.Render(screenTexture, activePage);
+					textRenderer.Render(screenTexture);
 				}
 
 				activePage.RenderOverlay(screenTexture);
