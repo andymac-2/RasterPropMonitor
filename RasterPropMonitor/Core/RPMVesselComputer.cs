@@ -57,6 +57,9 @@ namespace JSI
         internal static readonly int sasGroupNumber = BaseAction.GetGroupIndex(KSPActionGroup.SAS);
         internal static readonly int lightGroupNumber = BaseAction.GetGroupIndex(KSPActionGroup.Light);
         internal static readonly int rcsGroupNumber = BaseAction.GetGroupIndex(KSPActionGroup.RCS);
+        internal static readonly int abortGroupNumber = BaseAction.GetGroupIndex(KSPActionGroup.Abort);
+        internal static readonly int stageGroupNumber = BaseAction.GetGroupIndex(KSPActionGroup.Stage);
+
         internal static readonly int[] actionGroupID = {
             BaseAction.GetGroupIndex(KSPActionGroup.Custom10),
             BaseAction.GetGroupIndex(KSPActionGroup.Custom01),

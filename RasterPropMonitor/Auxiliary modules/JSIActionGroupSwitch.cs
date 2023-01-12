@@ -64,7 +64,6 @@ namespace JSI
         [KSPField]
         public string resourceName = "SYSR_ELECTRICCHARGE";
         private bool resourceDepleted = false; // Managed by rpmComp callback
-        private Action<bool> del;
 
         [KSPField]
         public string switchSound = "Squad/Sounds/sound_click_flick";
@@ -95,25 +94,44 @@ namespace JSI
         public int switchGroupIdentifier = -1;
         [KSPField]
         public int refreshRate = 60;
-        // Neater.
-        internal static readonly Dictionary<string, KSPActionGroup> groupList = new Dictionary<string, KSPActionGroup> { 
-			{ "gear",KSPActionGroup.Gear },
-			{ "brakes",KSPActionGroup.Brakes },
-			{ "lights",KSPActionGroup.Light },
-			{ "rcs",KSPActionGroup.RCS },
-			{ "sas",KSPActionGroup.SAS },
-			{ "abort",KSPActionGroup.Abort },
-			{ "stage",KSPActionGroup.Stage },
-			{ "custom01",KSPActionGroup.Custom01 },
-			{ "custom02",KSPActionGroup.Custom02 },
-			{ "custom03",KSPActionGroup.Custom03 },
-			{ "custom04",KSPActionGroup.Custom04 },
-			{ "custom05",KSPActionGroup.Custom05 },
-			{ "custom06",KSPActionGroup.Custom06 },
-			{ "custom07",KSPActionGroup.Custom07 },
-			{ "custom08",KSPActionGroup.Custom08 },
-			{ "custom09",KSPActionGroup.Custom09 },
-			{ "custom10",KSPActionGroup.Custom10 }
+        internal static readonly Dictionary<string, KSPActionGroup> groupList = new Dictionary<string, KSPActionGroup> {
+            { "gear",KSPActionGroup.Gear },
+            { "brakes",KSPActionGroup.Brakes },
+            { "lights",KSPActionGroup.Light },
+            { "rcs",KSPActionGroup.RCS },
+            { "sas",KSPActionGroup.SAS },
+            { "abort",KSPActionGroup.Abort },
+            { "stage",KSPActionGroup.Stage },
+            { "custom01",KSPActionGroup.Custom01 },
+            { "custom02",KSPActionGroup.Custom02 },
+            { "custom03",KSPActionGroup.Custom03 },
+            { "custom04",KSPActionGroup.Custom04 },
+            { "custom05",KSPActionGroup.Custom05 },
+            { "custom06",KSPActionGroup.Custom06 },
+            { "custom07",KSPActionGroup.Custom07 },
+            { "custom08",KSPActionGroup.Custom08 },
+            { "custom09",KSPActionGroup.Custom09 },
+            { "custom10",KSPActionGroup.Custom10 }
+        };
+        // maps to the RPM variable name
+        internal static readonly Dictionary<string, string> actionGroupToVariableName = new Dictionary<string, string> { 
+			{ "gear", "GEAR" },
+			{ "brakes", "BRAKES" },
+			{ "lights", "LIGHTS" },
+			{ "rcs", "RCS" },
+			{ "sas", "SAS" },
+			{ "abort", "AGSTATEABORT" },
+			{ "stage", "AGSTATESTAGE" },
+			{ "custom01", "AGSTATE1" },
+			{ "custom02", "AGSTATE2" },
+			{ "custom03", "AGSTATE3" },
+			{ "custom04", "AGSTATE4" },
+			{ "custom05", "AGSTATE5" },
+			{ "custom06", "AGSTATE6" },
+			{ "custom07", "AGSTATE7" },
+			{ "custom08", "AGSTATE8" },
+			{ "custom09", "AGSTATE9" },
+			{ "custom10", "AGSTATE0" }
 		};
         internal enum CustomActions
         {
@@ -146,7 +164,6 @@ namespace JSI
         private Light[] lightObjects;
         private FXGroup audioOutput;
         private FXGroup loopingOutput;
-        private bool startupComplete;
         private Material colorShiftMaterial;
         private VariableOrNumber stateVariable;
         private Action<bool> actionHandler;
@@ -257,8 +274,9 @@ namespace JSI
                     }
                 }
 
-                if (groupList.ContainsKey(actionName))
+                if (actionGroupToVariableName.TryGetValue(actionName, out string variableName))
                 {
+                    stateVariable = rpmComp.InstantiateVariableOrNumber(variableName);
                     kspAction = groupList[actionName];
                     currentState = vessel.ActionGroups[kspAction];
                     // action group switches may not belong to a radio group
@@ -466,6 +484,15 @@ namespace JSI
                     }
 
                     persistentVarValid = !string.IsNullOrEmpty(persistentVarName);
+                    if (persistentVarValid)
+                    {
+                        rpmComp.RegisterVariableCallback("PERSISTENT_" + persistentVarName, PersistentVarChangedCallback);
+                    }
+                }
+
+                if (stateVariable != null)
+                {
+                    stateVariable.onChangeCallbacks += StateVariableChangedCallback;
                 }
 
                 perPodPersistenceValid = !string.IsNullOrEmpty(perPodPersistenceName);
@@ -486,18 +513,23 @@ namespace JSI
                         if (range.Length == 2)
                         {
                             masterVariable = new VariableOrNumberRange(rpmComp, masterVariableName, range[0], range[1]);
+                            rpmComp.RegisterVariableCallback(masterVariableName, MasterVariableChangedCallback);
                         }
                         else
                         {
                             masterVariable = null;
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(perPodMasterSwitchName))
+                    {
+                        rpmComp.RegisterVariableCallback("PERSISTENT_" + perPodMasterSwitchName, PerPodMasterSwitchChangedCallback);
+                    }
                 }
 
                 if (needsElectricChargeValue)
                 {
-                    del = (Action<bool>)Delegate.CreateDelegate(typeof(Action<bool>), this, "ResourceDepletedCallback");
-                    rpmComp.RegisterResourceCallback(resourceName, del);
+                    rpmComp.RegisterResourceCallback(resourceName, ResourceDepletedCallback);
                 }
 
                 // set up the toggle switch
@@ -613,8 +645,6 @@ namespace JSI
                 perPodMasterSwitchValid = !string.IsNullOrEmpty(perPodMasterSwitchName);
 
                 JUtil.LogMessage(this, "Configuration complete in prop {0} ({1}).", internalProp.propID, internalProp.propName);
-
-                startupComplete = true;
             }
             catch (Exception e)
             {
@@ -638,9 +668,22 @@ namespace JSI
             audioOutput = null;
             loopingOutput = null;
 
-            if (del != null)
+            rpmComp.UnregisterVariableCallback(masterVariableName, MasterVariableChangedCallback);
+            rpmComp.UnregisterResourceCallback(resourceName, ResourceDepletedCallback);
+            
+            if (persistentVarValid)
             {
-                rpmComp.UnregisterResourceCallback(resourceName, del);
+                rpmComp.UnregisterVariableCallback("PERSISTENT_" + persistentVarName, PersistentVarChangedCallback);
+            }
+
+            if (!string.IsNullOrEmpty(perPodMasterSwitchName))
+            {
+                rpmComp.RegisterVariableCallback("PERSISTENT_" + perPodMasterSwitchName, PerPodMasterSwitchChangedCallback);
+            }
+
+            if (stateVariable != null)
+            {
+                stateVariable.onChangeCallbacks -= StateVariableChangedCallback;
             }
         }
 
@@ -774,130 +817,26 @@ namespace JSI
                 return;
             }
 
-            if (!startupComplete)
-            {
-                return;
-            }
-
-            if (!JUtil.IsActiveVessel(vessel))
-            {
-                if (loopingOutput != null && currentState == true)
-                {
-                    loopingOutput.audio.volume = 0.0f;
-                }
-                return;
-            }
-            else if (loopingOutput != null && currentState == true && loopingOutput.Active)
-            {
-                loopingOutput.audio.volume = loopingSoundVolume * GameSettings.SHIP_VOLUME;
-            }
-
-            if (consumingWhileActive && currentState && !forcedShutdown)
+            if (consumingWhileActive && currentState)
             {
                 double requesting = (consumeWhileActiveAmount * TimeWarp.deltaTime);
                 double extracted = part.RequestResource(consumeWhileActiveName, requesting);
                 if (Math.Abs(extracted - requesting) > Math.Abs(requesting / 2))
                 {
                     // We don't have enough of the resource or can't produce more negative resource, so we should shut down...
-                    forcedShutdown = true;
+                    ForceShutdown();
                     JUtil.LogMessage(this, "Could not consume {0}, asked for {1}, got {2} shutting switch down.", consumeWhileActiveName, requesting, extracted);
-                }
-            }
-
-            // Bizarre, but looks like I need to animate things offscreen if I want them in the right condition when camera comes back.
-            // So there's no check for internal cameras.
-
-            bool newState;
-            if (isPluginAction && stateVariable != null)
-            {
-                try
-                {
-                    newState = (stateVariable.AsInt()) > 0;
-                }
-                catch
-                {
-                    newState = currentState;
-                }
-            }
-            else if (isCustomAction)
-            {
-                if (string.IsNullOrEmpty(switchTransform) && perPodPersistenceValid)
-                {
-                    if (switchGroupIdentifier >= 0)
-                    {
-                        int activeGroupId = rpmComp.GetPersistentVariable(persistentVarName, 0, perPodPersistenceIsGlobal).MassageToInt();
-                        newState = (switchGroupIdentifier == activeGroupId);
-                        customGroupState = newState;
-                    }
-                    else
-                    {
-                        // If the switch transform is not given, and the global comp.Persistence value is, this means this is a slave module.
-                        newState = rpmComp.GetPersistentVariable(persistentVarName, false, perPodPersistenceIsGlobal);
-                    }
-                }
-                else
-                {
-                    // Otherwise it's a master module. But it still might have to follow the clicks on other copies of the same prop...
-                    if (perPodPersistenceValid)
-                    {
-                        if (switchGroupIdentifier >= 0)
-                        {
-                            int activeGroupId = rpmComp.GetPersistentVariable(persistentVarName, 0, perPodPersistenceIsGlobal).MassageToInt();
-                            newState = (switchGroupIdentifier == activeGroupId);
-                            customGroupState = newState;
-                        }
-                        else
-                        {
-                            newState = rpmComp.GetPersistentVariable(persistentVarName, customGroupState, perPodPersistenceIsGlobal);
-                        }
-                    }
-                    else
-                    {
-                        newState = customGroupState;
-                    }
                 }
             }
             else
             {
-                newState = vessel.ActionGroups[kspAction];
+                // if we're not consuming resources, we don't need to update
+                rpmComp.RemoveInternalModule(this);
             }
+        }
 
-            // If needsElectricCharge is true and there is no charge, the state value is overridden to false and the click action is reexecuted.
-            if (needsElectricChargeValue)
-            {
-                forcedShutdown |= resourceDepleted;
-            }
-
-            if (perPodMasterSwitchValid)
-            {
-                bool switchEnabled = rpmComp.GetPersistentVariable(perPodMasterSwitchName, false, false);
-                if (!switchEnabled)
-                {
-                    // If the master switch is 'off', this switch needs to turn off
-                    newState = false;
-                    forcedShutdown = true;
-                }
-            }
-
-            if (masterVariable != null)
-            {
-                if (!masterVariable.IsInRange())
-                {
-                    newState = false;
-                    forcedShutdown = true;
-                }
-            }
-
-            if (forcedShutdown)
-            {
-                if (currentState)
-                {
-                    Click();
-                }
-                newState = false;
-                forcedShutdown = false;
-            }
-
+        void SetState(bool newState)
+        {
             if (newState != currentState)
             {
                 // If we're consuming resources on toggle, do that now.
@@ -906,9 +845,14 @@ namespace JSI
                     double extracted = part.RequestResource(consumeOnToggleName, (double)consumeOnToggleAmount);
                     if (Math.Abs(extracted - consumeOnToggleAmount) > Math.Abs(consumeOnToggleAmount / 2))
                     {
-                        // We don't have enough of the resource, so we force a shutdown on the next loop.
-                        // This ensures the animations will play at least once.
-                        forcedShutdown = true;
+                        // not enough resources, so immediately jump to the new state and then shut down
+                        // this should make sure the animation plays, sounds, colors, etc all line up
+                        if (newState)
+                        {
+                            currentState = newState;
+                            ForceShutdown();
+                            return;
+                        }
                     }
                 }
 
@@ -921,6 +865,8 @@ namespace JSI
                 if (loopingOutput != null && (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA ||
                     CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal))
                 {
+                    loopingOutput.audio.volume = loopingSoundVolume * GameSettings.SHIP_VOLUME;
+
                     if (newState)
                     {
                         loopingOutput.audio.Play();
@@ -951,7 +897,24 @@ namespace JSI
                     colorShiftMaterial.SetColor(colorNameId, (newState ^ reverse ? enabledColorValue : disabledColorValue));
                 }
                 currentState = newState;
+
+                // if we need to consume resources, reactivate the update loop
+                if (consumingWhileActive && currentState)
+                {
+                    rpmComp.RestoreInternalModule(this);
+                }
             }
+        }
+
+        void ForceShutdown()
+        {
+            forcedShutdown = true;
+            if (currentState)
+            {
+                Click();
+            }
+            forcedShutdown = false;
+            SetState(false);
         }
 
         /// <summary>
@@ -964,6 +927,78 @@ namespace JSI
         void ResourceDepletedCallback(bool newValue)
         {
             resourceDepleted = newValue;
+            if (resourceDepleted)
+            {
+                ForceShutdown();
+            }
+        }
+
+        void MasterVariableChangedCallback(float newValue)
+        {
+            if (!masterVariable.IsInRange())
+            {
+                ForceShutdown();
+            }
+            // TODO: how do we get out of forcedshutdown?
+        }
+
+        private void StateVariableChangedCallback(float newValue)
+        {
+            bool newState = (int)newValue > 0;
+            SetState(newState);
+        }
+
+        private void PersistentVarChangedCallback(float newValue)
+        {
+            bool newState;
+
+            if (string.IsNullOrEmpty(switchTransform) && perPodPersistenceValid)
+            {
+                if (switchGroupIdentifier >= 0)
+                {
+                    int activeGroupId = rpmComp.GetPersistentVariable(persistentVarName, 0, perPodPersistenceIsGlobal).MassageToInt();
+                    newState = (switchGroupIdentifier == activeGroupId);
+                    customGroupState = newState;
+                }
+                else
+                {
+                    // If the switch transform is not given, and the global comp.Persistence value is, this means this is a slave module.
+                    newState = rpmComp.GetPersistentVariable(persistentVarName, false, perPodPersistenceIsGlobal);
+                }
+            }
+            else
+            {
+                // Otherwise it's a master module. But it still might have to follow the clicks on other copies of the same prop...
+                if (perPodPersistenceValid)
+                {
+                    if (switchGroupIdentifier >= 0)
+                    {
+                        int activeGroupId = rpmComp.GetPersistentVariable(persistentVarName, 0, perPodPersistenceIsGlobal).MassageToInt();
+                        newState = (switchGroupIdentifier == activeGroupId);
+                        customGroupState = newState;
+                    }
+                    else
+                    {
+                        newState = rpmComp.GetPersistentVariable(persistentVarName, customGroupState, perPodPersistenceIsGlobal);
+                    }
+                }
+                else
+                {
+                    newState = customGroupState;
+                }
+            }
+
+            SetState(newState);
+        }
+
+        private void PerPodMasterSwitchChangedCallback(float newValue)
+        {
+            bool switchEnabled = (int)newValue > 0;
+            if (!switchEnabled)
+            {
+                // If the master switch is 'off', this switch needs to turn off
+                ForceShutdown();
+            }
         }
     }
 }

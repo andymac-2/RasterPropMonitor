@@ -388,10 +388,19 @@ namespace JSI
             // Action group state.
             if (input.StartsWith("AGSTATE", StringComparison.Ordinal))
             {
+                string groupName = input.Substring("AGSTATE".Length);
                 uint groupID;
-                if (uint.TryParse(input.Substring("AGSTATE".Length), out groupID) && groupID < 10)
+                if (uint.TryParse(groupName, out groupID) && groupID < 10)
                 {
                     return (string variable, RPMVesselComputer comp) => vessel.ActionGroups.groups[RPMVesselComputer.actionGroupID[groupID]].GetHashCode();
+                }
+                else if (groupName == "ABORT")
+                {
+                    return (string variable, RPMVesselComputer comp) => vessel.ActionGroups.groups[RPMVesselComputer.abortGroupNumber].GetHashCode();
+                }
+                else if (groupName == "STAGE")
+                {
+                    return (string variable, RPMVesselComputer comp) => vessel.ActionGroups.groups[RPMVesselComputer.stageGroupNumber].GetHashCode();
                 }
                 else
                 {
@@ -2303,6 +2312,7 @@ namespace JSI
                     return (string variable, RPMVesselComputer comp) => { return vessel.ActionGroups.groups[RPMVesselComputer.lightGroupNumber].GetHashCode(); };
                 case "RCS":
                     return (string variable, RPMVesselComputer comp) => { return vessel.ActionGroups.groups[RPMVesselComputer.rcsGroupNumber].GetHashCode(); };
+
                 // 0.90 SAS mode fields:
                 case "SASMODESTABILITY":
                     return (string variable, RPMVesselComputer comp) =>
