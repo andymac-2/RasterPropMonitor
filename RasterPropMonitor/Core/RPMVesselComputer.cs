@@ -887,7 +887,7 @@ namespace JSI
             //  to -1 before the raycast starts failing.
             // vessel.pqsAltitude reports distance to the surface (effectively, altitudeTrue).
             RaycastHit sfc;
-            if (Physics.Raycast(CoM, -up, out sfc, (float)altitudeASL + 10000.0F, 1 << 15))
+            if (altitudeTrue < 5000 && Physics.Raycast(CoM, -up, out sfc, Mathf.Min(5000, (float)altitudeASL + 1000.0F), 1 << 15))
             {
                 slopeAngle = Vector3.Angle(up, sfc.normal);
                 //JUtil.LogMessage(this, "sfc.distance = {0}, vessel.heightFromTerrain = {1}", sfc.distance, vessel.heightFromTerrain);
