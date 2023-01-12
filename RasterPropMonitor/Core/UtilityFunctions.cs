@@ -1410,14 +1410,14 @@ namespace JSI
         public static float MassageToFloat(this object thatValue)
         {
             // RPMC only produces doubles, floats, ints, bools, and strings.
-            if (thatValue is float)
-                return (float)thatValue;
-            if (thatValue is double)
-                return (float)(double)thatValue;
-            if (thatValue is int)
-                return (float)(int)thatValue;
-            if (thatValue is bool)
-                return (float)(((bool)thatValue).GetHashCode());
+            if (thatValue is float floatVal)
+                return floatVal;
+            if (thatValue is double doubleVal)
+                return (float)doubleVal;
+            if (thatValue is int intVal)
+                return (float)intVal;
+            if (thatValue is bool boolVal)
+                return boolVal ? 1.0f : 0.0f;
             return float.NaN;
         }
 
@@ -1429,14 +1429,14 @@ namespace JSI
         public static int MassageToInt(this object thatValue)
         {
             // RPMC only produces doubles, floats, ints, bools, and strings.
-            if (thatValue is int)
-                return (int)thatValue;
-            if (thatValue is double)
-                return (int)(double)thatValue;
-            if (thatValue is float)
-                return (int)(float)thatValue;
-            if (thatValue is bool)
-                return ((bool)thatValue).GetHashCode();
+            if (thatValue is int intVal)
+                return intVal;
+            if (thatValue is double doubleVal)
+                return (int)doubleVal;
+            if (thatValue is float floatVal)
+                return (int)floatVal;
+            if (thatValue is bool boolVal)
+                return boolVal ? 1 : 0;
             return 0;
         }
 
@@ -1448,21 +1448,16 @@ namespace JSI
         public static double MassageToDouble(this object thatValue)
         {
             // RPMC only produces doubles, floats, ints, bools, and strings.
-            if (thatValue is double)
-                return (double)thatValue;
-            if (thatValue is float)
-                return (double)(float)thatValue;
-            if (thatValue is int)
-                return (double)(int)thatValue;
-            if (thatValue is bool)
-                return (double)(((bool)thatValue).GetHashCode());
+            if (thatValue is double doubleVal)
+                return doubleVal;
+            if (thatValue is float floatVal)
+                return (double)floatVal;
+            if (thatValue is int intVal)
+                return (double)intVal;
+            if (thatValue is bool boolVal)
+                return boolVal ? 1.0 : 0.0;
             return double.NaN;
         }
-
-        //public static bool ReturnFalse()
-        //{
-        //    return false;
-        //}
 
         internal static Delegate GetMethod(string packedMethod, InternalProp internalProp, Type delegateType)
         {
