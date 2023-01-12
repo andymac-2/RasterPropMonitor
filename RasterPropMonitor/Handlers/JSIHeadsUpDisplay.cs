@@ -517,7 +517,7 @@ namespace JSI
                 JUtil.ShowHide(true, overlayMesh);
             }
 
-            hudCamera.Render();
+            JUtil.RenderTextureCamera(hudCamera);
 
             JUtil.ShowHide(false, overlayMesh, ladderMesh, headingMesh, progradeLadderIcon, progradeHeadingIcon);
             for (int i = 0; i < verticalBars.Count; ++i)

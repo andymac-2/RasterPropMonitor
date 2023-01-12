@@ -497,7 +497,7 @@ namespace JSI
             }
 
             textCamera.targetTexture = screen;
-            textCamera.Render();
+            JUtil.RenderTextureCamera(textCamera);
 
             for (int i = 0; i < fontRenderer.Count; ++i)
             {

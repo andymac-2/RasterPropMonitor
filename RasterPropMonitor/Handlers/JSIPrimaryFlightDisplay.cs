@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -332,7 +332,7 @@ namespace JSI
 
             JUtil.ShowHide(true,
                 cameraBody, navBall, overlay, heading, markerPrograde, markerRetrograde);
-            ballCamera.Render();
+            JUtil.RenderTextureCamera(ballCamera);
             JUtil.ShowHide(false,
                 cameraBody, navBall, overlay, heading, markerPrograde, markerRetrograde,
                 markerManeuver, markerManeuverMinus, markerTarget, markerTargetMinus,

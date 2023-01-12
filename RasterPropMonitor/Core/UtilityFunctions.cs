@@ -306,6 +306,16 @@ namespace JSI
             }
         }
 
+        // https://forum.unity.com/threads/camera-render-seems-to-trigger-canvas-sendwillrendercanvases.462099/
+        static FieldInfo canvasHackField = typeof(Canvas).GetField("willRenderCanvases", BindingFlags.NonPublic | BindingFlags.Static);
+        internal static void RenderTextureCamera(Camera camera)
+        {
+            var canvasHackObject = canvasHackField.GetValue(null);
+            canvasHackField.SetValue(null, null);
+            camera.Render();
+            canvasHackField.SetValue(null, canvasHackObject);
+        }
+
         /// <summary>
         /// Parse a config file color string into a Color32.  The colorString
         /// parameter is a sequnce of R, G, B, A (ranging [0,255]), or it is a
