@@ -295,7 +295,6 @@ namespace JSI
 
         public bool Render(RenderTexture screen, float yawOffset, float pitchOffset)
         {
-
             if (isReferenceCamera && ourVessel.GetReferenceTransformPart() != referencePart)
             {
                 CleanupCameraObjects();
@@ -344,6 +343,7 @@ namespace JSI
 
             // This is a hack - FXCamera isn't always available, so I need to add and remove it in flight.
             // I don't know if there's a callback I can use to find when it's added, so brute force it for now.
+
             bool fxCameraExists = JUtil.DoesCameraExist(knownCameraNames[fxCameraIndex]);
             if (cameraObject[fxCameraIndex] == null)
             {

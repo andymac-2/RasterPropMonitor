@@ -556,9 +556,10 @@ namespace JSI
 
         internal static bool DoesCameraExist(string name)
         {
-            for (int i = 0; i < Camera.allCamerasCount; ++i)
+            Camera[] allCameras = Camera.allCameras;
+            for (int i = 0; i < allCameras.Length; ++i)
             {
-                if (Camera.allCameras[i].name == name)
+                if (allCameras[i].name == name)
                 {
                     return true;
                 }

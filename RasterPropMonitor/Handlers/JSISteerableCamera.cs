@@ -152,6 +152,8 @@ namespace JSI
         private readonly Vector2 defaultYawLimits = new Vector2(0.0f, 0.0f);
         private readonly Vector2 defaultPitchLimits = new Vector2(0.0f, 0.0f);
 
+        private bool isActivePage;
+
         private static Vector2 ClampToEdge(Vector2 position)
         {
             return position / (Math.Abs(position.x) > Math.Abs(position.y) ? Math.Abs(position.x) : Math.Abs(position.y));
@@ -202,6 +204,8 @@ namespace JSI
         /// <param name="pageID"></param>
         public void PageActive(bool state, int pageID)
         {
+            isActivePage = state;
+
             if (state == false && renderTex != null)
             {
                 UnityEngine.Object.Destroy(renderTex);
@@ -219,6 +223,11 @@ namespace JSI
             else
             {
                 cameraObject.SetFlicker(0, 0);
+            }
+
+            if (state && rpmComp != null)
+            {
+                rpmComp.RestoreInternalModule(this);
             }
         }
 
@@ -345,24 +354,15 @@ namespace JSI
 
                 return true;
             }
-            else if (skipMissingCameras)
-            {
-                // This will handle cameras getting ejected while in use.
-                SelectNextCamera();
-            }
 
             return false;
         }
 
         public override void OnUpdate()
         {
-            if (!JUtil.VesselIsInIVA(vessel) || cameraObject == null)
+            if (!isActivePage || cameraObject == null || cameras.Count == 0 || !JUtil.VesselIsInIVA(vessel))
             {
-                return;
-            }
-
-            if (cameras.Count < 1)
-            {
+                rpmComp.RemoveInternalModule(this);
                 return;
             }
 
@@ -593,6 +593,9 @@ namespace JSI
                 return;
 
             rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+
+            // remove the page until it's active
+            rpmComp.RemoveInternalModule(this);
 
             if (string.IsNullOrEmpty(cameraTransform))
             {
