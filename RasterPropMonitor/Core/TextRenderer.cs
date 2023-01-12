@@ -357,12 +357,16 @@ namespace JSI
                     }
                 }
 
-                if (string.Compare(textToRender, charIndex, Environment.NewLine, 0, Environment.NewLine.Length) == 0)
+                if (textToRender[charIndex] == '\r')
+                {
+                    ++charIndex;
+                }
+
+                if (textToRender[charIndex] == '\n')
                 {
                     // New line: Advance yCursor, reset xCursor and the various state values.
                     yCursor += fontLetterHeight;
                     xCursor = screenXMin * fontLetterWidth;
-                    charIndex += Environment.NewLine.Length - 1;
 
                     fontColor = defaultColor;
                     xOffset = 0.0f;
@@ -413,7 +417,11 @@ namespace JSI
          */
         private bool DrawChar(FontRenderer fr, char letter, float xPos, float yPos, Color32 letterColor, Script scriptType, Width fontWidth)
         {
-            if (fontCharacters.ContainsKey(letter))
+            if (letter == ' ')
+            {
+                // skip!
+            }
+            else if (fontCharacters.ContainsKey(letter))
             {
                 // This code was written for a much older flavor of Unity, and the Unity 2017.1 update broke
                 // some assumptions about who managed the y-inversion issue between OpenGL and DX9.
