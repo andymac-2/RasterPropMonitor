@@ -144,9 +144,9 @@ namespace JSI
                     {
                         spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
                             
-                        if (!spf[i].usesComp)
+                        if (spf[i].IsConstant)
                         {
-                            outputLines[i] = spf[i].formatString;
+                            outputLines[i] = spf[i].cachedResult;
                             spf[i] = null;
                         }
                         else

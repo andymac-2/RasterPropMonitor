@@ -86,7 +86,7 @@ namespace JSI
                     }
                 }
                 spf = new StringProcessorFormatter(sourceString, rpmComp);
-                oneshot = !spf.usesComp;
+                oneshot = spf.IsConstant;
 
                 if (!oneshot)
                 {

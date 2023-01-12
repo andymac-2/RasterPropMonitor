@@ -123,11 +123,7 @@ namespace JSI
                 {
                     if (labelsEx[activeLabel].oneShot)
                     {
-                        // Fetching formatString directly is notionally bad
-                        // because there may be formatting stuff, but if
-                        // oneShot is true, we already know that this is a
-                        // constant string with no formatting.
-                        textObj.text.text = labelsEx[activeLabel].label.formatString;
+                        textObj.text.text = labelsEx[activeLabel].label.cachedResult;
                     }
                     else
                     {
@@ -244,7 +240,7 @@ namespace JSI
                 hasText = true;
                 rpmComp = RasterPropMonitorComputer.Instantiate(part, true);
                 label = new StringProcessorFormatter(labelText, rpmComp);
-                oneShot = !label.usesComp;
+                oneShot = label.IsConstant;
             }
             else
             {

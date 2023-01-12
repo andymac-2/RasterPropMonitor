@@ -26,22 +26,22 @@ namespace JSI
     public class StringProcessorFormatter
     {
         // The formatString or plain text (if usesComp is false).
-        public readonly string formatString;
+        private readonly string formatString;
         // An array of source variables
         public readonly VariableOrNumber[] sourceVariables;
         // An array holding evaluants
         public readonly object[] sourceValues;
 
-        // Indicates that the SPF uses RPMVesselComputer to process variables
-        public readonly bool usesComp;
+        public bool IsConstant => sourceValues == null;
+
+        public string cachedResult;
 
         // TODO: Add support for multi-line processed support.
         public StringProcessorFormatter(string input, RasterPropMonitorComputer rpmComp)
         {
             if(string.IsNullOrEmpty(input))
             {
-                formatString = "";
-                usesComp = false;
+                cachedResult = "";
             }
             else if (input.IndexOf(JUtil.VariableListSeparator[0], StringComparison.Ordinal) >= 0)
             {
@@ -64,33 +64,66 @@ namespace JSI
                     sourceValues = new object[sourceVariables.Length];
                     formatString = tokens[0].TrimEnd();
 
+                    for (int i = 0; i < sourceVariables.Length; ++i)
+                    {
+                        sourceValues[i] = sourceVariables[i].Get();
+                    }
+
+                    cachedResult = string.Format(StringProcessor.fp, formatString, sourceValues);
+
                     // if every variable is a constant, we can run the format once and cache the result
                     if (allVariablesConstant)
                     {
-                        UpdateValues();
-                        formatString = string.Format(StringProcessor.fp, formatString, sourceValues);
                         sourceVariables = null;
                         sourceValues = null;
-                    }
-                    else
-                    {
-                        usesComp = true;
                     }
                 }
             }
             else
             {
-                formatString = input.TrimEnd();
-                usesComp = false;
+                cachedResult = input.TrimEnd();
             }
         }
 
-        public void UpdateValues()
+        public bool UpdateValues()
         {
+            if (sourceValues == null) return false;
+
+            bool anyChanged = false;
             for (int i = 0; i < sourceVariables.Length; ++i)
             {
-                sourceValues[i] = sourceVariables[i].Get();
+                var sourceVariable = sourceVariables[i];
+                if (!sourceVariable.isConstant)
+                {
+                    if (sourceVariable.isNumeric)
+                    {
+                        double newValue = sourceVariable.numericValue;
+                        if (Math.Abs((double)sourceValues[i] - newValue) > 1e-4)
+                        {
+                            anyChanged = true;
+                            sourceValues[i] = newValue;
+                        }
+                    }
+                    else
+                    {
+                        string newValue = sourceVariable.stringValue;
+                        anyChanged = anyChanged || newValue != (string)sourceValues[i];
+                        sourceValues[i] = newValue;
+                    }
+                }
             }
+
+            return anyChanged;
+        }
+
+        public string Get()
+        {
+            if (UpdateValues())
+            {
+                cachedResult = string.Format(StringProcessor.fp, formatString, sourceValues);
+            }
+
+            return cachedResult;
         }
     }
 
@@ -101,21 +134,7 @@ namespace JSI
         public static string ProcessString(StringProcessorFormatter formatter, RasterPropMonitorComputer rpmComp)
         {
             Profiler.BeginSample("ProcessString_cached");
-            string result = formatter.formatString;
-            if (formatter.usesComp)
-            {
-                try
-                {
-                    formatter.UpdateValues();
-
-                    result = string.Format(fp, formatter.formatString, formatter.sourceValues);
-                }
-                catch(Exception e)
-                {
-                    JUtil.LogErrorMessage(formatter, "Exception trapped in ProcessString for {1}: {0}", e, formatter.formatString);
-                }
-            }
-
+            string result = formatter.Get();
             Profiler.EndSample();
             return result;
         }

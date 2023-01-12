@@ -553,7 +553,7 @@ namespace JSI
         {
             oneshotComplete = false;
             spf = new StringProcessorFormatter(labelText, rpmComp);
-            oneshot = isOneshot || !spf.usesComp;
+            oneshot = isOneshot || spf.IsConstant;
         }
     }
 
