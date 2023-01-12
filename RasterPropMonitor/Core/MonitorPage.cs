@@ -133,50 +133,53 @@ namespace JSI
                     outputLines = null;
                     allTextConstant = true;
                 }
-                // create the formatters if necessary
-                else if (spf == null)
-                {
-                    string[] linesArray = text.Split(JUtil.LineSeparator, StringSplitOptions.None);
-                    spf = new StringProcessorFormatter[linesArray.Length];
-                    outputLines = new string[linesArray.Length];
-                    allTextConstant = true;
-                    for (int i = 0; i < linesArray.Length; ++i)
-                    {
-                        spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
-
-                        outputLines[i] = spf[i].cachedResult;
-
-                        if (spf[i].IsConstant)
-                        {
-                            spf[i] = null;
-                        }
-                        else
-                        {
-                            allTextConstant = false;
-                        }
-                    }
-                }
                 else
                 {
-                    for (int i = 0; i < spf.Length; i++)
+                    // create the formatters if necessary
+                    if (spf == null)
                     {
-                        if (spf[i] != null)
+                        string[] linesArray = text.Split(JUtil.LineSeparator, StringSplitOptions.None);
+                        spf = new StringProcessorFormatter[linesArray.Length];
+                        outputLines = new string[linesArray.Length];
+                        allTextConstant = true;
+                        for (int i = 0; i < linesArray.Length; ++i)
                         {
-                            outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
+                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
+
+                            outputLines[i] = spf[i].cachedResult;
+
+                            if (spf[i].IsConstant)
+                            {
+                                spf[i] = null;
+                            }
+                            else
+                            {
+                                allTextConstant = false;
+                            }
                         }
                     }
-                }
+                    else
+                    {
+                        for (int i = 0; i < spf.Length; i++)
+                        {
+                            if (spf[i] != null)
+                            {
+                                outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
+                            }
+                        }
+                    }
 
-                processedText = string.Join(Environment.NewLine, outputLines);
+                    processedText = string.Join(Environment.NewLine, outputLines);
 
-                if (allTextConstant)
-                {
-                    spf = null;
-                    outputLines = null;
-                }
-                else
-                {
-                    isMutable = true;
+                    if (allTextConstant)
+                    {
+                        spf = null;
+                        outputLines = null;
+                    }
+                    else
+                    {
+                        isMutable = true;
+                    }
                 }
             }
         }
