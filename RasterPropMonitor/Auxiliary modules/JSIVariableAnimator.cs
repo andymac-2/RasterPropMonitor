@@ -143,6 +143,7 @@ namespace JSI
         {
             if (useNewMode)
             {
+                enabled = false;
                 return;
             }
 
@@ -596,7 +597,7 @@ namespace JSI
         internal void TearDown(RasterPropMonitorComputer rpmComp)
         {
             //--- new ways
-            if (onChangeDelegate != null)
+            if (onChangeDelegate != null && rpmComp != null)
             {
                 rpmComp.UnregisterVariableCallback(variable.variableName, onChangeDelegate);
             }
