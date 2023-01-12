@@ -47,7 +47,7 @@ namespace JSI
         /// </summary>
         internal static bool debugShowVariableCallCount = false;
 
-        internal static bool useNewVariableAnimator = false;
+        internal static bool useNewVariableAnimator = true;
 
         /// <summary>
         /// What is the minimum setting we want to allow for our variable
