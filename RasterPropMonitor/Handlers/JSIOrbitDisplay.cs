@@ -62,10 +62,12 @@ namespace JSI
         public float iconPixelSize = 8f;
         [KSPField]
         public Vector2 iconShadowShift = new Vector2(1, 1);
-        [KSPField]
-        public int orbitPoints = 120;
+
         private bool startupComplete;
 		private Material lineMaterial;
+
+        static readonly int CIRCLE_POINTS = 60;
+        static readonly int ORBIT_POINTS = 60;
 
 		public override void OnAwake()
 		{
@@ -77,10 +79,15 @@ namespace JSI
 			}
 		}
 
-		// All units in pixels.  Assumes GL.Begin(LINES) and GL.Color() have
-		// already been called for this circle.
-		private static void DrawCircle(float centerX, float centerY, float radius, int maxOrbitPoints)
+        // TODO: this could all be improved by implementint adaptive screen-space tesselation:
+        // http://blog.johannesmp.com/2022/06/30/KSP2-Dev-Diary_Orbit-Tessellation/
+
+        // All units in pixels.  Assumes GL.Begin(LINES) and GL.Color() have
+        // already been called for this circle.
+        private static void DrawCircle(float centerX, float centerY, float radius)
         {
+            int maxOrbitPoints = CIRCLE_POINTS;
+
             // Figure out the tessellation level to use, based on circle size
             // and user limits.
             float circumferenceInPixels = 2.0f * Mathf.PI * radius;
@@ -107,17 +114,36 @@ namespace JSI
             }
         }
 
-        private static void DrawOrbit(Orbit o, CelestialBody referenceBody, Matrix4x4 screenTransform, int numSegments)
+        static Vector3 ScreenPositionFromOrbitAtTA(Orbit o, CelestialBody referenceBody, Matrix4x4 screenTransform, double ta, double now)
         {
+            Vector3 relativePosition = o.getRelativePositionFromTrueAnomaly(ta).xzy;
+
+            if (o.referenceBody != referenceBody)
+            {
+                double timeAtTA = o.GetUTforTrueAnomaly(ta, now);
+                relativePosition += o.referenceBody.getTruePositionAtUT(timeAtTA) - referenceBody.getTruePositionAtUT(timeAtTA);
+            }
+
+            return screenTransform.MultiplyPoint3x4(relativePosition);
+        }
+
+        private static void DrawOrbit(Orbit o, CelestialBody referenceBody, Matrix4x4 screenTransform)
+        {
+            int numSegments = ORBIT_POINTS;
+
             if (!o.activePatch)
             {
                 return;
             }
-
             double startTA;
             double endTA;
             double now = Planetarium.GetUniversalTime();
-            if (o.patchEndTransition != Orbit.PatchTransitionType.FINAL)
+            if (o.eccentricity < 1 && o.patchEndTransition == Orbit.PatchTransitionType.FINAL)
+            {
+                startTA = 0;
+                endTA = 2 * Math.PI;
+            }
+            else if (o.patchEndTransition != Orbit.PatchTransitionType.FINAL)
             {
                 startTA = o.TrueAnomalyAtUT(o.StartUT);
                 endTA = o.TrueAnomalyAtUT(o.EndUT);
@@ -133,15 +159,15 @@ namespace JSI
             }
             double dTheta = (endTA - startTA) / (double)numSegments;
             double theta = startTA;
-            double timeAtTA = o.GetUTforTrueAnomaly(theta, now);
-            Vector3 lastVertex = screenTransform.MultiplyPoint3x4(o.getRelativePositionFromTrueAnomaly(theta).xzy + (o.referenceBody.getTruePositionAtUT(timeAtTA)) - (referenceBody.getTruePositionAtUT(timeAtTA)));
+            double bias = Mathf.Lerp(0, -0.5f, (float)o.eccentricity);
+            Vector3 lastVertex = ScreenPositionFromOrbitAtTA(o, referenceBody, screenTransform, theta, now);
             for (int i = 0; i < numSegments; ++i)
             {
                 GL.Vertex3(lastVertex.x, lastVertex.y, 0.0f);
                 theta += dTheta;
-                timeAtTA = o.GetUTforTrueAnomaly(theta, now);
+                double ta = theta + bias * Math.Sin(theta * 2);
 
-                Vector3 newVertex = screenTransform.MultiplyPoint3x4(o.getRelativePositionFromTrueAnomaly(theta).xzy + (o.referenceBody.getTruePositionAtUT(timeAtTA)) - (referenceBody.getTruePositionAtUT(timeAtTA)));
+                Vector3 newVertex = ScreenPositionFromOrbitAtTA(o, referenceBody, screenTransform, ta, now);
                 GL.Vertex3(newVertex.x, newVertex.y, 0.0f);
 
                 lastVertex = newVertex;
@@ -150,26 +176,31 @@ namespace JSI
 
         // Fallback method: The orbit should be valid, but it's not showing as
         // active.  I've encountered this when targeting a vessel or planet.
-        private static void ReallyDrawOrbit(Orbit o, CelestialBody referenceBody, Matrix4x4 screenTransform, int numSegments)
+        private static void ReallyDrawOrbit(Orbit o, CelestialBody referenceBody, Matrix4x4 screenTransform)
         {
+            int numSegments = ORBIT_POINTS;
+
             if (o.eccentricity >= 1.0)
             {
                 Debug.Log("JSIOrbitDisplay.ReallyDrawOrbit(): I can't draw an orbit with e >= 1.0");
                 return;
             }
 
-            double dTheta = 2.0 * Math.PI / (double)numSegments;
+            // https://www.wolframalpha.com/input?i=y+%3D+x-+0.5+*sin%28x*2%29+from+x+%3D+0+to+2+*+pi
+
             double theta = 0.0;
+            double dTheta = 2 * Math.PI / (double)numSegments;
             double now = Planetarium.GetUniversalTime();
-            double timeAtTA = o.GetUTforTrueAnomaly(theta, now);
-            Vector3 lastVertex = screenTransform.MultiplyPoint3x4(o.getRelativePositionFromTrueAnomaly(theta).xzy + (o.referenceBody.getTruePositionAtUT(timeAtTA)) - (referenceBody.getTruePositionAtUT(timeAtTA)));
+            double bias = Mathf.Lerp(0, -0.5f, (float)o.eccentricity);
+            Vector3 lastVertex = ScreenPositionFromOrbitAtTA(o, referenceBody, screenTransform, theta, now); ;
             for (int i = 0; i < numSegments; ++i)
             {
                 GL.Vertex3(lastVertex.x, lastVertex.y, 0.0f);
-                theta += dTheta;
-                timeAtTA = o.GetUTforTrueAnomaly(theta, now);
 
-                Vector3 newVertex = screenTransform.MultiplyPoint3x4(o.getRelativePositionFromTrueAnomaly(theta).xzy + (o.referenceBody.getTruePositionAtUT(timeAtTA)) - (referenceBody.getTruePositionAtUT(timeAtTA)));
+                theta += dTheta;
+                double ta = theta + bias * Math.Sin(theta * 2);
+
+                Vector3 newVertex = ScreenPositionFromOrbitAtTA(o, referenceBody, screenTransform, ta, now);
                 GL.Vertex3(newVertex.x, newVertex.y, 0.0f);
 
                 lastVertex = newVertex;
@@ -457,13 +488,13 @@ namespace JSI
 
             // orbitDriver is null on the sun, so we'll just use white instead.
             GL.Color((vessel.mainBody.orbitDriver == null) ? new Color(1.0f, 1.0f, 1.0f) : vessel.mainBody.orbitDriver.orbitColor);
-            DrawCircle(focusCenter.x, focusCenter.y, (float)(vessel.mainBody.Radius * pixelScalar), orbitPoints);
+            DrawCircle(focusCenter.x, focusCenter.y, (float)(vessel.mainBody.Radius * pixelScalar));
             if (vessel.mainBody.atmosphere)
             {
                 // Use the atmospheric ambient to color the atmosphere circle.
                 GL.Color(vessel.mainBody.atmosphericAmbientColor);
 
-                DrawCircle(focusCenter.x, focusCenter.y, (float)((vessel.mainBody.Radius + vessel.mainBody.atmosphereDepth) * pixelScalar), orbitPoints);
+                DrawCircle(focusCenter.x, focusCenter.y, (float)((vessel.mainBody.Radius + vessel.mainBody.atmosphereDepth) * pixelScalar));
             }
 
             if (targetVessel != null && !targetVessel.LandedOrSplashed)
@@ -474,11 +505,11 @@ namespace JSI
                     // For some reason, activePatch is false for targetVessel.
                     // If we have a stable orbit for the target, use a fallback
                     // rendering method:
-                    ReallyDrawOrbit(targetVessel.orbit, vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                    ReallyDrawOrbit(targetVessel.orbit, vessel.orbit.referenceBody, screenTransform);
                 }
                 else
                 {
-                    DrawOrbit(targetVessel.orbit, vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                    DrawOrbit(targetVessel.orbit, vessel.orbit.referenceBody, screenTransform);
                 }
             }
 
@@ -487,31 +518,31 @@ namespace JSI
                 if (moon != targetBody)
                 {
                     GL.Color(moon.orbitDriver.orbitColor);
-                    ReallyDrawOrbit(moon.GetOrbit(), vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                    ReallyDrawOrbit(moon.GetOrbit(), vessel.orbit.referenceBody, screenTransform);
                 }
             }
 
             if (targetBody != null)
             {
                 GL.Color(iconColorTargetValue);
-                ReallyDrawOrbit(targetBody.GetOrbit(), vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                ReallyDrawOrbit(targetBody.GetOrbit(), vessel.orbit.referenceBody, screenTransform);
             }
 
             if (node != null)
             {
                 GL.Color(orbitColorNextNodeValue);
-                DrawOrbit(node.nextPatch, vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                DrawOrbit(node.nextPatch, vessel.orbit.referenceBody, screenTransform);
             }
 
             if (vessel.orbit.nextPatch != null && vessel.orbit.nextPatch.activePatch)
             {
                 GL.Color(orbitColorNextNodeValue);
-                DrawOrbit(vessel.orbit.nextPatch, vessel.orbit.referenceBody, screenTransform, orbitPoints);
+                DrawOrbit(vessel.orbit.nextPatch, vessel.orbit.referenceBody, screenTransform);
             }
 
             // Draw the vessel orbit
             GL.Color(orbitColorSelfValue);
-            DrawOrbit(vessel.orbit, vessel.orbit.referenceBody, screenTransform, orbitPoints);
+            DrawOrbit(vessel.orbit, vessel.orbit.referenceBody, screenTransform);
 
             // Done drawing lines.  Reset color to white, so we don't mess up anyone else.
             GL.Color(Color.white);
