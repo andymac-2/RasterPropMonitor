@@ -47,6 +47,7 @@ namespace JSI
                 {
                     invalidated = true;
                     alignment_ = value;
+                    enabled = true;
                 }
             }
         }
@@ -64,6 +65,7 @@ namespace JSI
                 {
                     invalidated = true;
                     anchor_ = value;
+                    enabled = true;
                 }
             }
         }
@@ -81,6 +83,7 @@ namespace JSI
                 {
                     invalidated = true;
                     characterSize_ = value;
+                    enabled = true;
                 }
             }
         }
@@ -98,6 +101,7 @@ namespace JSI
                 {
                     invalidatedColor = true;
                     color_ = value;
+                    enabled = true;
                 }
             }
         }
@@ -115,6 +119,7 @@ namespace JSI
                 {
                     invalidated = true;
                     font_ = value;
+                    enabled = true;
                     if (font_ != null)
                     {
                         CreateComponents();
@@ -136,6 +141,7 @@ namespace JSI
                 if (value != fontSize_)
                 {
                     invalidated = true;
+                    enabled = true;
                     fontSize_ = value;
                 }
             }
@@ -153,6 +159,7 @@ namespace JSI
                 if (value != fontStyle_)
                 {
                     invalidated = true;
+                    enabled = true;
                     fontStyle_ = value;
                 }
             }
@@ -170,6 +177,7 @@ namespace JSI
                 if (value != lineSpacing_)
                 {
                     invalidated = true;
+                    enabled = true;
                     lineSpacing_ = value;
                 }
             }
@@ -208,6 +216,7 @@ namespace JSI
                 if (value != text_)
                 {
                     invalidated = true;
+                    enabled = true;
                     text_ = value;
 
                     if (meshRenderer_ != null)
@@ -280,6 +289,7 @@ namespace JSI
             {
                 invalidated = true;
                 meshRenderer_.material.mainTexture = font_.material.mainTexture;
+                enabled = true;
             }
         }
 
@@ -340,6 +350,8 @@ namespace JSI
                     invalidatedColor = false;
                 }
             }
+
+            enabled = false;
         }
 
         /// <summary>
