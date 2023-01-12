@@ -668,17 +668,20 @@ namespace JSI
             audioOutput = null;
             loopingOutput = null;
 
-            rpmComp.UnregisterVariableCallback(masterVariableName, MasterVariableChangedCallback);
-            rpmComp.UnregisterResourceCallback(resourceName, ResourceDepletedCallback);
-            
-            if (persistentVarValid)
+            if (rpmComp != null)
             {
-                rpmComp.UnregisterVariableCallback("PERSISTENT_" + persistentVarName, PersistentVarChangedCallback);
-            }
+                rpmComp.UnregisterVariableCallback(masterVariableName, MasterVariableChangedCallback);
+                rpmComp.UnregisterResourceCallback(resourceName, ResourceDepletedCallback);
 
-            if (!string.IsNullOrEmpty(perPodMasterSwitchName))
-            {
-                rpmComp.RegisterVariableCallback("PERSISTENT_" + perPodMasterSwitchName, PerPodMasterSwitchChangedCallback);
+                if (persistentVarValid)
+                {
+                    rpmComp.UnregisterVariableCallback("PERSISTENT_" + persistentVarName, PersistentVarChangedCallback);
+                }
+
+                if (!string.IsNullOrEmpty(perPodMasterSwitchName))
+                {
+                    rpmComp.RegisterVariableCallback("PERSISTENT_" + perPodMasterSwitchName, PerPodMasterSwitchChangedCallback);
+                }
             }
 
             if (stateVariable != null)
