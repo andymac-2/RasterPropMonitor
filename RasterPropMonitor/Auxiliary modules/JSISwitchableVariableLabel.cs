@@ -181,9 +181,14 @@ namespace JSI
 
         public override void OnUpdate()
         {
-            if (JUtil.RasterPropMonitorShouldUpdate(part) && UpdateCheck())
+            if (UpdateCheck())
             {
                 textObj.text.text = StringProcessor.ProcessString(labelsEx[activeLabel].label, rpmComp);
+
+                if (labelsEx[activeLabel].oneShot)
+                {
+                    rpmComp.RemoveInternalModule(this);
+                }
             }
         }
 
@@ -194,6 +199,11 @@ namespace JSI
             if (activeLabel == labelsEx.Count)
             {
                 activeLabel = 0;
+            }
+
+            if (labelsEx.Count > 1 && !labelsEx[activeLabel].oneShot)
+            {
+                rpmComp.RestoreInternalModule(this);
             }
 
             if (labelsEx[activeLabel].hasColor)
