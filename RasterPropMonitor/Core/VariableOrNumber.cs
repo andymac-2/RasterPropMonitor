@@ -39,6 +39,7 @@ namespace JSI
         internal bool isConstant;
         private readonly RasterPropMonitorComputer rpmComp;
 
+        internal NumericVariableEvaluator numericEvaluator;
         internal VariableEvaluator evaluator;
         internal event Action<float> onChangeCallbacks;
         internal event Action<bool> onResourceDepletedCallbacks;
@@ -55,7 +56,6 @@ namespace JSI
                 onResourceDepletedCallbacks.Invoke(newValue < 0.01f);
             }
         }
-
 
         /// <summary>
         /// Initialize a VariableOrNumber
@@ -79,7 +79,7 @@ namespace JSI
             }
             else
             {
-                object value = evaluator(input, vesselComp);
+                object value = evaluator(vesselComp);
 
                 if (value is string str)
                 {
@@ -95,25 +95,50 @@ namespace JSI
             }
         }
 
+        internal VariableOrNumber(string input, NumericVariableEvaluator evaluator, RPMVesselComputer vesselComp, bool constant, RasterPropMonitorComputer rpmComp_)
+        {
+            variableName = input;
+            isConstant = constant;
+            rpmComp = rpmComp_; // will be null if this variable is cacheable
+            this.numericEvaluator = evaluator;
+
+            double value = evaluator(vesselComp);
+
+            numericValue = value.MassageToDouble();
+            isNumeric = true;
+        }
+
+        void UpdateNumericValue(double newVal)
+        {
+            double oldVal = numericValue;
+            isNumeric = true;
+            numericValue = newVal;
+
+            if (Math.Abs(oldVal - newVal) > 1e-5)
+            {
+                FireCallbacks((float)newVal);
+            }
+        }
+
         public void Update(RPMVesselComputer comp)
         {
-            object evaluant = evaluator(variableName, comp);
-
-            if (evaluant is string str)
+            if (numericEvaluator != null)
             {
-                isNumeric = false;
-                stringValue = str;
+                double newVal = numericEvaluator(comp);
+                UpdateNumericValue(newVal);
             }
             else
             {
-                double oldVal = numericValue;
-                double newVal = evaluant.MassageToDouble();
-                isNumeric = true;
-                numericValue = newVal;
+                object evaluant = evaluator(comp);
 
-                if (Math.Abs(oldVal - newVal) > 1e-5)
+                if (evaluant is string str)
                 {
-                    FireCallbacks((float)newVal);
+                    isNumeric = false;
+                    stringValue = str;
+                }
+                else
+                {
+                    UpdateNumericValue(evaluant.MassageToDouble());
                 }
             }
         }
@@ -127,7 +152,7 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                return evaluator(variableName, comp).MassageToFloat();
+                return evaluator(comp).MassageToFloat();
             }
             else
             {
@@ -144,7 +169,7 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                return evaluator(variableName, comp).MassageToDouble();
+                return evaluator(comp).MassageToDouble();
             }
             else
             {
@@ -161,7 +186,7 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                return evaluator(variableName, comp).MassageToInt();
+                return evaluator(comp).MassageToInt();
             }
             else
             {
@@ -178,7 +203,7 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
-                return evaluator(variableName, comp);
+                return evaluator(comp);
             }
             else if (isNumeric)
             {
@@ -211,11 +236,11 @@ namespace JSI
             }
         }
 
-        public float rawValue
+        public double rawValue
         {
             get
             {
-                return sourceValue.AsFloat();
+                return sourceValue.AsDouble();
             }
         }
 

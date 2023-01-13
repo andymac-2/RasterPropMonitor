@@ -30,7 +30,7 @@ namespace JSI
     /// </summary>
     interface IComplexVariable
     {
-        object Evaluate();
+        double Evaluate();
     }
 
     /// <summary>
@@ -118,16 +118,16 @@ namespace JSI
             }
         }
 
-        public object Evaluate()
+        public double Evaluate()
         {
             bool evaluation = false;
             if (op == Operator.ISNANORINF)
             {
-                evaluation = (float.IsNaN(sourceVariables[0].rawValue) || float.IsInfinity(sourceVariables[0].rawValue)) ^ reverse[0];
+                evaluation = (double.IsNaN(sourceVariables[0].rawValue) || double.IsInfinity(sourceVariables[0].rawValue)) ^ reverse[0];
 
                 for (int i = 1; i < sourceVariables.Count && (evaluation == false); ++i)
                 {
-                    evaluation = (float.IsNaN(sourceVariables[i].rawValue) || float.IsInfinity(sourceVariables[i].rawValue)) ^ reverse[i];
+                    evaluation = (double.IsNaN(sourceVariables[i].rawValue) || double.IsInfinity(sourceVariables[i].rawValue)) ^ reverse[i];
                 }
             }
             else

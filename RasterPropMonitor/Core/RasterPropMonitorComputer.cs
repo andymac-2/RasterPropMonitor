@@ -219,15 +219,26 @@ namespace JSI
         /// <param name="variableName"></param>
         private VariableOrNumber AddVariable(string variableName)
         {
-            var evaluator = GetEvaluator(variableName, out bool cacheable, out bool isConstant);
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-
-            var vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
-
-            if (vc.evaluator == null && !unrecognizedVariables.Contains(variableName))
+            VariableOrNumber vc;
+            
+            // try to find a numeric evaluator first
+            var numericEvaluator = GetNumericEvaluator(variableName, out bool cacheable, out bool isConstant);
+            if (numericEvaluator != null)
             {
-                unrecognizedVariables.Add(variableName);
-                JUtil.LogErrorMessage(this, "Unrecognized variable {0}", variableName);
+                vc = new VariableOrNumber(variableName, numericEvaluator, comp, isConstant, cacheable ? null : this);
+            }
+            else
+            {
+                // if that doesnt' work, look for a generic one
+                var evaluator = GetEvaluator(variableName, out cacheable, out isConstant);
+                vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
+
+                if (evaluator == null && !unrecognizedVariables.Contains(variableName))
+                {
+                    unrecognizedVariables.Add(variableName);
+                    JUtil.LogErrorMessage(this, "Unrecognized variable {0}", variableName);
+                }
             }
 
             variableCollection.AddVariable(vc);

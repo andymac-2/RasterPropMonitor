@@ -441,7 +441,7 @@ namespace JSI
         //    return Activation.FlightScene;
         //}
 
-        private Dictionary<Guid, Dictionary<string, object>> persistentNodeData = new Dictionary<Guid, Dictionary<string, object>>();
+        private Dictionary<Guid, Dictionary<string, double>> persistentNodeData = new Dictionary<Guid, Dictionary<string, double>>();
         private bool anyRestored = false;
 
         /// <summary>
@@ -460,7 +460,7 @@ namespace JSI
                     string nodeName = string.Empty;
                     if (pers[nodeIdx].TryGetValue("name", ref nodeName))
                     {
-                        Dictionary<string, object> myPersistentVars = new Dictionary<string, object>();
+                        Dictionary<string, double> myPersistentVars = new Dictionary<string, double>();
 
                         for (int i = 0; i < pers[nodeIdx].CountValues; ++i)
                         {
@@ -485,7 +485,7 @@ namespace JSI
                                         bool vb = false;
                                         if (Boolean.TryParse(value[1].Trim(), out vb))
                                         {
-                                            myPersistentVars[val.name.Trim()] = vb;
+                                            myPersistentVars[val.name.Trim()] = vb ? 1 : 0;
                                         }
                                         else
                                         {
@@ -542,7 +542,7 @@ namespace JSI
         /// </summary>
         /// <param name="rpmcId"></param>
         /// <returns></returns>
-        internal Dictionary<string, object> RestorePersistents(Guid rpmcId)
+        internal Dictionary<string, double> RestorePersistents(Guid rpmcId)
         {
             // Whether we have the persistent data or not, we want to flag
             // that we did indeed have someone ask for persistents, which

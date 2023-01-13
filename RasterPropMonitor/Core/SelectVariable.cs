@@ -68,7 +68,7 @@ namespace JSI
 
         }
 
-        public object Evaluate()
+        public double Evaluate()
         {
             int i = 0;
             for (; i < sourceVariables.Count; ++i)
@@ -79,7 +79,7 @@ namespace JSI
                 }
             }
 
-            return result[i].Get();
+            return result[i].AsDouble();
         }
 
         private static VariableOrNumberRange ProcessSourceNode(ConfigNode node, RasterPropMonitorComputer rpmComp, out bool reverse)

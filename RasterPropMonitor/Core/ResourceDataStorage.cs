@@ -267,7 +267,7 @@ namespace JSI
             return resourceQuery;
         }
 
-        public object ListSYSElement(string resourceName, string valueType, bool stage)
+        public double ListSYSElement(string resourceName, string valueType, bool stage)
         {
             double v = 0.0;
             try
@@ -325,12 +325,12 @@ namespace JSI
             catch (Exception e)
             {
                 JUtil.LogErrorMessage(this, "ListElement({1}) threw trapped exception {0}", e, resourceName);
-                return null;
+                return double.NaN;
             }
             return v;
         }
 
-        public object ListElement(string resourceName, string valueType, bool stage)
+        public double ListElement(string resourceName, string valueType, bool stage)
         {
             double v = 0.0;
 

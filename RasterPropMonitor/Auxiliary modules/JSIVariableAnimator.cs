@@ -1345,12 +1345,12 @@ namespace JSI
             // would make this fire every update instead of every fixed update
             yield return new WaitForFixedUpdate();
 
-            float updatedValue = variable.rawValue;
+            float updatedValue = (float)variable.rawValue;
             //JUtil.LogMessage(this, "OnCoroutine Update {0}", variable.variableName);
             while (Update(updatedValue))
             {
                 yield return new WaitForFixedUpdate();
-                updatedValue = variable.rawValue;
+                updatedValue = (float)variable.rawValue;
 
                 //JUtil.LogMessage(this, "OnCoroutine Update {0}", variable.variableName);
             }

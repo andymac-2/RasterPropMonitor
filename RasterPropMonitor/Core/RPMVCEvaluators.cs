@@ -34,7 +34,7 @@ namespace JSI
         /// <param name="name"></param>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
-        internal object GetPersistentVariable(string name, object defaultValue)
+        internal double GetPersistentVariable(string name, double defaultValue)
         {
             if (vessel != null)
             {
@@ -87,7 +87,7 @@ namespace JSI
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        internal void SetPersistentVariable(string name, object value)
+        internal void SetPersistentVariable(string name, double value)
         {
             if (vessel != null)
             {

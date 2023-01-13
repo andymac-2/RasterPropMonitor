@@ -30,7 +30,7 @@ namespace JSI
         /// Per-pod persistence.  This code was devolved from RPMVC due to
         /// difficulties handling docking and undocking.
         /// </summary>
-        internal Dictionary<string, object> persistentVars = new Dictionary<string, object>();
+        internal Dictionary<string, double> persistentVars = new Dictionary<string, double>();
 
         /// <summary>
         /// Returns the named persistent value, or the default provided if
@@ -42,9 +42,9 @@ namespace JSI
         /// <param name="defaultValue">The default value</param>
         /// <param name="broadcast">Broadcast the request to other parts of the same craft?</param>
         /// <returns></returns>
-        internal object GetPersistentVariable(string name, object defaultValue, bool broadcast)
+        internal double GetPersistentVariable(string name, double defaultValue, bool broadcast)
         {
-            object val;
+            double val;
             if (persistentVars.ContainsKey(name))
             {
                 val = persistentVars[name];
@@ -64,38 +64,11 @@ namespace JSI
             return val;
         }
 
-        /// <summary>
-        /// Return the persistent variable, pre-treated as a boolean.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="defaultValue"></param>
-        /// <param name="broadcast">Broadcast the request to other parts of the same craft?</param>
-        /// <returns></returns>
         internal bool GetPersistentVariable(string name, bool defaultValue, bool broadcast)
         {
-            object val;
-            if (persistentVars.ContainsKey(name))
-            {
-                val = persistentVars[name];
-            }
-            else if (broadcast)
-            {
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                val = comp.GetPersistentVariable(name, defaultValue);
-                if (val.GetType() == typeof(System.Boolean))
-                {
-                    persistentVars[name] = val;
-                }
-            }
-            else
-            {
-                val = defaultValue;
-                persistentVars[name] = defaultValue;
-            }
-
-            return (val.GetType() == typeof(System.Boolean)) ? (bool)val : false;
+            double val = GetPersistentVariable(name, defaultValue ? 1 : 0, broadcast);
+            return val != 0;
         }
-
 
         /// <summary>
         /// Indicates whether the named persistent variable is present in the
@@ -127,7 +100,7 @@ namespace JSI
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <param name="broadcast">Broadcast the request to other parts of the same craft?</param>
-        internal void SetPersistentVariable(string name, object value, bool broadcast)
+        internal void SetPersistentVariable(string name, double value, bool broadcast)
         {
             if (name.Trim().Length == 0)
             {
@@ -141,6 +114,11 @@ namespace JSI
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 comp.SetPersistentVariable(name, value);
             }
+        }
+
+        internal void SetPersistentVariable(string name, bool value, bool broadcast)
+        {
+            SetPersistentVariable(name, value ? 1 : 0, broadcast);
         }
     }
 }

@@ -143,7 +143,7 @@ namespace JSI
             }
         }
 
-        public object Evaluate()
+        public double Evaluate()
         {
             if (indexOperator)
             {
