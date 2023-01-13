@@ -498,35 +498,32 @@ namespace JSI
             }
         }
 
-        public void FixedUpdate()
+        void UpdateVariables()
         {
-            if (JUtil.RasterPropMonitorShouldUpdate(part) && timeToUpdate)
+            UpdateLocalVars();
+
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vid);
+
+            for (int i = 0; i < periodicRandomVals.Count; ++i)
             {
-                UpdateLocalVars();
-
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vid);
-
-                for (int i = 0; i < periodicRandomVals.Count; ++i)
+                periodicRandomVals[i].counter -= refreshDataRate;
+                if (periodicRandomVals[i].counter <= 0)
                 {
-                    periodicRandomVals[i].counter -= refreshDataRate;
-                    if (periodicRandomVals[i].counter <= 0)
-                    {
-                        periodicRandomVals[i].counter = periodicRandomVals[i].period;
-                        periodicRandomVals[i].value = UnityEngine.Random.value;
-                    }
+                    periodicRandomVals[i].counter = periodicRandomVals[i].period;
+                    periodicRandomVals[i].value = UnityEngine.Random.value;
                 }
+            }
 
-                variableCollection.Update(comp);
+            variableCollection.Update(comp);
 
-                ++debug_fixedUpdates;
+            ++debug_fixedUpdates;
 
-                timeToUpdate = false;
+            timeToUpdate = false;
 
-                Vessel v = vessel;
-                for (int i = 0; i < activeTriggeredEvents.Count; ++i)
-                {
-                    activeTriggeredEvents[i].Update(v);
-                }
+            Vessel v = vessel;
+            for (int i = 0; i < activeTriggeredEvents.Count; ++i)
+            {
+                activeTriggeredEvents[i].Update(v);
             }
         }
 
@@ -557,8 +554,11 @@ namespace JSI
                     {
                         dataUpdateCountdown = refreshDataRate;
                         timeToUpdate = true;
+                        UpdateVariables();
                     }
                 }
+
+                // handle InternalModules that want to activate/deactivate
 
                 foreach (var module in modulesToRemove)
                 {

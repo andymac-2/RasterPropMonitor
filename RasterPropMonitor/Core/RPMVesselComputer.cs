@@ -771,6 +771,7 @@ namespace JSI
             {
                 //JUtil.LogMessage(this, "UpdateCheck - time to update");
                 timeToUpdate = true;
+                UpdateVariables();
             }
 
             if (!JUtil.IsInIVA() && lastActiveKerbal != null)
@@ -781,24 +782,6 @@ namespace JSI
                 lastActiveKerbal.headTransform.parent.gameObject.SetActive(true);
                 lastActiveKerbal.headTransform.gameObject.SetActive(true);
                 lastActiveKerbal = null;
-            }
-        }
-
-        public void FixedUpdate()
-        {
-            if (!HighLogic.LoadedSceneIsFlight)
-            {
-                return;
-            }
-
-            if (vessel == null /*|| vessel.isActiveVessel == false*/)
-            {
-                return;
-            }
-
-            if (JUtil.VesselIsInIVA(vessel) || JUtil.StockOverlayCamIsOn())
-            {
-                UpdateVariables();
             }
         }
 
