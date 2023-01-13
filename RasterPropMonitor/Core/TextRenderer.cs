@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace JSI
 {
@@ -11,14 +12,13 @@ namespace JSI
         {
             public Texture2D fontTexture;
             public Mesh mesh;
-            public GameObject obj;
             public Material fontMaterial;
 
             public List<Vector3> vertices = new List<Vector3>();
             public List<Vector2> uvs = new List<Vector2>();
             public List<Color32> colors32 = new List<Color32>();
 
-            internal FontRenderer(Texture2D fontTexture, Vector2 vectorSize, int drawingLayer, Transform parentTransform)
+            internal FontRenderer(Texture2D fontTexture, Vector2 vectorSize)
             {
                 Shader displayShader = JUtil.LoadInternalShader("RPM/FontShader");
 
@@ -29,20 +29,7 @@ namespace JSI
                 this.fontTexture = fontTexture;
                 this.fontTexture.filterMode = FilterMode.Bilinear;
 
-                obj = new GameObject(fontTexture.name + "-FontRenderer");
-                MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-                obj.AddComponent<MeshRenderer>();
-
                 mesh = new Mesh();
-                meshFilter.mesh = mesh;
-
-                obj.layer = drawingLayer;
-
-                UnityEngine.Object.Destroy(obj.GetComponent<Collider>());
-
-                obj.transform.position = new Vector3(0, 0, 0.5f);
-                obj.GetComponent<Renderer>().material = fontMaterial;
-                obj.transform.parent = parentTransform;
             }
 
             internal void Bake()
@@ -97,7 +84,6 @@ namespace JSI
             internal void Destroy()
             {
                 UnityEngine.Object.Destroy(mesh);
-                UnityEngine.Object.Destroy(obj);
                 UnityEngine.Object.Destroy(fontMaterial);
             }
         }
@@ -128,9 +114,6 @@ namespace JSI
         private string cachedOverlayText;
 
         private readonly bool manuallyInvertY;
-
-        private GameObject cameraBody;
-        private Camera textCamera;
 
         private enum Script
         {
@@ -207,28 +190,10 @@ namespace JSI
             fontLetterHalfWidth = fontLetterSize.x * 0.5f;
             fontLetterDoubleWidth = fontLetterSize.x * 2.0f;
 
-            // Set up the camera
-            cameraBody = new GameObject();
-            cameraBody.name = "RPMTextRender" + cameraBody.GetInstanceID();
-            cameraBody.layer = drawingLayer;
-
-            textCamera = cameraBody.AddComponent<Camera>();
-            textCamera.enabled = false;
-            textCamera.orthographic = true;
-            textCamera.aspect = (float)screenWidth / (float)screenHeight;
-            textCamera.eventMask = 0;
-            textCamera.farClipPlane = 3f;
-            textCamera.orthographicSize = (float)(screenHeight) * 0.5f;
-            textCamera.cullingMask = 1 << drawingLayer;
-            textCamera.clearFlags = CameraClearFlags.Nothing;
-            textCamera.transparencySortMode = TransparencySortMode.Orthographic;
-            textCamera.transform.position = Vector3.zero;
-            textCamera.transform.LookAt(new Vector3(0.0f, 0.0f, 1.5f), Vector3.up);
-
             fontRenderer = new List<FontRenderer>();
             for (int i = 0; i < fontTexture.Count; ++i)
             {
-                FontRenderer fr = new FontRenderer(fontTexture[i], fontLetterSize, drawingLayer, cameraBody.transform);
+                FontRenderer fr = new FontRenderer(fontTexture[i], fontLetterSize);
 
                 fontRenderer.Add(fr);
             }
@@ -241,6 +206,7 @@ namespace JSI
          */
         private void ParseText(string textToRender, int screenXMin, int screenYMin, Color defaultColor, int pageFont)
         {
+            Profiler.BeginSample("ParseText");
             if (pageFont >= fontRenderer.Count)
             {
                 pageFont = 0;
@@ -410,6 +376,8 @@ namespace JSI
             {
                 JUtil.LogMessage(this, "String missing characters: {0}", textToRender);
             }
+
+            Profiler.EndSample();
         }
 
         /**
@@ -501,24 +469,23 @@ namespace JSI
          */
         public void Render(RenderTexture screen)
         {
-            for (int i = 0; i < fontRenderer.Count; ++i)
-            {
-                if (fontRenderer[i].mesh.vertexCount > 0)
-                {
-                    JUtil.ShowHide(true, fontRenderer[i].obj);
-                }
-            }
-
-            textCamera.targetTexture = screen;
-            JUtil.RenderTextureCamera(textCamera);
+            Profiler.BeginSample("TextRenderer");
+            
+            GL.PushMatrix();
+            GL.LoadPixelMatrix(-screenPixelWidth * 0.5f, screenPixelWidth * 0.5f, -screenPixelHeight * 0.5f, screenPixelHeight * 0.5f);
 
             for (int i = 0; i < fontRenderer.Count; ++i)
             {
                 if (fontRenderer[i].mesh.vertexCount > 0)
                 {
-                    JUtil.ShowHide(false, fontRenderer[i].obj);
+                    fontRenderer[i].fontMaterial.SetPass(0);
+                    Graphics.DrawMeshNow(fontRenderer[i].mesh, Matrix4x4.identity);
                 }
             }
+
+            GL.PopMatrix();
+
+            Profiler.EndSample();
         }
     }
 }
