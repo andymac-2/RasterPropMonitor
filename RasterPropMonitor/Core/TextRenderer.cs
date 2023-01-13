@@ -199,6 +199,61 @@ namespace JSI
             }
         }
 
+        static int HexDigitValue(char hexDigit)
+        {
+            if (hexDigit >= '0' && hexDigit <= '9') return hexDigit - '0';
+            if (hexDigit >= 'A' && hexDigit <= 'F') return hexDigit - 'A' + 10;
+            if (hexDigit >= 'a' && hexDigit <= 'f') return hexDigit - 'a' + 10;
+            return 0;
+        }
+
+        static Color32 ParseHexColorRGB(string text, int startIndex)
+        {
+            int r = HexDigitValue(text[startIndex + 0]) * 16 + HexDigitValue(text[startIndex + 1]);
+            int g = HexDigitValue(text[startIndex + 2]) * 16 + HexDigitValue(text[startIndex + 3]);
+            int b = HexDigitValue(text[startIndex + 4]) * 16 + HexDigitValue(text[startIndex + 5]);
+
+            return new Color32((byte)r, (byte)g, (byte)b, 255);
+        }
+
+        static Color32 ParseHexColorRGBA(string text, int startIndex)
+        {
+            int r = HexDigitValue(text[startIndex + 0]) * 16 + HexDigitValue(text[startIndex + 1]);
+            int g = HexDigitValue(text[startIndex + 2]) * 16 + HexDigitValue(text[startIndex + 3]);
+            int b = HexDigitValue(text[startIndex + 4]) * 16 + HexDigitValue(text[startIndex + 5]);
+            int a = HexDigitValue(text[startIndex + 6]) * 16 + HexDigitValue(text[startIndex + 7]);
+
+            return new Color32((byte)r, (byte)g, (byte)b, (byte)a);
+        }
+
+        static int ParseInt(string text, int startIndex, int endIndex)
+        {
+            bool neg = false;
+            if (text[startIndex] == '+')
+            {
+                ++startIndex;
+            }
+            else if (text[startIndex] == '-')
+            {
+                neg = true;
+                ++startIndex;
+            }
+
+            int result = 0;
+            while (startIndex < endIndex)
+            {
+                result = result * 10 + text[startIndex] - '0';
+                ++startIndex;
+            }
+
+            return neg ? -result : result;
+        }
+
+        static bool CheckTag(string text, int startIndex, string tag)
+        {
+            return string.CompareOrdinal(text, startIndex, tag, 0, tag.Length) == 0;
+        }
+
         /**
          * ParseText
          *
@@ -230,94 +285,122 @@ namespace JSI
                 // consume characters and change state without actually generating any output.
                 while (charIndex < textToRender.Length && textToRender[charIndex] == '[')
                 {
+                    ++charIndex;
+                    if (charIndex >= textToRender.Length) break;
+
                     // If there's no closing bracket, we stop parsing and go on to printing.
-                    int nextBracket = textToRender.IndexOf(']', charIndex) - charIndex;
-                    if (nextBracket < 1)
-                        break;
-                    // Much easier to parse it this way, although I suppose more expensive.
-                    string tagText = textToRender.Substring(charIndex + 1, nextBracket - 1);
-                    if ((tagText.Length == 9 || tagText.Length == 7) && tagText[0] == '#')
+                    int tagLength = textToRender.IndexOf(']', charIndex) - charIndex;
+
+                    if (tagLength <= 1)
                     {
-                        // Valid color tags are [#rrggbbaa] or [#rrggbb].
-                        fontColor = XKCDColors.ColorTranslator.FromHtml(tagText);
-                        charIndex += nextBracket + 1;
+
+                        break;
                     }
-                    else if (tagText.Length > 2 && tagText[0] == '@')
+                    else if (tagLength == 2)
+                    {
+                        if (CheckTag(textToRender, charIndex, "hw"))
+                        {
+                            fontWidth = Width.Half;
+                            charIndex += tagLength + 1;
+                        }
+                        else if (CheckTag(textToRender, charIndex, "dw"))
+                        {
+                            fontWidth = Width.Double;
+                            charIndex += tagLength + 1;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else if (textToRender[charIndex] == '@')
                     {
                         // Valid nudge tags are [@x<number>] or [@y<number>] so the conditions for them is that
                         // the next symbol is @ and there are at least three, one designating the axis.
-                        float coord;
-                        if (float.TryParse(tagText.Substring(2), out coord))
+                        int nudgeAmount = ParseInt(textToRender, charIndex + 2, charIndex + tagLength);
+
+                        switch (textToRender[charIndex+1])
                         {
-                            switch (tagText[1])
-                            {
-                                case 'X':
-                                case 'x':
-                                    xOffset = coord;
-                                    break;
-                                case 'Y':
-                                case 'y':
-                                    yOffset = coord;
-                                    break;
-                            }
-                            // We only consume the symbols if they did parse correctly.
-                            charIndex += nextBracket + 1;
+                            case 'X':
+                            case 'x':
+                                xOffset = nudgeAmount;
+                                break;
+                            case 'Y':
+                            case 'y':
+                                yOffset = nudgeAmount;
+                                break;
                         }
-                        else //If it didn't parse, skip over it.
-                            break;
+                        // We only consume the symbols if they did parse correctly.
+                        charIndex += tagLength + 1;
                     }
-                    else if (tagText == "sup")
+                    else if (tagLength == 3)
                     {
-                        // Superscript!
-                        scriptType = Script.Superscript;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText == "sub")
-                    {
-                        // Subscript!
-                        scriptType = Script.Subscript;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText == "/sup" || tagText == "/sub")
-                    {
-                        // And back...
-                        scriptType = Script.Normal;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText == "hw")
-                    {
-                        fontWidth = Width.Half;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText == "dw")
-                    {
-                        fontWidth = Width.Double;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText == "/hw" || tagText == "/dw")
-                    {
-                        // And back...
-                        fontWidth = Width.Normal;
-                        charIndex += nextBracket + 1;
-                    }
-                    else if (tagText.StartsWith("font", StringComparison.Ordinal))
-                    {
-                        int newFontID;
-                        if (int.TryParse(tagText.Substring(4), out newFontID) && newFontID >= 0 && newFontID < fontRenderer.Count)
+                        if (CheckTag(textToRender, charIndex, "sup"))
                         {
-                            //fontTextureIndex = (int)newFontID;
+                            // Superscript!
+                            scriptType = Script.Superscript;
+                            charIndex += tagLength + 1;
+                        }
+                        else if (CheckTag(textToRender, charIndex, "sub"))
+                        {
+                            // Subscript!
+                            scriptType = Script.Subscript;
+                            charIndex += tagLength + 1;
+                        }
+                        if (CheckTag(textToRender, charIndex, "/hw") || CheckTag(textToRender, charIndex, "/dw"))
+                        {
+                            // And back...
+                            fontWidth = Width.Normal;
+                            charIndex += tagLength + 1;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else if (tagLength == 4)
+                    {
+                        if (CheckTag(textToRender, charIndex, "/sup") || CheckTag(textToRender, charIndex, "/sub"))
+                        {
+                            // And back...
+                            scriptType = Script.Normal;
+                            charIndex += tagLength + 1;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else if (tagLength == 7 && textToRender[charIndex] == '#')
+                    {
+                        fontColor = ParseHexColorRGB(textToRender, charIndex + 1);
+                        charIndex += tagLength + 1;
+                    }
+                    else if (tagLength == 9 && textToRender[charIndex] == '#')
+                    {
+                        fontColor = ParseHexColorRGBA(textToRender, charIndex + 1);
+                        charIndex += tagLength + 1;
+                    }
+                    else if (CheckTag(textToRender, charIndex, "font"))
+                    {
+                        tagLength -= "font".Length;
+                        charIndex += "font".Length;
+                        int newFontID = ParseInt(textToRender, charIndex, charIndex + tagLength);
+                        
+                        if (newFontID < fontRenderer.Count)
+                        {
                             fr = fontRenderer[newFontID];
                         }
-                        charIndex += nextBracket + 1;
+                        charIndex += tagLength + 1;
                     }
-                    else if (tagText == "[")
+                    else if (textToRender[charIndex] == '[')
                     {
                         // We got a "[[]" which means an escaped opening bracket.
                         escapedBracket = true;
-                        charIndex += nextBracket;
+                        charIndex += tagLength;
                         break;
                     }
-                    else // Else we didn't recognise anything so it's not a tag.
+                    else
                     {
                         break;
                     }
@@ -351,7 +434,13 @@ namespace JSI
                         yPos < screenPixelHeight &&
                         yPos > -fontLetterHeight)
                     {
-                        if (!DrawChar(fr, escapedBracket ? '[' : textToRender[charIndex], xPos, yPos, fontColor, scriptType, fontWidth))
+                        char c = escapedBracket ? '[' : textToRender[charIndex];
+
+                        if (c == ' ')
+                        {
+                            // skip!
+                        }
+                        else if (!DrawChar(fr, escapedBracket ? '[' : textToRender[charIndex], xPos, yPos, fontColor, scriptType, fontWidth))
                         {
                             anyWarnings = true;
                         }
@@ -385,11 +474,7 @@ namespace JSI
          */
         private bool DrawChar(FontRenderer fr, char letter, float xPos, float yPos, Color32 letterColor, Script scriptType, Width fontWidth)
         {
-            if (letter == ' ')
-            {
-                // skip!
-            }
-            else if (fontCharacters.ContainsKey(letter))
+            if (fontCharacters.ContainsKey(letter))
             {
                 // This code was written for a much older flavor of Unity, and the Unity 2017.1 update broke
                 // some assumptions about who managed the y-inversion issue between OpenGL and DX9.
