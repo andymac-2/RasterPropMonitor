@@ -238,6 +238,12 @@ namespace JSI
         private bool invalidatedColor = false;
         private bool fontNag = false;
 
+        List<Vector3> vertices = new List<Vector3>();
+        List<Color32> colors32 = new List<Color32>();
+        List<Vector4> tangents = new List<Vector4>();
+        List<Vector2> uv = new List<Vector2>();
+        List<int> triangles = new List<int>();
+
         /// <summary>
         /// Set up rendering components.
         /// </summary>
@@ -453,19 +459,8 @@ namespace JSI
 
             meshRenderer_.gameObject.SetActive(true);
 
-            Vector3[] vertices = new Vector3[maxVerts];
-            Color32[] colors32 = new Color32[maxVerts];
-            Vector4[] tangents = new Vector4[maxVerts];
-            Vector2[] uv = new Vector2[maxVerts];
+            PrepBuffers(maxVerts);
 
-            int[] triangles = new int[maxVerts + maxVerts / 2];
-            for (int idx = 0; idx < triangles.Length; ++idx)
-            {
-                triangles.SetValue(0, idx);
-            }
-
-            int charWritten = 0;
-            int arrayIndex = 0;
             int yPos = 0;
             int xAnchor = 0;
             switch (anchor_)
@@ -579,41 +574,21 @@ namespace JSI
                         {
                             if (charInfo.minX != charInfo.maxX && charInfo.minY != charInfo.maxY)
                             {
-                                triangles[charWritten * 6 + 0] = arrayIndex + 0;
-                                triangles[charWritten * 6 + 1] = arrayIndex + 3;
-                                triangles[charWritten * 6 + 2] = arrayIndex + 2;
-                                triangles[charWritten * 6 + 3] = arrayIndex + 0;
-                                triangles[charWritten * 6 + 4] = arrayIndex + 1;
-                                triangles[charWritten * 6 + 5] = arrayIndex + 3;
+                                vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f));
+                                colors32.Add(fontColor);
+                                uv.Add(charInfo.uvTopLeft);
 
-                                vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f);
-                                colors32[arrayIndex] = fontColor;
-                                tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                                uv[arrayIndex] = charInfo.uvTopLeft;
+                                vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f));
+                                colors32.Add(fontColor);
+                                uv.Add(charInfo.uvTopRight);
 
-                                ++arrayIndex;
+                                vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f));
+                                colors32.Add(fontColor);
+                                uv.Add(charInfo.uvBottomLeft);
 
-                                vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f);
-                                colors32[arrayIndex] = fontColor;
-                                tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                                uv[arrayIndex] = charInfo.uvTopRight;
-
-                                ++arrayIndex;
-
-                                vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f);
-                                colors32[arrayIndex] = fontColor;
-                                tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                                uv[arrayIndex] = charInfo.uvBottomLeft;
-
-                                ++arrayIndex;
-
-                                vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f);
-                                colors32[arrayIndex] = fontColor;
-                                tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                                uv[arrayIndex] = charInfo.uvBottomRight;
-
-                                ++arrayIndex;
-                                ++charWritten;
+                                vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f));
+                                colors32.Add(fontColor);
+                                uv.Add(charInfo.uvBottomRight);
                             }
                             xPos += charInfo.advance;
                         }
@@ -623,15 +598,53 @@ namespace JSI
                 yPos -= lineAdvance;
             }
 
+            PopulateMesh();
+        }
+
+        void PopulateMesh()
+        {
             meshFilter_.mesh.Clear();
-            meshFilter_.mesh.vertices = vertices;
-            meshFilter_.mesh.colors32 = colors32;
-            meshFilter_.mesh.tangents = tangents;
-            meshFilter_.mesh.uv = uv;
-            meshFilter_.mesh.triangles = triangles;
+            meshFilter_.mesh.SetVertices(vertices, 0, vertices.Count);
+            meshFilter_.mesh.SetColors(colors32, 0, colors32.Count);
+            meshFilter_.mesh.SetTangents(tangents, 0, vertices.Count); // note, tangents list might be longer than the vertex array
+            meshFilter_.mesh.SetUVs(0, uv, 0, uv.Count);
+            meshFilter_.mesh.SetTriangles(triangles, 0, vertices.Count / 4 * 6, 0);
             meshFilter_.mesh.RecalculateNormals();
             // Can't hide mesh with (true), or we can't edit colors later.
             meshFilter_.mesh.UploadMeshData(false);
+        }
+
+        private void PrepBuffers(int maxVerts)
+        {
+            vertices.Capacity = Math.Max(vertices.Capacity, maxVerts);
+            colors32.Capacity = Math.Max(colors32.Capacity, maxVerts);
+            tangents.Capacity = Math.Max(tangents.Capacity, maxVerts);
+            uv.Capacity = Math.Max(uv.Capacity, maxVerts);
+
+            vertices.Clear();
+            colors32.Clear();
+            uv.Clear();
+
+            // these never change, so we populate it once and leave it
+            for (int tangentCount = tangents.Count; tangentCount < maxVerts; ++tangentCount)
+            {
+                tangents.Add(new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+            }
+
+            // "triangles" is really "indices" and there are 6 per character
+            int oldNumQuads = triangles.Count / 6;
+            int newNumQuads = maxVerts / 4;
+            triangles.Capacity = Math.Max(triangles.Capacity, newNumQuads / 4 * 6);
+            for (int quadIndex = oldNumQuads; quadIndex < newNumQuads; ++quadIndex)
+            {
+                int baseVertexIndex = quadIndex * 4;
+                triangles.Add(baseVertexIndex + 0);
+                triangles.Add(baseVertexIndex + 3);
+                triangles.Add(baseVertexIndex + 2);
+                triangles.Add(baseVertexIndex + 0);
+                triangles.Add(baseVertexIndex + 1);
+                triangles.Add(baseVertexIndex + 3);
+            }
         }
 
         /// <summary>
@@ -675,19 +688,8 @@ namespace JSI
 
             meshRenderer_.gameObject.SetActive(true);
 
-            Vector3[] vertices = new Vector3[maxVerts];
-            Color32[] colors32 = new Color32[maxVerts];
-            Vector4[] tangents = new Vector4[maxVerts];
-            Vector2[] uv = new Vector2[maxVerts];
+            PrepBuffers(maxVerts);
 
-            int[] triangles = new int[maxVerts + maxVerts / 2];
-            for (int idx = 0; idx < triangles.Length; ++idx)
-            {
-                triangles.SetValue(0, idx);
-            }
-
-            int charWritten = 0;
-            int arrayIndex = 0;
             int yPos = 0;
             int xAnchor = 0;
             switch (anchor_)
@@ -743,58 +745,30 @@ namespace JSI
                     CharacterInfo charInfo;
                     if (font_.GetCharacterInfo(textLines[line][ch], out charInfo))
                     {
-                        triangles[charWritten * 6 + 0] = arrayIndex + 0;
-                        triangles[charWritten * 6 + 1] = arrayIndex + 3;
-                        triangles[charWritten * 6 + 2] = arrayIndex + 2;
-                        triangles[charWritten * 6 + 3] = arrayIndex + 0;
-                        triangles[charWritten * 6 + 4] = arrayIndex + 1;
-                        triangles[charWritten * 6 + 5] = arrayIndex + 3;
+                        vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f));
+                        colors32.Add(color_);
+                        uv.Add(charInfo.uvTopLeft);
 
-                        vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f);
-                        colors32[arrayIndex] = color_;
-                        tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                        uv[arrayIndex] = charInfo.uvTopLeft;
+                        vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f));
+                        colors32.Add(color_);
+                        uv.Add(charInfo.uvTopRight);
 
-                        ++arrayIndex;
+                        vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f));
+                        colors32.Add(color_);
+                        uv.Add(charInfo.uvBottomLeft);
 
-                        vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.maxY), 0.0f);
-                        colors32[arrayIndex] = color_;
-                        tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                        uv[arrayIndex] = charInfo.uvTopRight;
-
-                        ++arrayIndex;
-
-                        vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.minX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f);
-                        colors32[arrayIndex] = color_;
-                        tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                        uv[arrayIndex] = charInfo.uvBottomLeft;
-
-                        ++arrayIndex;
-
-                        vertices[arrayIndex] = new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f);
-                        colors32[arrayIndex] = color_;
-                        tangents[arrayIndex] = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-                        uv[arrayIndex] = charInfo.uvBottomRight;
-
-                        ++arrayIndex;
+                        vertices.Add(new Vector3(characterSize_ * (float)(xPos + charInfo.maxX), characterSize_ * (float)(yPos + charInfo.minY), 0.0f));
+                        colors32.Add(color_);
+                        uv.Add(charInfo.uvBottomRight);
 
                         xPos += charInfo.advance;
-                        ++charWritten;
                     }
                 }
 
                 yPos -= lineAdvance;
             }
 
-            meshFilter_.mesh.Clear();
-            meshFilter_.mesh.vertices = vertices;
-            meshFilter_.mesh.colors32 = colors32;
-            meshFilter_.mesh.tangents = tangents;
-            meshFilter_.mesh.uv = uv;
-            meshFilter_.mesh.triangles = triangles;
-            meshFilter_.mesh.RecalculateNormals();
-            // Can't hide mesh with (true), or we can't edit colors later.
-            meshFilter_.mesh.UploadMeshData(false);
+            PopulateMesh();
         }
 
         /// <summary>
