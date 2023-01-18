@@ -1151,7 +1151,7 @@ namespace JSI
                 RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 for (int i = 0; i < comp.availableEngines.Count; ++i)
                 {
-                    comp.availableEngines[i].thrustPercentage = (float)limit;
+                    comp.availableEngines[i].engineModule.thrustPercentage = (float)limit;
                 }
             }
         }

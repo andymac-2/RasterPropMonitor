@@ -58,8 +58,13 @@ namespace JSI
         };
 
         //--- Engines
+        internal struct EngineInfo
+        {
+            public ModuleEngines engineModule;
+            public float maxIsp;
+        }
         internal List<JSIThrustReverser> availableThrustReverser = new List<JSIThrustReverser>();
-        internal List<ModuleEngines> availableEngines = new List<ModuleEngines>();
+        internal List<EngineInfo> availableEngines = new List<EngineInfo>();
         internal List<MultiModeEngine> availableMultiModeEngines = new List<MultiModeEngine>();
         internal float totalCurrentThrust;
         internal float totalLimitedMaximumThrust;
@@ -212,9 +217,12 @@ namespace JSI
                         {
                             if (module.isEnabled && !modulesToIgnore.Contains(module.moduleName))
                             {
-                                if (module is ModuleEngines)
+                                if (module is ModuleEngines engine)
                                 {
-                                    availableEngines.Add(module as ModuleEngines);
+                                    EngineInfo engineInfo;
+                                    engineInfo.engineModule = engine;
+                                    engine.atmosphereCurve.FindMinMaxValue(out float minIsp, out engineInfo.maxIsp);
+                                    availableEngines.Add(engineInfo);
                                 }
                                 else if (module is MultiModeEngine)
                                 {
@@ -667,15 +675,17 @@ namespace JSI
             bool requestReset = false;
             for (int i = 0; i < availableEngines.Count; ++i)
             {
-                requestReset |= (!availableEngines[i].isEnabled);
+                ModuleEngines engine = availableEngines[i].engineModule;
 
-                Part thatPart = availableEngines[i].part;
+                requestReset |= (!engine.isEnabled);
+
+                Part thatPart = engine.part;
                 if (thatPart.inverseStage == StageManager.CurrentStage)
                 {
                     if (!visitedParts.Contains(thatPart))
                     {
                         currentEngineCount++;
-                        if (availableEngines[i].getIgnitionState)
+                        if (engine.getIgnitionState)
                         {
                             activeEngineCount++;
                         }
@@ -684,16 +694,16 @@ namespace JSI
                 }
 
                 anyEnginesOverheating |= (thatPart.skinTemperature / thatPart.skinMaxTemp > 0.9) || (thatPart.temperature / thatPart.maxTemp > 0.9);
-                anyEnginesEnabled |= availableEngines[i].allowShutdown && availableEngines[i].getIgnitionState;
-                anyEnginesFlameout |= (availableEngines[i].isActiveAndEnabled && availableEngines[i].flameout);
+                anyEnginesEnabled |= engine.allowShutdown && engine.getIgnitionState;
+                anyEnginesFlameout |= (engine.isActiveAndEnabled && engine.flameout);
 
-                float currentThrust = GetCurrentThrust(availableEngines[i]);
+                float currentThrust = GetCurrentThrust(engine);
                 totalCurrentThrust += currentThrust;
-                float rawMaxThrust = GetMaximumThrust(availableEngines[i]);
+                float rawMaxThrust = GetMaximumThrust(engine);
                 totalRawMaximumThrust += rawMaxThrust;
-                float maxThrust = rawMaxThrust * availableEngines[i].thrustPercentage * 0.01f;
+                float maxThrust = rawMaxThrust * engine.thrustPercentage * 0.01f;
                 totalLimitedMaximumThrust += maxThrust;
-                float realIsp = GetRealIsp(availableEngines[i]);
+                float realIsp = GetRealIsp(engine);
                 if (realIsp > 0.0f)
                 {
                     averageIspContribution += maxThrust / realIsp;
@@ -705,16 +715,14 @@ namespace JSI
                     currentEngineFuelFlow += specificFuelConsumption * currentThrust;
                 }
 
-                foreach (Propellant thatResource in availableEngines[i].propellants)
+                foreach (Propellant thatResource in engine.propellants)
                 {
                     resources.MarkPropellant(thatResource);
                 }
 
-                float minIsp, maxIsp;
-                availableEngines[i].atmosphereCurve.FindMinMaxValue(out minIsp, out maxIsp);
-                if (maxIsp > 0.0f)
+                if (availableEngines[i].maxIsp > 0.0f)
                 {
-                    maxIspContribution += maxThrust / maxIsp;
+                    maxIspContribution += maxThrust / availableEngines[i].maxIsp;
                 }
 
                 if (thatPart.skinMaxTemp - thatPart.skinTemperature < hottestEngine)
@@ -916,21 +924,22 @@ namespace JSI
         {
             for (int i = 0; i < availableEngines.Count; ++i)
             {
-                Part thatPart = availableEngines[i].part;
+                ModuleEngines engine = availableEngines[i].engineModule;
+                Part thatPart = engine.part;
 
                 // The first line allows to start engines of the first stage before the initial launch 
                 if ((StageManager.CurrentStage == StageManager.StageCount && thatPart.inverseStage == StageManager.StageCount - 1) ||
                     thatPart.inverseStage == StageManager.CurrentStage || !state)
                 {
-                    if (availableEngines[i].EngineIgnited != state)
+                    if (engine.EngineIgnited != state)
                     {
-                        if (state && availableEngines[i].allowRestart)
+                        if (state && engine.allowRestart)
                         {
-                            availableEngines[i].Activate();
+                            engine.Activate();
                         }
-                        else if (availableEngines[i].allowShutdown)
+                        else if (engine.allowShutdown)
                         {
-                            availableEngines[i].Shutdown();
+                            engine.Shutdown();
                         }
                     }
                 }
