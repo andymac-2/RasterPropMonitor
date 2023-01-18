@@ -100,6 +100,7 @@ namespace JSI
         private string persistentVarName;
         private FXGroup audioOutput;
         public Texture2D noSignalTexture;
+        private GameObject screenObject;
         private Material screenMat;
         private bool startupComplete;
         private string fontDefinitionString = @" !""#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~Δ☊¡¢£¤¥¦§¨©ª«¬☋®¯°±²³´µ¶·¸¹º»¼½¾¿";
@@ -129,6 +130,26 @@ namespace JSI
                 }
             }
             return font;
+        }
+
+        class ScreenRenderer : MonoBehaviour
+        {
+            private RasterPropMonitor m_monitor;
+
+            public void Initialize(RasterPropMonitor monitor)
+            {
+                m_monitor = monitor;
+            }
+
+            void OnBecameVisible()
+            {
+                m_monitor.enabled = true;
+            }
+
+            void OnBecameInvisible()
+            {
+                m_monitor.enabled = false;
+            }
         }
 
         public void Start()
@@ -176,7 +197,10 @@ namespace JSI
                 // Now that is done, proceed to setting up the screen.
 
                 screenTexture = new RenderTexture(screenPixelWidth, screenPixelHeight, 24, RenderTextureFormat.ARGB32);
-                screenMat = internalProp.FindModelTransform(screenTransform).GetComponent<Renderer>().material;
+                screenObject = internalProp.FindModelTransform(screenTransform).gameObject;
+                var renderer = screenObject.AddComponent<ScreenRenderer>();
+                renderer.Initialize(this);
+                screenMat = screenObject.GetComponent<Renderer>().material;
 
                 bool manuallyInvertY = false;
                 //if (SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 9") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 11") || SystemInfo.graphicsDeviceVersion.StartsWith("Direct3D 12"))
