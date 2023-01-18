@@ -41,6 +41,7 @@ namespace JSI
         private readonly static List<string> emptyIgnoreList = new List<string>();
 
         //--- Docking Nodes
+        internal List<ModuleDockingNode> availableDockingNodes = new List<ModuleDockingNode>();
         internal ModuleDockingNode mainDockingNode;
         /// <summary>
         /// Contains the state of the mainDockingNode in a queriable numeric
@@ -157,6 +158,7 @@ namespace JSI
         {
             listsInvalid = true;
 
+            availableDockingNodes.Clear();
             availableAblators.Clear();
             availableAirIntakes.Clear();
             availableAlternators.Clear();
@@ -332,6 +334,10 @@ namespace JSI
                                 else if (module is IScienceDataContainer scienceDataContainer)
                                 {
                                     availableScienceContainers.Add(scienceDataContainer);
+                                }
+                                else if (module is ModuleDockingNode dockingNode)
+                                {
+                                    availableDockingNodes.Add(dockingNode);
                                 }
                             }
                         }
@@ -588,44 +594,21 @@ namespace JSI
             mainDockingNodeState = DockingNodeState.UNKNOWN;
 
             Part referencePart = vessel.GetReferenceTransformPart();
-            if (referencePart != null)
+            Part currentPart = JUtil.DeduceCurrentPart(vessel);
+            uint launchId = currentPart ? currentPart.launchID : 0;
+            foreach (var dockingNode in availableDockingNodes)
             {
-                ModuleDockingNode node = referencePart.FindModuleImplementing<ModuleDockingNode>();
-                if (node != null)
+                // if we find a docking node on the reference part, use it and we're done
+                if (dockingNode.part == referencePart)
                 {
-                    // The current reference part is a docking node, so we
-                    // choose it.
-                    mainDockingNode = node;
-                }
-            }
-
-            if (mainDockingNode == null)
-            {
-                uint launchId;
-                Part currentPart = JUtil.DeduceCurrentPart(vessel);
-                if (currentPart == null)
-                {
-                    launchId = 0u;
-                }
-                else
-                {
-                    launchId = currentPart.launchID;
+                    mainDockingNode = dockingNode;
+                    break;
                 }
 
-                for (int i = 0; i < vessel.parts.Count; ++i)
+                // otherwise find any docking node from the same launch
+                if (dockingNode.part.launchID == launchId)
                 {
-                    if (vessel.parts[i].launchID == launchId)
-                    {
-                        ModuleDockingNode node = vessel.parts[i].FindModuleImplementing<ModuleDockingNode>();
-                        if (node != null)
-                        {
-                            // We found a docking node that has the same launch
-                            // ID as the current IVA part, so we consider it our
-                            // main docking node.
-                            mainDockingNode = node;
-                            break;
-                        }
-                    }
+                    mainDockingNode = dockingNode;
                 }
             }
 
