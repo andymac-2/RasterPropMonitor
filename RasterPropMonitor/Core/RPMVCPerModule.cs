@@ -144,6 +144,10 @@ namespace JSI
         internal bool radiatorsBroken;
         internal bool radiatorsActive;
 
+        // --- Science
+        internal List<IScienceDataContainer> availableScienceContainers = new List<IScienceDataContainer>();
+        internal float totalDataAmount;
+        internal float totalExperimentCount;
 
         #region List Management
         /// <summary>
@@ -175,6 +179,7 @@ namespace JSI
             availableTransmitters.Clear();
             availableDeployableRadiators.Clear();
             availableActiveRadiators.Clear();
+            availableScienceContainers.Clear();
 
             mainDockingNode = null;
         }
@@ -323,6 +328,10 @@ namespace JSI
                                 else if (module is ModuleActiveRadiator)
                                 {
                                     availableActiveRadiators.Add(module as ModuleActiveRadiator);
+                                }
+                                else if (module is IScienceDataContainer scienceDataContainer)
+                                {
+                                    availableScienceContainers.Add(scienceDataContainer);
                                 }
                             }
                         }
@@ -520,6 +529,24 @@ namespace JSI
             foreach (var radiator in availableActiveRadiators)
             {
                 radiatorsActive |= radiator.IsCooling;
+            }
+        }
+
+        private void FetchScienceData()
+        {
+            foreach (IScienceDataContainer container in availableScienceContainers)
+            {
+                if (container.GetScienceCount() > 0)
+                {
+                    foreach (ScienceData datapoint in container.GetData())
+                    {
+                        if (datapoint != null)
+                        {
+                            totalDataAmount += datapoint.dataAmount;
+                            totalExperimentCount += 1.0f;
+                        }
+                    }
+                }
             }
         }
 
@@ -886,6 +913,7 @@ namespace JSI
             FetchWheelData();
             FetchAntennaData();
             FetchRadiatorData();
+            FetchScienceData();
 
             if (requestReset)
             {

@@ -226,8 +226,6 @@ namespace JSI
         internal double speedHorizontal;
         internal double speedVertical;
         internal double speedVerticalRounded;
-        internal float totalDataAmount;
-        internal float totalExperimentCount;
         internal float totalShipDryMass;
         internal float totalShipWetMass;
 
@@ -978,21 +976,6 @@ namespace JSI
                     hottestPart = hottestPartMaxTemperature - hottestPartTemperature;
                 }
                 totalResourceMass += thatPart.GetResourceMass();
-
-                foreach (IScienceDataContainer container in thatPart.FindModulesImplementing<IScienceDataContainer>())
-                {
-                    if (container.GetScienceCount() > 0)
-                    {
-                        foreach (ScienceData datapoint in container.GetData())
-                        {
-                            if (datapoint != null)
-                            {
-                                totalDataAmount += datapoint.dataAmount;
-                                totalExperimentCount += 1.0f;
-                            }
-                        }
-                    }
-                }
             }
 
             totalShipWetMass = vessel.GetTotalMass();
