@@ -366,6 +366,8 @@ namespace JSI
                         }
                     case "LISTR":
                         {
+                            if (tokens[2] == "NAME") return null;
+
                             ushort resourceID = Convert.ToUInt16(tokens[1]);
 
                             bool stage = tokens[2].StartsWith("STAGE", StringComparison.Ordinal);
