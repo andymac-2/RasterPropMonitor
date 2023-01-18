@@ -117,7 +117,6 @@ namespace JSI
                         int crewSeatID = Convert.ToInt32(tokens[1]);
                         return (RPMVesselComputer comp) =>
                         {
-                            // TODO: some of these are numeric
                             return CrewListElement(tokens[2], crewSeatID, localCrew, localCrewMedical);
                         };
 
@@ -125,7 +124,6 @@ namespace JSI
                         int vesselCrewSeatID = Convert.ToInt32(tokens[1]);
                         return (RPMVesselComputer comp) =>
                         {
-                            // TODO: some of these are numeric
                             return CrewListElement(tokens[2], vesselCrewSeatID, comp.vesselCrew, comp.vesselCrewMedical);
                         };
 
@@ -386,6 +384,33 @@ namespace JSI
                                     return comp.resources.ListElement(resourceName, valueType, stage);
                                 }
                             };
+                        }
+                    case "CREWLOCAL":
+                        int crewSeatID = Convert.ToInt32(tokens[1]);
+                        if (CrewListElementIsNumeric(tokens[2]))
+                        {
+                            return (RPMVesselComputer comp) =>
+                            {
+                                return CrewListNumericElement(tokens[2], crewSeatID, localCrew, localCrewMedical);
+                            };
+                        }
+                        else
+                        {
+                            return null;
+                        }
+
+                    case "CREW":
+                        int vesselCrewSeatID = Convert.ToInt32(tokens[1]);
+                        if (CrewListElementIsNumeric(tokens[2]))
+                        {
+                            return (RPMVesselComputer comp) =>
+                            {
+                                return CrewListNumericElement(tokens[2], vesselCrewSeatID, comp.vesselCrew, comp.vesselCrewMedical);
+                            };
+                        }
+                        else
+                        {
+                            return null;
                         }
                     case "PERIODRANDOM":
                         int periodrandom;
@@ -2584,7 +2609,28 @@ namespace JSI
         #endregion
 
         #region eval helpers
-        private static object CrewListElement(string element, int seatID, IList<ProtoCrewMember> crewList, IList<kerbalExpressionSystem> crewMedical)
+
+        private static bool CrewListElementIsNumeric(string element)
+        {
+            switch (element)
+            {
+
+                case "PRESENT":
+                case "EXISTS":
+                case "STUPIDITY":
+                case "COURAGE":
+                case "BADASS":
+                case "PANIC":
+                case "WHEE":
+                case "LEVEL":
+                case "EXPERIENCE":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static double CrewListNumericElement(string element, int seatID, IList<ProtoCrewMember> crewList, IList<kerbalExpressionSystem> crewMedical)
         {
             bool exists = (crewList != null) && (seatID < crewList.Count);
             bool valid = exists && crewList[seatID] != null;
@@ -2594,12 +2640,6 @@ namespace JSI
                     return valid ? 1d : -1d;
                 case "EXISTS":
                     return exists ? 1d : -1d;
-                case "FIRST":
-                    return valid ? crewList[seatID].name.Split()[0] : string.Empty;
-                case "LAST":
-                    return valid ? crewList[seatID].name.Split()[1] : string.Empty;
-                case "FULL":
-                    return valid ? crewList[seatID].name : string.Empty;
                 case "STUPIDITY":
                     return valid ? crewList[seatID].stupidity : -1d;
                 case "COURAGE":
@@ -2610,16 +2650,32 @@ namespace JSI
                     return (valid && crewMedical[seatID] != null) ? crewMedical[seatID].panicLevel : -1d;
                 case "WHEE":
                     return (valid && crewMedical[seatID] != null) ? crewMedical[seatID].wheeLevel : -1d;
-                case "TITLE":
-                    return valid ? crewList[seatID].experienceTrait.Title : string.Empty;
                 case "LEVEL":
                     return valid ? (float)crewList[seatID].experienceLevel : -1d;
                 case "EXPERIENCE":
                     return valid ? crewList[seatID].experience : -1d;
                 default:
+                    return -1d;
+            }
+        }
+
+        private static string CrewListElement(string element, int seatID, IList<ProtoCrewMember> crewList, IList<kerbalExpressionSystem> crewMedical)
+        {
+            bool exists = (crewList != null) && (seatID < crewList.Count);
+            bool valid = exists && crewList[seatID] != null;
+            switch (element)
+            {
+                case "FIRST":
+                    return valid ? crewList[seatID].name.Split()[0] : string.Empty;
+                case "LAST":
+                    return valid ? crewList[seatID].name.Split()[1] : string.Empty;
+                case "FULL":
+                    return valid ? crewList[seatID].name : string.Empty;
+                case "TITLE":
+                    return valid ? crewList[seatID].experienceTrait.Title : string.Empty;
+                default:
                     return "???!";
             }
-
         }
 
         /// <summary>

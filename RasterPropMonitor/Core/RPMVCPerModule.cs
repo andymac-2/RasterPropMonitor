@@ -670,7 +670,8 @@ namespace JSI
 
             float averageIspContribution = 0.0f;
             float maxIspContribution = 0.0f;
-            List<Part> visitedParts = new List<Part>();
+
+            Part lastPart = null;
 
             bool requestReset = false;
             for (int i = 0; i < availableEngines.Count; ++i)
@@ -682,14 +683,15 @@ namespace JSI
                 Part thatPart = engine.part;
                 if (thatPart.inverseStage == StageManager.CurrentStage)
                 {
-                    if (!visitedParts.Contains(thatPart))
+                    // modules *should* be added to this in part order
+                    if (thatPart != lastPart)
                     {
                         currentEngineCount++;
                         if (engine.getIgnitionState)
                         {
                             activeEngineCount++;
                         }
-                        visitedParts.Add(thatPart);
+                        lastPart = thatPart;
                     }
                 }
 
