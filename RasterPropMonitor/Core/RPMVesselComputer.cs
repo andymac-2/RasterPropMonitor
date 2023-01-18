@@ -514,6 +514,16 @@ namespace JSI
                                             JUtil.LogErrorMessage(this, "Failed to parse {0} as a float", val.name);
                                         }
                                         break;
+                                    case "System.Double":
+                                        if (double.TryParse(value[1].Trim(), out double vd))
+                                        {
+                                            myPersistentVars[val.name.Trim()] = vd;
+                                        }
+                                        else
+                                        {
+                                            JUtil.LogErrorMessage(this, "Failed to parse {0} as a double", val.name);
+                                        }
+                                        break;
                                     default:
                                         JUtil.LogErrorMessage(this, "Found unknown persistent type {0}", value[0]);
                                         break;
