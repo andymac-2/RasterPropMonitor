@@ -253,7 +253,7 @@ namespace JSI
             if (cameraObject == null)
             {
                 cameraObject = new FlyingCamera(part, cameraAspect);
-                cameraObject.PointCamera(activeCamera);
+                PointCamera(+1);
             }
 
             cameraObject.FOV = activeCamera.currentFoV;
@@ -491,19 +491,8 @@ namespace JSI
             lastUpdateTime = Planetarium.GetUniversalTime();
         }
 
-        private void SelectNextCamera()
+        void PointCamera(int incrementDirection)
         {
-            if (cameras.Count < 2)
-            {
-                return;
-            }
-
-            ++currentCamera;
-            if (currentCamera == cameras.Count)
-            {
-                currentCamera = 0;
-            }
-
             bool gotCamera = cameraObject.PointCamera(cameras[currentCamera]);
 
             if (!skipMissingCameras)
@@ -520,12 +509,8 @@ namespace JSI
             while (!gotCamera && camerasTested < cameras.Count)
             {
                 ++camerasTested;
-                ++currentCamera;
-                if (currentCamera == cameras.Count)
-                {
-                    currentCamera = 0;
-                }
-
+                currentCamera = (currentCamera + incrementDirection + cameras.Count) % cameras.Count;
+                
                 gotCamera = cameraObject.PointCamera(cameras[currentCamera]);
             }
 
@@ -533,6 +518,22 @@ namespace JSI
             //{
             //    rpmComp.SetPropVar(cameraInfoVarName + "_ID", internalProp.propID, currentCamera + 1);
             //}
+        }
+
+        private void SelectNextCamera()
+        {
+            if (cameras.Count < 2)
+            {
+                return;
+            }
+
+            ++currentCamera;
+            if (currentCamera == cameras.Count)
+            {
+                currentCamera = 0;
+            }
+
+            PointCamera(+1);
         }
 
         private void SelectPreviousCamera()
@@ -548,34 +549,7 @@ namespace JSI
                 currentCamera = cameras.Count - 1;
             }
 
-            bool gotCamera = cameraObject.PointCamera(cameras[currentCamera]);
-
-            if (!skipMissingCameras)
-            {
-                //if (rpmComp != null)
-                //{
-                //    rpmComp.SetPropVar(cameraInfoVarName + "_ID", internalProp.propID, currentCamera + 1);
-                //}
-                return;
-            }
-
-            int camerasTested = 1;
-
-            while (!gotCamera && camerasTested < cameras.Count)
-            {
-                ++camerasTested;
-                --currentCamera;
-                if (currentCamera < 0)
-                {
-                    currentCamera = cameras.Count - 1;
-                }
-
-                gotCamera = cameraObject.PointCamera(cameras[currentCamera]);
-            }
-            //if (rpmComp != null)
-            //{
-            //    rpmComp.SetPropVar(cameraInfoVarName + "_ID", internalProp.propID, currentCamera + 1);
-            //}
+            PointCamera(-1);
         }
 
         // Analysis disable once UnusedParameter
