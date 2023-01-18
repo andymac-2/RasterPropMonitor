@@ -165,8 +165,11 @@ namespace JSI
         /// <param name="cb"></param>
         public void UnregisterVariableCallback(string variableName, Action<float> cb)
         {
-            var vc = InstantiateVariableOrNumber(variableName);
-            vc.onChangeCallbacks -= cb;
+            var vc = variableCollection.GetVariable(variableName);
+            if (vc != null)
+            {
+                vc.onChangeCallbacks -= cb;
+            }
         }
 
         /// <summary>
@@ -189,8 +192,11 @@ namespace JSI
         /// <param name="cb"></param>
         public void UnregisterResourceCallback(string variableName, Action<bool> cb)
         {
-            var vc = InstantiateVariableOrNumber(variableName);
-            vc.onResourceDepletedCallbacks -= cb;
+            var vc = variableCollection?.GetVariable(variableName);
+            if (vc != null)
+            {
+                vc.onResourceDepletedCallbacks -= cb;
+            }
         }
 
         /// <summary>
