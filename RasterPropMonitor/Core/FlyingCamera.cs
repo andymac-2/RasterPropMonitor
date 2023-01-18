@@ -386,7 +386,6 @@ namespace JSI
                     cameraObject[i].targetTexture = screen;
                     cameraObject[i].transform.rotation = rotation;
                     cameraObject[i].fieldOfView = FOV;
-                    cameraObject[i].Render();
 
                     JUtil.RenderTextureCamera(cameraObject[i]);
                 }
