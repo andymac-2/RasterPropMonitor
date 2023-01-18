@@ -535,7 +535,7 @@ namespace JSI
                 return;
             }
 
-            if (UpdateCheck())
+            if (UpdateCheck() && JUtil.RasterPropMonitorShouldUpdate(part))
             {
                 textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
                 labels[activeLabel].oneshotComplete = true;
