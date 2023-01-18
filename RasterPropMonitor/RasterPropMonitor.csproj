@@ -123,6 +123,7 @@
     <Compile Include="Core\SelectVariable.cs" />
     <Compile Include="Core\TextRenderer.cs" />
     <Compile Include="Core\VariableCollection.cs" />
+    <Compile Include="Core\VisibilityEnabler.cs" />
     <Compile Include="Handlers\IJSIModule.cs" />
     <Compile Include="Handlers\JSIChatterer.cs" />
     <Compile Include="Handlers\JSIEngine.cs" />

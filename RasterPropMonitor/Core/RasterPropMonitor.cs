@@ -132,26 +132,6 @@ namespace JSI
             return font;
         }
 
-        class ScreenRenderer : MonoBehaviour
-        {
-            private RasterPropMonitor m_monitor;
-
-            public void Initialize(RasterPropMonitor monitor)
-            {
-                m_monitor = monitor;
-            }
-
-            void OnBecameVisible()
-            {
-                m_monitor.enabled = true;
-            }
-
-            void OnBecameInvisible()
-            {
-                m_monitor.enabled = false;
-            }
-        }
-
         public void Start()
         {
 
@@ -198,7 +178,7 @@ namespace JSI
 
                 screenTexture = new RenderTexture(screenPixelWidth, screenPixelHeight, 24, RenderTextureFormat.ARGB32);
                 screenObject = internalProp.FindModelTransform(screenTransform).gameObject;
-                var renderer = screenObject.AddComponent<ScreenRenderer>();
+                var renderer = screenObject.AddComponent<VisibilityEnabler>();
                 renderer.Initialize(this);
                 screenMat = screenObject.GetComponent<Renderer>().material;
 

@@ -256,6 +256,9 @@ namespace JSI
                 meshRenderer_.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 meshRenderer_.receiveShadows = true; // not working?
                 meshRenderer_.material = new Material(JUtil.LoadInternalShader("RPM/JSILabel"));
+
+                var enabler = gameObject.AddComponent<VisibilityEnabler>();
+                enabler.Initialize(this);
             }
         }
 
