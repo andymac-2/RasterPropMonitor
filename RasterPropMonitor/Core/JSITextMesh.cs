@@ -319,7 +319,7 @@ namespace JSI
                         return;
                     }
 
-                    if (text_.Contains("["))
+                    if (text_.IndexOf('[') != -1)
                     {
                         richText = true;
                         GenerateRichText();
@@ -377,54 +377,70 @@ namespace JSI
             int[] textLength = new int[textLines.Length];
             int maxTextLength = 0;
             int maxVerts = 0;
+
+            // TODO: this loop is just to *measure* the text - it might be better to parse and measure it in one loop?
             for (int line = 0; line < textLines.Length; ++line)
             {
                 textLength[line] = 0;
+                string textToRender = textLines[line];
 
-                for (int charIndex = 0; charIndex < textLines[line].Length; charIndex++)
+                for (int charIndex = 0; charIndex < textToRender.Length; charIndex++)
                 {
                     bool escapedBracket = false;
                     // We will continue parsing bracket pairs until we're out of bracket pairs,
                     // since all of them -- except the escaped bracket tag --
                     // consume characters and change state without actually generating any output.
-                    while (charIndex < textLines[line].Length && textLines[line][charIndex] == '[')
+                    while (charIndex < textToRender.Length && textToRender[charIndex] == '[')
                     {
+                        ++charIndex;
+                        if (charIndex >= textToRender.Length) break;
+
                         // If there's no closing bracket, we stop parsing and go on to printing.
-                        int nextBracket = textLines[line].IndexOf(']', charIndex) - charIndex;
-                        if (nextBracket < 1)
-                            break;
-                        // Much easier to parse it this way, although I suppose more expensive.
-                        string tagText = textLines[line].Substring(charIndex + 1, nextBracket - 1).Trim();
-                        if ((tagText.Length == 9 || tagText.Length == 7) && tagText[0] == '#')
+                        int tagLength = textToRender.IndexOf(']', charIndex) - charIndex;
+                        if (tagLength <= 0)
                         {
-                            charIndex += nextBracket + 1;
-                        }
-                        else if (tagText == "[")
-                        {
-                            // We got a "[[]" which means an escaped opening bracket.
-                            escapedBracket = true;
-                            charIndex += nextBracket;
                             break;
                         }
-                        else if (tagText == "b")
+                        else if (tagLength == 1)
                         {
-                            bold = true;
-                            charIndex += nextBracket + 1;
+                            if (textToRender[charIndex] == 'b')
+                            {
+                                bold = true;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (textToRender[charIndex] == 'i')
+                            {
+                                italic = true;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (textToRender[charIndex] == '[')
+                            {
+                                // We got a "[[]" which means an escaped opening bracket.
+                                escapedBracket = true;
+                                charIndex += tagLength;
+                                break;
+                            }
                         }
-                        else if (tagText == "i")
+                        else if (tagLength == 2)
                         {
-                            italic = true;
-                            charIndex += nextBracket + 1;
+                            if (TextRenderer.CheckTag(textToRender, charIndex, "/i"))
+                            {
+                                italic = false;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (TextRenderer.CheckTag(textToRender, charIndex, "/b"))
+                            {
+                                bold = false;
+                                charIndex += tagLength + 1;
+                            }
                         }
-                        else if (tagText == "/b")
+                        else if (tagLength == 7 && textToRender[charIndex] == '#')
                         {
-                            bold = false;
-                            charIndex += nextBracket + 1;
+                            charIndex += tagLength + 1;
                         }
-                        else if (tagText == "/i")
+                        else if (tagLength == 9 && textToRender[charIndex] == '#')
                         {
-                            italic = false;
-                            charIndex += nextBracket + 1;
+                            charIndex += tagLength + 1;
                         }
                         else // Else we didn't recognise anything so it's not a tag.
                         {
@@ -435,9 +451,9 @@ namespace JSI
                     if (charIndex < textLines[line].Length)
                     {
                         FontStyle style = GetFontStyle(bold, italic);
-                        font_.RequestCharactersInTexture(escapedBracket ? "[" : textLines[line][charIndex].ToString(), fontSize_, style);
+                        font_.RequestCharactersInTexture(escapedBracket ? "[" : textToRender[charIndex].ToString(), fontSize_, style);
                         CharacterInfo charInfo;
-                        if (font_.GetCharacterInfo(textLines[line][charIndex], out charInfo, 0, style))
+                        if (font_.GetCharacterInfo(textToRender[charIndex], out charInfo, fontSize_, style))
                         {
                             textLength[line] += charInfo.advance;
                             maxVerts += 4;
@@ -512,53 +528,67 @@ namespace JSI
                 xPos += xAnchor;
 
                 Color32 fontColor = color_;
+                string textToRender = textLines[line];
 
-                for (int charIndex = 0; charIndex < textLines[line].Length; charIndex++)
+                for (int charIndex = 0; charIndex < textToRender.Length; charIndex++)
                 {
                     bool escapedBracket = false;
                     // We will continue parsing bracket pairs until we're out of bracket pairs,
                     // since all of them -- except the escaped bracket tag --
                     // consume characters and change state without actually generating any output.
-                    while (charIndex < textLines[line].Length && textLines[line][charIndex] == '[')
+                    while (charIndex < textToRender.Length && textToRender[charIndex] == '[')
                     {
+                        ++charIndex;
+                        if (charIndex >= textToRender.Length) break;
+
                         // If there's no closing bracket, we stop parsing and go on to printing.
-                        int nextBracket = textLines[line].IndexOf(']', charIndex) - charIndex;
-                        if (nextBracket < 1)
-                            break;
-                        // Much easier to parse it this way, although I suppose more expensive.
-                        string tagText = textLines[line].Substring(charIndex + 1, nextBracket - 1).Trim();
-                        if ((tagText.Length == 9 || tagText.Length == 7) && tagText[0] == '#')
+                        int tagLength = textToRender.IndexOf(']', charIndex) - charIndex;
+                        if (tagLength <= 0)
                         {
-                            // Valid color tags are [#rrggbbaa] or [#rrggbb].
-                            fontColor = XKCDColors.ColorTranslator.FromHtml(tagText);
-                            charIndex += nextBracket + 1;
-                        }
-                        else if (tagText == "[")
-                        {
-                            // We got a "[[]" which means an escaped opening bracket.
-                            escapedBracket = true;
-                            charIndex += nextBracket;
                             break;
                         }
-                        else if (tagText == "b")
+                        else if (tagLength == 1)
                         {
-                            bold = true;
-                            charIndex += nextBracket + 1;
+                            if (textToRender[charIndex] == 'b')
+                            {
+                                bold = true;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (textToRender[charIndex] == 'i')
+                            {
+                                italic = true;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (textToRender[charIndex] == '[')
+                            {
+                                // We got a "[[]" which means an escaped opening bracket.
+                                escapedBracket = true;
+                                charIndex += tagLength;
+                                break;
+                            }
                         }
-                        else if (tagText == "i")
+                        else if (tagLength == 2)
                         {
-                            italic = true;
-                            charIndex += nextBracket + 1;
+                            if (TextRenderer.CheckTag(textToRender, charIndex, "/i"))
+                            {
+                                italic = false;
+                                charIndex += tagLength + 1;
+                            }
+                            else if (TextRenderer.CheckTag(textToRender, charIndex, "/b"))
+                            {
+                                bold = false;
+                                charIndex += tagLength + 1;
+                            }
                         }
-                        else if (tagText == "/b")
+                        else if (tagLength == 7 && textToRender[charIndex] == '#')
                         {
-                            bold = false;
-                            charIndex += nextBracket + 1;
+                            fontColor = TextRenderer.ParseHexColorRGB(textToRender, charIndex + 1);
+                            charIndex += tagLength + 1;
                         }
-                        else if (tagText == "/i")
+                        else if (tagLength == 9 && textToRender[charIndex] == '#')
                         {
-                            italic = false;
-                            charIndex += nextBracket + 1;
+                            fontColor = TextRenderer.ParseHexColorRGBA(textToRender, charIndex + 1);
+                            charIndex += tagLength + 1;
                         }
                         else // Else we didn't recognise anything so it's not a tag.
                         {

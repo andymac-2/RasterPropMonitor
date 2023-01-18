@@ -17,6 +17,7 @@ namespace JSI
             public List<Vector3> vertices = new List<Vector3>();
             public List<Vector2> uvs = new List<Vector2>();
             public List<Color32> colors32 = new List<Color32>();
+            public List<ushort> indices = new List<ushort>();
 
             internal FontRenderer(Texture2D fontTexture, Vector2 vectorSize)
             {
@@ -41,36 +42,25 @@ namespace JSI
                     return;
                 }
 
-                mesh.vertices = vertices.ToArray();
-                mesh.uv = uvs.ToArray();
+                mesh.SetVertices(vertices);
+                mesh.SetUVs(0, uvs);
+                mesh.SetColors(colors32);
 
-                if (colors32.Count > 0)
-                {
-                    Color32[] colorarr = new Color32[colors32.Count * 4];
-                    for (int i = 0; i < colors32.Count; ++i)
-                    {
-                        colorarr[i * 4 + 0] = colors32[i];
-                        colorarr[i * 4 + 1] = colors32[i];
-                        colorarr[i * 4 + 2] = colors32[i];
-                        colorarr[i * 4 + 3] = colors32[i];
-                    }
-                    mesh.colors32 = colorarr;
-                }
-
-                int quadCount = vertices.Count / 4;
                 // 6 indices for each quad (4 vertices)
-                int[] indices = new int[quadCount * 6];
-                for (int i = 0; i < quadCount; ++i)
+                int oldQuadCount = indices.Count / 6;
+                int quadCount = vertices.Count / 4;
+                for (int quadIndex = oldQuadCount; quadIndex < quadCount; ++quadIndex)
                 {
-                    indices[i * 6 + 0] = i * 4 + 1;
-                    indices[i * 6 + 1] = i * 4 + 0;
-                    indices[i * 6 + 2] = i * 4 + 2;
-                    indices[i * 6 + 3] = i * 4 + 3;
-                    indices[i * 6 + 4] = i * 4 + 1;
-                    indices[i * 6 + 5] = i * 4 + 2;
+                    ushort baseVertexIndex = (ushort)(quadIndex * 4);
+                    indices.Add((ushort)(baseVertexIndex + 1));
+                    indices.Add((ushort)(baseVertexIndex + 0));
+                    indices.Add((ushort)(baseVertexIndex + 2));
+                    indices.Add((ushort)(baseVertexIndex + 3));
+                    indices.Add((ushort)(baseVertexIndex + 1));
+                    indices.Add((ushort)(baseVertexIndex + 2));
                 }
 
-                mesh.triangles = indices;
+                mesh.SetTriangles(indices, 0, quadCount * 6, 0);
             }
 
             internal void Clear()
@@ -207,7 +197,7 @@ namespace JSI
             return 0;
         }
 
-        static Color32 ParseHexColorRGB(string text, int startIndex)
+        public static Color32 ParseHexColorRGB(string text, int startIndex)
         {
             int r = HexDigitValue(text[startIndex + 0]) * 16 + HexDigitValue(text[startIndex + 1]);
             int g = HexDigitValue(text[startIndex + 2]) * 16 + HexDigitValue(text[startIndex + 3]);
@@ -216,7 +206,7 @@ namespace JSI
             return new Color32((byte)r, (byte)g, (byte)b, 255);
         }
 
-        static Color32 ParseHexColorRGBA(string text, int startIndex)
+        public static Color32 ParseHexColorRGBA(string text, int startIndex)
         {
             int r = HexDigitValue(text[startIndex + 0]) * 16 + HexDigitValue(text[startIndex + 1]);
             int g = HexDigitValue(text[startIndex + 2]) * 16 + HexDigitValue(text[startIndex + 3]);
@@ -226,7 +216,7 @@ namespace JSI
             return new Color32((byte)r, (byte)g, (byte)b, (byte)a);
         }
 
-        static int ParseInt(string text, int startIndex, int endIndex)
+        public static int ParseInt(string text, int startIndex, int endIndex)
         {
             bool neg = false;
             if (text[startIndex] == '+')
@@ -249,7 +239,7 @@ namespace JSI
             return neg ? -result : result;
         }
 
-        static bool CheckTag(string text, int startIndex, string tag)
+        public static bool CheckTag(string text, int startIndex, string tag)
         {
             return string.CompareOrdinal(text, startIndex, tag, 0, tag.Length) == 0;
         }
@@ -290,10 +280,8 @@ namespace JSI
 
                     // If there's no closing bracket, we stop parsing and go on to printing.
                     int tagLength = textToRender.IndexOf(']', charIndex) - charIndex;
-
                     if (tagLength <= 1)
                     {
-
                         break;
                     }
                     else if (tagLength == 2)
@@ -502,6 +490,10 @@ namespace JSI
                 fr.uvs.Add(new Vector2(uv.xMin, (manuallyInvertY) ? uv.yMin : uv.yMax));
                 fr.uvs.Add(new Vector2(uv.xMax, (manuallyInvertY) ? uv.yMin : uv.yMax));
 
+                // add 1 color entry per vertex
+                fr.colors32.Add(letterColor);
+                fr.colors32.Add(letterColor);
+                fr.colors32.Add(letterColor);
                 fr.colors32.Add(letterColor);
             }
             else if (!characterWarnings.Contains(letter))
