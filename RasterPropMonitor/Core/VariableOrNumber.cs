@@ -152,6 +152,10 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                if (numericEvaluator != null)
+                {
+                    return (float)numericEvaluator(comp);
+                }
                 return evaluator(comp).MassageToFloat();
             }
             else
@@ -169,6 +173,10 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                if (numericEvaluator != null)
+                {
+                    return numericEvaluator(comp);
+                }
                 return evaluator(comp).MassageToDouble();
             }
             else
@@ -186,6 +194,10 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                if (numericEvaluator != null)
+                {
+                    return (int)numericEvaluator(comp);
+                }
                 return evaluator(comp).MassageToInt();
             }
             else
@@ -203,6 +215,10 @@ namespace JSI
             if (rpmComp != null)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
+                if (numericEvaluator != null)
+                {
+                    return numericEvaluator(comp);
+                }
                 return evaluator(comp);
             }
             else if (isNumeric)
