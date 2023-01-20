@@ -232,6 +232,7 @@ namespace JSI
             int result = 0;
             while (startIndex < endIndex)
             {
+                if (text[startIndex] < '0' || text[startIndex] > '9') break;
                 result = result * 10 + text[startIndex] - '0';
                 ++startIndex;
             }
@@ -335,7 +336,7 @@ namespace JSI
                             scriptType = Script.Subscript;
                             charIndex += tagLength + 1;
                         }
-                        if (CheckTag(textToRender, charIndex, "/hw") || CheckTag(textToRender, charIndex, "/dw"))
+                        else if (CheckTag(textToRender, charIndex, "/hw") || CheckTag(textToRender, charIndex, "/dw"))
                         {
                             // And back...
                             fontWidth = Width.Normal;
@@ -392,6 +393,11 @@ namespace JSI
                     {
                         break;
                     }
+                }
+
+                if (charIndex >= textToRender.Length)
+                {
+                    break;
                 }
 
                 if (textToRender[charIndex] == '\r')
