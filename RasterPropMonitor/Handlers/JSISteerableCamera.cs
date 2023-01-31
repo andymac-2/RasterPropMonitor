@@ -208,6 +208,7 @@ namespace JSI
 
             if (state == false && renderTex != null)
             {
+                cameraObject.PointCamera(null, 0);
                 UnityEngine.Object.Destroy(renderTex);
                 renderTex = null;
             }
@@ -253,7 +254,8 @@ namespace JSI
             if (cameraObject == null)
             {
                 cameraObject = new FlyingCamera(part, cameraAspect);
-                PointCamera(+1);
+                cameraObject.PointCamera(activeCamera);
+                cameraObject.SetFlicker(flickerChance, flickerRange);
             }
 
             cameraObject.FOV = activeCamera.currentFoV;
