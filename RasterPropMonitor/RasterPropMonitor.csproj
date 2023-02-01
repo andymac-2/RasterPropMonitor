@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.props" Condition="Exists('..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,6 +11,8 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <CodePage>65001</CodePage>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -246,6 +249,7 @@
   <ItemGroup />
   <ItemGroup>
     <None Include=".editorconfig" />
+    <None Include="packages.config" />
     <None Include="Shaders\RPM-DisplayShader-compiled.shader" />
     <None Include="Shaders\RPM-CroppedDisplayShader-compiled.shader" />
     <None Include="Shaders\RPM-CroppedDisplayShader.shader" />
@@ -253,7 +257,18 @@
     <None Include="Shaders\RPM-FontShader-compiled.shader" />
     <None Include="Shaders\RPM-FontShader.shader" />
   </ItemGroup>
+  <ItemGroup>
+    <Publicize Include="Assembly-CSharp" />
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetDir)$(TargetName).* $(SolutionDir)GameData\JSI\RasterPropMonitor\Plugins\$(TargetName).*</PostBuildEvent>
   </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.props'))" />
+    <Error Condition="!Exists('..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets'))" />
+  </Target>
+  <Import Project="..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets" Condition="Exists('..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets')" />
 </Project>

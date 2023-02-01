@@ -83,7 +83,7 @@ namespace JSI
         {
             if (part != null)
             {
-                Kerbal k = part.FindCurrentKerbal();
+                Kerbal k = CameraManager.Instance.ivaCameraActiveKerbal;
                 if (k != null)
                 {
                     // Disallow tourists using props

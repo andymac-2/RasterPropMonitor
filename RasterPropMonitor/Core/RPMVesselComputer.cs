@@ -446,7 +446,7 @@ namespace JSI
         /// Load and parse persistent variables
         /// </summary>
         /// <param name="node"></param>
-        protected override void OnLoad(ConfigNode node)
+        public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
 
@@ -570,7 +570,7 @@ namespace JSI
         /// Save our persistent variables
         /// </summary>
         /// <param name="node"></param>
-        protected override void OnSave(ConfigNode node)
+        public override void OnSave(ConfigNode node)
         {
             base.OnSave(node);
 
@@ -629,7 +629,7 @@ namespace JSI
             //}
         }
 
-        protected override void OnAwake()
+        public override void OnAwake()
         {
             base.OnAwake();
 
@@ -683,7 +683,7 @@ namespace JSI
             GameEvents.onVesselDestroy.Add(onVesselDestroy);
         }
 
-        protected override void OnStart()
+        public override void OnStart()
         {
             if (vessel == null)
             {

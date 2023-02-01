@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -101,9 +101,9 @@ namespace JSI
             });
 
             // If (somehow) we start in IVA, make sure we initialize here.
-            if (JUtil.UserIsInPod(part) && InternalCamera.Instance != null && InternalCamera.Instance.isActive && CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA)
+            if (CameraManager.Instance.activeInternalPart == part)
             {
-                Kerbal activeKerbal = part.FindCurrentKerbal();
+                Kerbal activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
                 int seatID;
                 if (activeKerbal == null)
                 {
@@ -133,9 +133,9 @@ namespace JSI
         /// <param name="newMode"></param>
         private void OnCameraChange(CameraManager.CameraMode newMode)
         {
-            if (newMode == CameraManager.CameraMode.IVA)
+            if (CameraManager.Instance.activeInternalPart == part)
             {
-                Kerbal activeKerbal = part.FindCurrentKerbal();
+                Kerbal activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
                 if (activeKerbal != null)
                 {
                     int seatID = activeKerbal.protoCrewMember.seatIdx;
@@ -183,8 +183,8 @@ namespace JSI
         {
             // Unfortunately, the callback is telling me who the previous Kerbal was,
             // not who the new Kerbal is.
-            Kerbal activeKerbal = part.FindCurrentKerbal();
-            if (activeKerbal != null)
+            Kerbal activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
+            if (activeKerbal != null && CameraManager.Instance.activeInternalPart == part)
             {
                 int seatID = activeKerbal.protoCrewMember.seatIdx;
                 if (seatID != oldSeat)

@@ -454,7 +454,7 @@ namespace JSI
             Kerbal thatKerbal = CameraManager.Instance.IVACameraActiveKerbal;
             if (thatKerbal != null)
             {
-                return thatKerbal.InPart == thisPart;
+                return CameraManager.Instance.activeInternalPart == thisPart;
             }
             else
             {
@@ -473,29 +473,11 @@ namespace JSI
             Kerbal activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
             if (activeKerbal != null)
             {
-                return (activeKerbal.InPart == thisPart) ? activeKerbal.protoCrewMember.seatIdx : -1;
+                return (CameraManager.Instance.activeInternalPart == thisPart) ? activeKerbal.protoCrewMember.seatIdx : -1;
             }
             else
             {
                 return -1;
-            }
-        }
-
-        /// <summary>
-        /// Return a reference to the active kerbal in the current part.
-        /// </summary>
-        /// <param name="thisPart"></param>
-        /// <returns></returns>
-        public static Kerbal FindCurrentKerbal(this Part thisPart)
-        {
-            Kerbal activeKerbal = CameraManager.Instance.IVACameraActiveKerbal;
-            if (activeKerbal != null)
-            {
-                return (activeKerbal.InPart == thisPart) ? activeKerbal : null;
-            }
-            else
-            {
-                return null;
             }
         }
 
