@@ -114,7 +114,7 @@ namespace JSI
             isNumeric = true;
             numericValue = newVal;
 
-            if (Math.Abs(oldVal - newVal) > 1e-5)
+            if (JUtil.ValueChanged(oldVal, newVal))
             {
                 FireCallbacks((float)newVal);
             }

@@ -98,7 +98,7 @@ namespace JSI
                     if (sourceVariable.isNumeric)
                     {
                         double newValue = sourceVariable.numericValue;
-                        if (Math.Abs((double)sourceValues[i] - newValue) > 1e-4)
+                        if (JUtil.ValueChanged((double)sourceValues[i], newValue))
                         {
                             anyChanged = true;
                             sourceValues[i] = newValue;

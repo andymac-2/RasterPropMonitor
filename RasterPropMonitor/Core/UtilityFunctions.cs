@@ -390,6 +390,15 @@ namespace JSI
             }
         }
 
+        public static bool ValueChanged(double oldValue, double newValue)
+        {
+            if (double.IsNaN(oldValue) != double.IsNaN(newValue) || Math.Abs(newValue - oldValue) > 1e-4)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public static Vector3d SwizzleXZY(this Vector3d vector)
         {
             return new Vector3d(vector.x, vector.z, vector.y);
