@@ -423,6 +423,11 @@ namespace JSI
                                 charIndex += tagLength;
                                 break;
                             }
+                            else // Else we didn't recognise anything so it's not a tag.
+                            {
+                                --charIndex; // treat this as a literal bracket
+                                break;
+                            }
                         }
                         else if (tagLength == 2)
                         {
@@ -436,6 +441,11 @@ namespace JSI
                                 bold = false;
                                 charIndex += tagLength + 1;
                             }
+                            else // Else we didn't recognise anything so it's not a tag.
+                            {
+                                --charIndex; // treat this as a literal bracket
+                                break;
+                            }
                         }
                         else if (tagLength == 7 && textToRender[charIndex] == '#')
                         {
@@ -447,6 +457,7 @@ namespace JSI
                         }
                         else // Else we didn't recognise anything so it's not a tag.
                         {
+                            --charIndex; // treat this as a literal bracket
                             break;
                         }
                     }
@@ -569,6 +580,11 @@ namespace JSI
                                 charIndex += tagLength;
                                 break;
                             }
+                            else // Else we didn't recognise anything so it's not a tag.
+                            {
+                                --charIndex; // treat this as a literal bracket
+                                break;
+                            }
                         }
                         else if (tagLength == 2)
                         {
@@ -581,6 +597,11 @@ namespace JSI
                             {
                                 bold = false;
                                 charIndex += tagLength + 1;
+                            }
+                            else // Else we didn't recognise anything so it's not a tag.
+                            {
+                                --charIndex; // treat this as a literal bracket
+                                break;
                             }
                         }
                         else if (tagLength == 7 && textToRender[charIndex] == '#')
@@ -595,6 +616,7 @@ namespace JSI
                         }
                         else // Else we didn't recognise anything so it's not a tag.
                         {
+                            --charIndex; // treat this as a literal bracket
                             break;
                         }
                     }

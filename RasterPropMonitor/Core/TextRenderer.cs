@@ -299,6 +299,7 @@ namespace JSI
                         }
                         else
                         {
+                            --charIndex; // treat this as a literal bracket
                             break;
                         }
                     }
@@ -344,6 +345,7 @@ namespace JSI
                         }
                         else
                         {
+                            --charIndex; // treat this as a literal bracket
                             break;
                         }
                     }
@@ -357,6 +359,7 @@ namespace JSI
                         }
                         else
                         {
+                            --charIndex; // treat this as a literal bracket
                             break;
                         }
                     }
@@ -391,6 +394,7 @@ namespace JSI
                     }
                     else
                     {
+                        --charIndex; // treat this as a literal bracket
                         break;
                     }
                 }
