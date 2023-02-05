@@ -25,7 +25,7 @@ namespace JSI
 {
     class JSIKAC : IJSIModule
     {
-        private static readonly bool kacFound;
+        public static readonly bool kacFound;
 
         static JSIKAC()
         {

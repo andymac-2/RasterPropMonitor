@@ -32,7 +32,7 @@ namespace JSI
         private static readonly DynamicFuncBool chattererRx;
         private static readonly DynamicAction chattererStartTalking;
 
-        private static readonly bool chattererFound;
+        public static readonly bool chattererFound;
 
         private Guid lastVessel;
         private UnityEngine.Object chatterer;

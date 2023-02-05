@@ -315,16 +315,16 @@ namespace JSI
                 GameEvents.onVesselChange.Add(onVesselChange);
                 GameEvents.onVesselCrewWasModified.Add(onVesselCrewWasModified);
 
-                installedModules.Add(new JSIParachute(vessel));
-                installedModules.Add(new JSIMechJeb(vessel));
+                if (JSIParachute.rcFound) installedModules.Add(new JSIParachute(vessel));
+                if (JSIMechJeb.IsInstalled) installedModules.Add(new JSIMechJeb(vessel));
                 installedModules.Add(new JSIInternalRPMButtons(vessel));
-                installedModules.Add(new JSIFAR(vessel));
-                installedModules.Add(new JSIKAC(vessel));
+                if (JSIFAR.farFound) installedModules.Add(new JSIFAR(vessel));
+                if (JSIKAC.kacFound) installedModules.Add(new JSIKAC(vessel));
 #if ENABLE_ENGINE_MONITOR
                 installedModules.Add(new JSIEngine(vessel));
 #endif
-                installedModules.Add(new JSIPilotAssistant(vessel));
-                installedModules.Add(new JSIChatterer(vessel));
+                if (JSIPilotAssistant.paFound) installedModules.Add(new JSIPilotAssistant(vessel));
+                if (JSIChatterer.chattererFound) installedModules.Add(new JSIChatterer(vessel));
 
                 if (string.IsNullOrEmpty(RPMCid))
                 {

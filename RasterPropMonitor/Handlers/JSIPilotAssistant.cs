@@ -35,7 +35,7 @@ namespace JSI
      */
     class JSIPilotAssistant : IJSIModule
     {
-        static private readonly bool paFound;
+        public static readonly bool paFound;
         // AsstVesselModule.vesselAsst
         private static readonly FieldInfo vesselAsst_t;
 

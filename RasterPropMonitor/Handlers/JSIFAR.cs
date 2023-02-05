@@ -28,7 +28,7 @@ namespace JSI
 {
     class JSIFAR : IJSIModule
     {
-        private static readonly bool farFound;
+        public static readonly bool farFound;
 
         // FARAPI.ActiveVesselAoA()
         private static readonly MethodInfo farActiveVesselAoA;
