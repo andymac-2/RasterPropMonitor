@@ -22,6 +22,7 @@ using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
 namespace JSI
 {
@@ -39,6 +40,7 @@ namespace JSI
 
         private bool listsInvalid = true;
         private readonly static List<string> emptyIgnoreList = new List<string>();
+        private double lastUTC;
 
         //--- Docking Nodes
         internal List<ModuleDockingNode> availableDockingNodes = new List<ModuleDockingNode>();
@@ -759,7 +761,7 @@ namespace JSI
                 actualMaxIsp = 0.0f;
             }
 
-            resources.EndLoop(Planetarium.GetUniversalTime());
+            resources.EndLoop(Planetarium.GetUniversalTime() - lastUTC);
 
             return requestReset;
         }
@@ -892,6 +894,12 @@ namespace JSI
                 return;
             }
 
+            double currentUTC = Planetarium.fetch.time;
+            if (currentUTC == lastUTC)
+            {
+                return;
+            }
+
             UpdateModuleLists();
 
             bool requestReset = false;
@@ -912,6 +920,8 @@ namespace JSI
             {
                 InvalidateModuleLists();
             }
+
+            lastUTC = currentUTC;
         }
         #endregion
 

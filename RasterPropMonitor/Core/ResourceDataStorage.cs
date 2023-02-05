@@ -26,7 +26,6 @@ namespace JSI
     public class ResourceDataStorage
     {
         private readonly ResourceData[] rs;
-        private double lastcheck;
         private readonly Dictionary<string, ResourceData> nameResources = new Dictionary<string, ResourceData>();
         private readonly Dictionary<string, ResourceData> sysrResources = new Dictionary<string, ResourceData>();
         private readonly string[] sortedResourceNames;
@@ -101,15 +100,14 @@ namespace JSI
             }
         }
 
-        public void EndLoop(double time)
+        public void EndLoop(double dt)
         {
-            float invDeltaT = (float)(1.0 / (time - lastcheck));
+            float invDeltaT = (float)(1.0 / dt);
             for (int i = 0; i < rs.Length; ++i)
             {
                 rs[i].delta = (rs[i].previous - rs[i].current) * invDeltaT;
                 rs[i].previous = rs[i].current;
             }
-            lastcheck = time;
 
             if (stagePartsChanged)
             {
