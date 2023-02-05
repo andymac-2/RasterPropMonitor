@@ -67,6 +67,13 @@ namespace JSI
         internal bool GetPersistentVariable(string name, bool defaultValue, bool broadcast)
         {
             double val = GetPersistentVariable(name, defaultValue ? 1 : 0, broadcast);
+            
+            // HACK: if someone tried to access this persistent var, it will have defaulted to -1 which would be "true"
+            if (val == -1.0)
+            {
+                SetPersistentVariable(name, defaultValue ? 1 : 0, broadcast);
+                return defaultValue;
+            }
             return val != 0;
         }
 
