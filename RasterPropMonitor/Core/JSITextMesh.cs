@@ -205,6 +205,7 @@ namespace JSI
 
         private string text_;
         private bool richText = false;
+        private bool hasColorTags = false;
         public string text
         {
             get
@@ -338,7 +339,7 @@ namespace JSI
                 }
                 else if (invalidatedColor)
                 {
-                    if (richText)
+                    if (richText && hasColorTags)
                     {
                         GenerateRichText();
                     }
@@ -346,12 +347,11 @@ namespace JSI
                     {
                         if (meshFilter_.mesh.colors32.Length > 0)
                         {
-                            Color32[] newColor = new Color32[meshFilter_.mesh.colors32.Length];
-                            for (int idx = 0; idx < newColor.Length; ++idx)
+                            for (int idx = 0; idx < colors32.Count; ++idx)
                             {
-                                newColor[idx] = color_;
+                                colors32[idx] = color_;
                             }
-                            meshFilter_.mesh.colors32 = newColor;
+                            meshFilter_.mesh.SetColors(colors32);
                             meshFilter_.mesh.UploadMeshData(false);
                         }
                     }
@@ -368,6 +368,8 @@ namespace JSI
         /// </summary>
         private void GenerateRichText()
         {
+            hasColorTags = false;
+
             // Break the text into lines
             string[] textLines = text_.Split(JUtil.LineSeparator, StringSplitOptions.None);
 
@@ -449,10 +451,12 @@ namespace JSI
                         }
                         else if (tagLength == 7 && textToRender[charIndex] == '#')
                         {
+                            hasColorTags = true;
                             charIndex += tagLength + 1;
                         }
                         else if (tagLength == 9 && textToRender[charIndex] == '#')
                         {
+                            hasColorTags = true;
                             charIndex += tagLength + 1;
                         }
                         else // Else we didn't recognise anything so it's not a tag.
