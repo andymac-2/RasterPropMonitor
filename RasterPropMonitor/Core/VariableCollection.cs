@@ -21,7 +21,7 @@ namespace JSI
         public void AddVariable(VariableOrNumber variable)
         {
             variableCache.Add(variable.variableName, variable);
-            if (!variable.isConstant)
+            if (variable.updateType <= VariableUpdateType.PerFrame)
             {
                 updatableVariables.Add(variable);
             }

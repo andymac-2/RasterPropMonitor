@@ -25,6 +25,14 @@ using static JSI.RasterPropMonitorComputer;
 
 namespace JSI
 {
+    enum VariableUpdateType
+    {
+        Volatile, // variable must be re-evaluated every time it's accessed
+        PerFrame, // variable is re-evaluated once per frame and cached (this is default)
+        Pushed,   // variable is re-evaluated on demand by an external system (e.g. persistent variables)
+        Constant, // variable is evaluated once on first use
+    }
+
     /// <summary>
     /// This is the class that individual modules use to access the variable
     /// It's owned by the VariableCache instances inside the RasterPropMonitorComputer
@@ -36,13 +44,15 @@ namespace JSI
         internal double numericValue;
         internal string stringValue;
         internal bool isNumeric;
-        internal bool isConstant;
+        internal VariableUpdateType updateType;
         private readonly RasterPropMonitorComputer rpmComp;
 
         internal NumericVariableEvaluator numericEvaluator;
         internal VariableEvaluator evaluator;
         internal event Action<float> onChangeCallbacks;
         internal event Action<bool> onResourceDepletedCallbacks;
+
+        public bool isConstant => updateType == VariableUpdateType.Constant;
 
         internal void FireCallbacks(float newValue)
         {
@@ -63,16 +73,16 @@ namespace JSI
         /// <param name="input">The name of the variable</param>
         /// <param name="cacheable">Whether the variable is cacheable</param>
         /// <param name="rpmComp">The RasterPropMonitorComputer that owns the variable</param>
-        internal VariableOrNumber(string input, VariableEvaluator evaluator, RPMVesselComputer vesselComp, bool constant, RasterPropMonitorComputer rpmComp_)
+        internal VariableOrNumber(string input, VariableEvaluator evaluator, RPMVesselComputer vesselComp, VariableUpdateType updateType, RasterPropMonitorComputer rpmComp_)
         {
             variableName = input;
-            isConstant = constant;
+            this.updateType = updateType;
             rpmComp = rpmComp_; // will be null if this variable is cacheable
             this.evaluator = evaluator;
 
             if (evaluator == null)
             {
-                isConstant = true;
+                updateType = VariableUpdateType.Constant;
                 stringValue = input;
                 isNumeric = false;
                 rpmComp = null;
@@ -95,10 +105,10 @@ namespace JSI
             }
         }
 
-        internal VariableOrNumber(string input, NumericVariableEvaluator evaluator, RPMVesselComputer vesselComp, bool constant, RasterPropMonitorComputer rpmComp_)
+        internal VariableOrNumber(string input, NumericVariableEvaluator evaluator, RPMVesselComputer vesselComp, VariableUpdateType updateType, RasterPropMonitorComputer rpmComp_)
         {
             variableName = input;
-            isConstant = constant;
+            this.updateType = updateType;
             rpmComp = rpmComp_; // will be null if this variable is cacheable
             this.numericEvaluator = evaluator;
 
@@ -149,7 +159,7 @@ namespace JSI
         /// <returns></returns>
         public float AsFloat()
         {
-            if (rpmComp != null)
+            if (updateType == VariableUpdateType.Volatile)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
                 if (numericEvaluator != null)
@@ -170,7 +180,7 @@ namespace JSI
         /// <returns></returns>
         public double AsDouble()
         {
-            if (rpmComp != null)
+            if (updateType == VariableUpdateType.Volatile)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
                 if (numericEvaluator != null)
@@ -191,7 +201,7 @@ namespace JSI
         /// <returns></returns>
         public int AsInt()
         {
-            if (rpmComp != null)
+            if (updateType == VariableUpdateType.Volatile)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
                 if (numericEvaluator != null)
@@ -212,7 +222,7 @@ namespace JSI
         /// <returns></returns>
         public object Get()
         {
-            if (rpmComp != null)
+            if (updateType == VariableUpdateType.Volatile)
             {
                 RPMVesselComputer comp = RPMVesselComputer.Instance(rpmComp.vessel);
                 if (numericEvaluator != null)

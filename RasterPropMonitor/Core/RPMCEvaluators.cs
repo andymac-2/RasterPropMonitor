@@ -64,15 +64,14 @@ namespace JSI
 
         #region evaluator
         //static // uncomment this to make sure there's no non-static methods being generated
-        internal VariableEvaluator GetEvaluator(string input, out bool cacheable, out bool isConstant)
+        internal VariableEvaluator GetEvaluator(string input, out VariableUpdateType updateType)
         {
-            cacheable = true;
-            isConstant = false;
+            updateType = VariableUpdateType.PerFrame;
 
             // handle literals
             if (input[0] == '$')
             {
-                isConstant = true;
+                updateType = VariableUpdateType.Constant;
                 input = input.Substring(1).Trim();
                 return (RPMVesselComputer comp) => input;
             }
@@ -81,8 +80,9 @@ namespace JSI
 			try
 			{
 				object result;
-				if (plugins.ProcessVariable(input, out result, out cacheable))
+				if (plugins.ProcessVariable(input, out result, out bool cacheable))
 				{
+                    updateType = cacheable ? VariableUpdateType.PerFrame: VariableUpdateType.Volatile;
 					// It's a plugin variable.
 					return (RPMVesselComputer comp) =>
 					{
@@ -129,7 +129,7 @@ namespace JSI
 
                     case "STOREDSTRING":
                         int storedStringNumber;
-                        isConstant = true;
+                        updateType = VariableUpdateType.Constant;
                         if (int.TryParse(tokens[1], out storedStringNumber))
                         {
                             return (RPMVesselComputer comp) => 
@@ -167,7 +167,7 @@ namespace JSI
 
             if (input.StartsWith("AGMEMO", StringComparison.Ordinal))
             {
-                isConstant = true;
+                updateType = VariableUpdateType.Constant;
                 if (uint.TryParse(input.Substring("AGMEMO".Length), out uint groupID))
                 {
                     RPMVesselComputer vesselComputer = RPMVesselComputer.Instance(vessel);
@@ -198,7 +198,7 @@ namespace JSI
             {
                 // Meta.
                 case "RPMVERSION":
-                    isConstant = true;
+                    updateType = VariableUpdateType.Constant;
                     return (RPMVesselComputer comp) => { return FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion; };
 
                 // Orbital parameters
@@ -318,15 +318,17 @@ namespace JSI
             return null;
         }
         
-        internal NumericVariableEvaluator GetNumericEvaluator(string input, out bool cacheable, out bool isConstant)
+        // cacheable: whether the value for this variable can calculated once per frame.  random variables are the only things that aren't cacheable right now
+        // constant: whether the value is constant for the lifetime of this part
+        // isUpdateable: whether the variable system should recalculate the value of this variable once per frame
+        internal NumericVariableEvaluator GetNumericEvaluator(string input, out VariableUpdateType updateType)
         {
-            cacheable = true;
-            isConstant = false;
-
+            updateType = VariableUpdateType.PerFrame;
+            
             // handle literals
             if (double.TryParse(input, out double value))
             {
-                isConstant = true;
+                updateType = VariableUpdateType.Constant;
                 return (RPMVesselComputer comp) => value;
             }
 
@@ -339,7 +341,7 @@ namespace JSI
                     case "ISLOADED":
                         string assemblyname = input.Substring(input.IndexOf("_", StringComparison.Ordinal) + 1);
 
-                        isConstant = true;
+                        updateType = VariableUpdateType.Constant;
 
                         if (RPMGlobals.knownLoadedAssemblies.Contains(assemblyname))
                         {
@@ -478,6 +480,7 @@ namespace JSI
                     case "PERSISTENT":
                         {
                             string substring = input.Substring("PERSISTENT".Length + 1);
+                            updateType = VariableUpdateType.Pushed;
                             return (RPMVesselComputer comp) =>
                             {
                                 return GetPersistentVariable(substring, -1.0, false);
@@ -527,7 +530,7 @@ namespace JSI
 
                         if (propToUse == null)
                         {
-                            isConstant = true;
+                            updateType = VariableUpdateType.Constant;
                             JUtil.LogErrorMessage(this, $"Could not find InternalModule for {tokens[1]}");
                             return (RPMVesselComputer comp) => { return -1; };
                         }
@@ -543,7 +546,7 @@ namespace JSI
                                 }
                                 else
                                 {
-                                    isConstant = true;
+                                    updateType = VariableUpdateType.Constant;
                                     // Doesn't exist -- return nothing
                                     return (RPMVesselComputer comp) => { return -1; };
                                 }
@@ -584,13 +587,13 @@ namespace JSI
             {
                 // Conversion constants
                 case "MetersToFeet":
-                    isConstant = true;
+                    updateType = VariableUpdateType.Constant;
                     return (RPMVesselComputer comp) => RPMGlobals.MetersToFeet;
                 case "MetersPerSecondToKnots":
-                    isConstant = true;
+                    updateType = VariableUpdateType.Constant;
                     return (RPMVesselComputer comp) => RPMGlobals.MetersPerSecondToKnots;
                 case "MetersPerSecondToFeetPerMinute":
-                    isConstant = true;
+                    updateType = VariableUpdateType.Constant;
                     return (RPMVesselComputer comp) => RPMGlobals.MetersPerSecondToFeetPerMinute;
 
                 // Speeds.
@@ -2042,10 +2045,10 @@ namespace JSI
                 case "STAGEREADY":
                     return (RPMVesselComputer comp) => { return (StageManager.CanSeparate && InputLockManager.IsUnlocked(ControlTypes.STAGING)).GetHashCode(); };
                 case "RANDOM":
-                    cacheable = false;
+                    updateType = VariableUpdateType.Volatile;
                     return (RPMVesselComputer comp) => { return UnityEngine.Random.value; };
                 case "RANDOMNORMAL":
-                    cacheable = false;
+                    updateType = VariableUpdateType.Volatile;
                     return (RPMVesselComputer comp) =>
                     {
                         // Box-Muller method tweaked to prevent a 0 in u.
@@ -2225,7 +2228,7 @@ namespace JSI
 
                 // Meta.
                 case "MECHJEBAVAILABLE":
-                    isConstant = true;
+                    updateType = VariableUpdateType.Constant;
                     return MechJebAvailable();
                 case "TIMEWARPPHYSICS":
                     return (RPMVesselComputer comp) => { return (TimeWarp.CurrentRate > 1.0f && TimeWarp.WarpMode == TimeWarp.Modes.LOW).GetHashCode(); };

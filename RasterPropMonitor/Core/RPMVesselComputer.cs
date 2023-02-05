@@ -103,8 +103,6 @@ namespace JSI
         //}
         // internal LinearAtmosphereGauge linearAtmosGauge;
 
-        private readonly VariableCollection variableCollection = new VariableCollection();
-
         // Data refresh
         private int dataUpdateCountdown;
         private int refreshDataRate = 60;
@@ -354,34 +352,6 @@ namespace JSI
             }
 
             return instances[v.id];
-        }
-
-        public VariableOrNumber GetOrCreateVariable(string variableName)
-        {
-            var vc = variableCollection.GetVariable(variableName);
-            if (vc == null)
-            {
-                vc = AddVariable(variableName);
-            }
-            return vc;
-        }
-
-        private VariableOrNumber AddVariable(string variableName)
-        {
-            var evaluator = GetVariableEvaluator(variableName, out bool cacheable, out bool isConstant);
-            if (evaluator == null) return null;
-
-            return new VariableOrNumber(variableName, evaluator, this, isConstant, null); // TODO: how do we handle non-cacheable things?
-        }
-
-        private VariableEvaluator GetVariableEvaluator(string variableName, out bool cacheable, out bool isConstant)
-        {
-            cacheable = true;
-            isConstant = false;
-
-
-
-            return null;
         }
 
         private Kerbal lastActiveKerbal = null;
@@ -815,8 +785,6 @@ namespace JSI
                 FetchAltitudes();
                 FetchVesselData();
                 FetchTargetData();
-
-                variableCollection.Update(this);
             }
         }
 

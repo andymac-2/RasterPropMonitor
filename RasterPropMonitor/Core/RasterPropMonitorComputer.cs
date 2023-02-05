@@ -210,7 +210,7 @@ namespace JSI
             if (string.IsNullOrWhiteSpace(variableName)) return null;
 
             variableName = variableName.Trim();
-            var variable = variableCollection.GetVariable(variableName) ?? RPMVesselComputer.Instance(vessel).GetOrCreateVariable(variableName);
+            var variable = variableCollection.GetVariable(variableName);
             if (variable == null)
             {
                 variable = AddVariable(variableName);
@@ -229,16 +229,17 @@ namespace JSI
             VariableOrNumber vc;
             
             // try to find a numeric evaluator first
-            var numericEvaluator = GetNumericEvaluator(variableName, out bool cacheable, out bool isConstant);
+            var numericEvaluator = GetNumericEvaluator(variableName, out VariableUpdateType updateType);
             if (numericEvaluator != null)
             {
-                vc = new VariableOrNumber(variableName, numericEvaluator, comp, isConstant, cacheable ? null : this);
+                vc = new VariableOrNumber(variableName, numericEvaluator, comp, updateType, updateType == VariableUpdateType.Volatile ? this : null);
             }
             else
             {
                 // if that doesnt' work, look for a generic one
-                var evaluator = GetEvaluator(variableName, out cacheable, out isConstant);
-                vc = new VariableOrNumber(variableName, evaluator, comp, isConstant, cacheable ? null : this);
+                var evaluator = GetEvaluator(variableName, out updateType);
+                if (evaluator == null) updateType = VariableUpdateType.Constant;
+                vc = new VariableOrNumber(variableName, evaluator, comp, updateType, updateType == VariableUpdateType.Volatile ? this : null);
 
                 if (evaluator == null && !unrecognizedVariables.Contains(variableName))
                 {

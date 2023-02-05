@@ -45,9 +45,9 @@ namespace JSI
         internal double GetPersistentVariable(string name, double defaultValue, bool broadcast)
         {
             double val;
-            if (persistentVars.ContainsKey(name))
+            if (persistentVars.TryGetValue(name, out val))
             {
-                val = persistentVars[name];
+                
             }
             else if (broadcast)
             {
@@ -109,9 +109,17 @@ namespace JSI
             }
             persistentVars[name] = value;
 
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+
+            // TEMP: how can we avoid this string concat?
+            var vc = variableCollection.GetVariable("PERSISTENT_" + name);
+            if (vc != null)
+            {
+                vc.Update(comp);
+            }
+
             if(broadcast)
             {
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
                 comp.SetPersistentVariable(name, value);
             }
         }
