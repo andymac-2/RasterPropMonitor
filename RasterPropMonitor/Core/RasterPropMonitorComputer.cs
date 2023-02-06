@@ -316,7 +316,7 @@ namespace JSI
                 GameEvents.onVesselChange.Add(onVesselChange);
                 GameEvents.onVesselCrewWasModified.Add(onVesselCrewWasModified);
 
-                if (JSIParachute.rcFound) installedModules.Add(new JSIParachute(vessel));
+                installedModules.Add(new JSIParachute(vessel)); // note this handles both stock chutes and realchute
                 if (JSIMechJeb.IsInstalled) installedModules.Add(new JSIMechJeb(vessel));
                 installedModules.Add(new JSIInternalRPMButtons(vessel));
                 if (JSIFAR.farFound) installedModules.Add(new JSIFAR(vessel));
