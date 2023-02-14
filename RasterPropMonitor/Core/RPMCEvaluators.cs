@@ -947,7 +947,7 @@ namespace JSI
                     {
                         if (node != null)
                         {
-                            return comp.actualAverageIsp * (1.0f - Math.Exp(-node.GetBurnVector(vessel.orbit).magnitude / comp.actualAverageIsp / RPMGlobals.gee)) / (comp.totalLimitedMaximumThrust / (comp.totalShipWetMass * RPMGlobals.gee));
+                            return JSIInternalRPMButtons.GetBurnDuration((float)node.DeltaV.magnitude);
                         }
                         return double.NaN;
                     };

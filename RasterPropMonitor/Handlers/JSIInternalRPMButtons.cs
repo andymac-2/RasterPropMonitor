@@ -1366,7 +1366,7 @@ namespace JSI
             return TimeWarp.fetch.Mode == TimeWarp.Modes.HIGH;
         }
 
-        double GetBurnDuration(float dv)
+        public static double GetBurnDuration(float dv)
         {
             var vesselDeltaV = FlightGlobals.ActiveVessel.VesselDeltaV;
             double totalDuration = 0;
