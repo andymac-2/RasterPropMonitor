@@ -202,29 +202,19 @@ namespace JSI
             }
         }
 
-        private void CleanupCameraObjects()
+        public void CleanupCameraObjects()
         {
-            if (enabled)
+            for (int i = 0; i < cameraObject.Length; i++)
             {
-                for (int i = 0; i < cameraObject.Length; i++)
+                if (cameraObject[i] != null)
                 {
-                    try
-                    {
-                        UnityEngine.Object.Destroy(cameraObject[i]);
-                        // Analysis disable once EmptyGeneralCatchClause
-                    }
-                    catch
-                    {
-                        // Yes, that's really what it's supposed to be doing.
-                    }
-                    finally
-                    {
-                        cameraObject[i] = null;
-                    }
+                    UnityEngine.Object.Destroy(cameraObject[i]);
                 }
-                enabled = false;
-                //JUtil.LogMessage(this, "Turning camera off.");
+                
+                cameraObject[i] = null;
             }
+
+            enabled = false;
             cameraPart = null;
             cameraTransform = null;
         }

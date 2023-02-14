@@ -394,6 +394,11 @@ namespace JSI
 
         public void OnDestroy()
         {
+            if (cameraObject != null)
+            {
+                cameraObject.CleanupCameraObjects();
+                cameraObject = null;
+            }
             if (homeCrosshairMaterial != null)
             {
                 UnityEngine.Object.Destroy(homeCrosshairMaterial);
