@@ -1398,8 +1398,7 @@ namespace JSI
 
             if (vessel.patchedConicSolver != null && vessel.patchedConicSolver.maneuverNodes.Count > 0)
             {
-                double halfBurnDuration = GetBurnDuration((float)vessel.patchedConicSolver.maneuverNodes[0].DeltaV.magnitude * 0.5f);
-                targetUT = Planetarium.GetUniversalTime() + halfBurnDuration - GameSettings.WARP_TO_MANNODE_MARGIN;
+                targetUT = Planetarium.GetUniversalTime() + vessel.patchedConicSolver.maneuverNodes[0].startBurnIn - GameSettings.WARP_TO_MANNODE_MARGIN;
             }
             else if (vessel.orbit.nextPatch != null && vessel.orbit.nextPatch.activePatch)
             {
