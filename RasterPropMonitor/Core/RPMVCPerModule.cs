@@ -40,7 +40,6 @@ namespace JSI
 
         private bool listsInvalid = true;
         private readonly static List<string> emptyIgnoreList = new List<string>();
-        private double lastUTC;
 
         //--- Docking Nodes
         internal List<ModuleDockingNode> availableDockingNodes = new List<ModuleDockingNode>();
@@ -894,12 +893,6 @@ namespace JSI
                 return;
             }
 
-            double currentUTC = Planetarium.fetch.time;
-            if (currentUTC == lastUTC)
-            {
-                return;
-            }
-
             UpdateModuleLists();
 
             bool requestReset = false;
@@ -920,8 +913,6 @@ namespace JSI
             {
                 InvalidateModuleLists();
             }
-
-            lastUTC = currentUTC;
         }
         #endregion
 

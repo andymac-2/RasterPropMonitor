@@ -107,6 +107,7 @@ namespace JSI
         private int dataUpdateCountdown;
         private int refreshDataRate = 60;
         private bool timeToUpdate = false;
+        private double lastUTC;
 
         // Craft-relative basis vectors
         internal Vector3 forward;
@@ -765,6 +766,12 @@ namespace JSI
 
         public void UpdateVariables()
         {
+            double currentUTC = Planetarium.fetch.time;
+            if (currentUTC == lastUTC)
+            {
+                return;
+            }
+
             // Update values related to the vessel (position, CoM, etc)
             if (timeToUpdate)
             {
@@ -786,6 +793,8 @@ namespace JSI
                 FetchVesselData();
                 FetchTargetData();
             }
+
+            lastUTC = currentUTC;
         }
 
         //private void DebugFunction()
