@@ -250,6 +250,12 @@ namespace JSI
 
         public void Start()
         {
+            if (!JSIMechJeb.IsInstalled)
+            {
+                JUtil.LogErrorMessage(this, "PROP {0} is instantiating a MechJebRPM module when MechJeb isn't installed", internalProp.propName);
+                enabled = false;
+                return;
+            }
 
             // I guess I shouldn't have expected Squad to actually do something nice for a modder like that.
             // In 0.23, loading in non-alphabetical order is still broken.
