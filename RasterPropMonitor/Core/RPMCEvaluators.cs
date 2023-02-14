@@ -3101,9 +3101,10 @@ namespace JSI
             {
                 return (RPMVesselComputer comp) =>
                 {
-                    if (comp?.vessel.VesselDeltaV != null)
+                    var stageInfo = comp?.vessel?.VesselDeltaV?.GetStage(comp.vessel.currentStage);
+                    if (stageInfo != null)
                     {
-                        return comp.vessel.VesselDeltaV.GetStage(comp.vessel.currentStage).deltaVActual;
+                        return stageInfo.deltaVActual;
                     }
                     return (comp.actualAverageIsp * RPMGlobals.gee) * Math.Log(comp.totalShipWetMass / (comp.totalShipWetMass - comp.resources.PropellantMass(true)));
                 };
