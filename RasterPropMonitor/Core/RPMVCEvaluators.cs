@@ -277,7 +277,7 @@ namespace JSI
             Vector3 force = pureDragV + pureLiftV;
             double drag = Vector3.Dot(force, -vessel.srf_velocity.normalized);
 
-            return Math.Sqrt(localGeeDirect / drag) * vessel.srfSpeed;
+            return drag > 0 ? Math.Sqrt(localGeeDirect / drag) * vessel.srfSpeed : 0.0;
         }
 
         /// <summary>
