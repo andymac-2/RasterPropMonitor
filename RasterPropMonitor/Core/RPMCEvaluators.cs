@@ -3022,13 +3022,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetAngleOfAttack", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetAngleOfAttack", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3049,13 +3052,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIMechJeb:GetDeltaV", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIMechJeb.IsInstalled)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIMechJeb:GetDeltaV", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3063,6 +3069,11 @@ namespace JSI
             {
                 return (RPMVesselComputer comp) =>
                 {
+                    // TODO: use the stock deltav calculator instead
+                    if (comp?.vessel?.VesselDeltaV != null)
+                    {
+                        return comp.vessel.VesselDeltaV.TotalDeltaVActual;
+                    }
                     return (comp.actualAverageIsp * RPMGlobals.gee) * Math.Log(comp.totalShipWetMass / (comp.totalShipWetMass - comp.resources.PropellantMass(false)));
                 };
             }
@@ -3090,6 +3101,10 @@ namespace JSI
             {
                 return (RPMVesselComputer comp) =>
                 {
+                    if (comp?.vessel.VesselDeltaV != null)
+                    {
+                        return comp.vessel.VesselDeltaV.GetStage(comp.vessel.currentStage).deltaVActual;
+                    }
                     return (comp.actualAverageIsp * RPMGlobals.gee) * Math.Log(comp.totalShipWetMass / (comp.totalShipWetMass - comp.resources.PropellantMass(true)));
                 };
             }
@@ -3103,13 +3118,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDragForce", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDragForce", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3133,13 +3151,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDragForce", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDragForce", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3160,13 +3181,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDynamicPressure", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetDynamicPressure", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3224,13 +3248,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetLiftForce", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetLiftForce", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3254,13 +3281,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetLiftForce", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetLiftForce", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3281,7 +3311,11 @@ namespace JSI
         {
             Func<bool> accessor = null;
 
-            accessor = (Func<bool>)GetInternalMethod("JSIMechJeb:GetMechJebAvailable", typeof(Func<bool>));
+            if (JSIMechJeb.IsInstalled)
+            {
+                accessor = (Func<bool>)GetInternalMethod("JSIMechJeb:GetMechJebAvailable", typeof(Func<bool>));
+            }
+
             if (accessor == null)
             {
                 return (RPMVesselComputer comp) => { return 0; };
@@ -3296,13 +3330,16 @@ namespace JSI
         {
             Func<double> accessor = null;
 
-            accessor = (Func<double>)GetInternalMethod("JSIFAR:GetSideSlip", typeof(Func<double>));
-            if (accessor != null)
+            if (JSIFAR.farFound)
             {
-                double value = accessor();
-                if (double.IsNaN(value))
+                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetSideSlip", typeof(Func<double>));
+                if (accessor != null)
                 {
-                    accessor = null;
+                    double value = accessor();
+                    if (double.IsNaN(value))
+                    {
+                        accessor = null;
+                    }
                 }
             }
 
@@ -3325,17 +3362,20 @@ namespace JSI
             {
                 Func<double> accessor = null;
 
-                accessor = (Func<double>)GetInternalMethod("JSIFAR:GetTerminalVelocity", typeof(Func<double>));
-                if (accessor != null)
+                if (JSIFAR.farFound)
                 {
-                    double value = accessor();
-                    if (value < 0.0)
+                    accessor = (Func<double>)GetInternalMethod("JSIFAR:GetTerminalVelocity", typeof(Func<double>));
+                    if (accessor != null)
                     {
-                        accessor = null;
+                        double value = accessor();
+                        if (value < 0.0)
+                        {
+                            accessor = null;
+                        }
                     }
                 }
 
-                if (accessor == null)
+                if (accessor == null && JSIMechJeb.IsInstalled)
                 {
                     accessor = (Func<double>)GetInternalMethod("JSIMechJeb:GetTerminalVelocity", typeof(Func<double>));
                     double value = accessor();
