@@ -945,7 +945,7 @@ namespace JSI
                 case "MNODEBURNTIMESECS":
                     return (RPMVesselComputer comp) =>
                     {
-                        if (node != null && comp.totalLimitedMaximumThrust > 0 && comp.actualAverageIsp > 0.0f)
+                        if (node != null)
                         {
                             return comp.actualAverageIsp * (1.0f - Math.Exp(-node.GetBurnVector(vessel.orbit).magnitude / comp.actualAverageIsp / RPMGlobals.gee)) / (comp.totalLimitedMaximumThrust / (comp.totalShipWetMass * RPMGlobals.gee));
                         }
