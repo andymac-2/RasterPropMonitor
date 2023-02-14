@@ -213,17 +213,16 @@ namespace JSI
                 renderTex = null;
             }
 
-            if (cameraObject == null)
+            if (cameraObject != null)
             {
-                return;
-            }
-            if (state)
-            {
-                cameraObject.SetFlicker(flickerChance, flickerRange);
-            }
-            else
-            {
-                cameraObject.SetFlicker(0, 0);
+                if (state)
+                {
+                    cameraObject.SetFlicker(flickerChance, flickerRange);
+                }
+                else
+                {
+                    cameraObject.SetFlicker(0, 0);
+                }
             }
 
             if (state && rpmComp != null)
