@@ -163,6 +163,8 @@ namespace JSI
                 overlay.layer = drawingLayer;
                 overlay.transform.position = new Vector3(0, 0, overlayDepth);
                 overlay.GetComponent<Renderer>().material = overlayMaterial;
+
+                overlay.SetActive(false);
             }
 
             if (!string.IsNullOrEmpty(headingBar))
@@ -178,6 +180,8 @@ namespace JSI
                 Renderer hdgMatl = null;
                 heading.GetComponentCached<Renderer>(ref hdgMatl).material = headingMaterial;
                 hdgMatl.material.SetTextureScale("_MainTex", new Vector2(headingSpan, 1f));
+
+                heading.SetActive(false);
             }
 
             Texture2D gizmoTexture = JUtil.GetGizmoTexture();
@@ -367,6 +371,11 @@ namespace JSI
             overlayMaterial.SetPass(0);
             Graphics.DrawMeshNow(overlayMesh, overlay.transform.localToWorldMatrix);
 
+            var headingMesh = heading.GetComponent<MeshFilter>().mesh;
+            var headingMaterial = heading.GetComponent<MeshRenderer>().material;
+            headingMaterial.SetPass(0);
+            Graphics.DrawMeshNow(headingMesh, heading.transform.localToWorldMatrix);
+
             GL.PopMatrix();
 
             return true;
@@ -506,6 +515,8 @@ namespace JSI
                 }
 
                 navBall.GetComponent<Renderer>().material.SetFloat("_Opacity", ballOpacity);
+                
+                navBall.SetActive(false);
 
                 startupComplete = true;
             }
