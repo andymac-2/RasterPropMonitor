@@ -366,15 +366,21 @@ namespace JSI
             DrawMarker(markerDockingAlignment);
             DrawMarker(markerNavWaypoint);
 
-            var overlayMesh = overlay.GetComponent<MeshFilter>().mesh;
-            var overlayMaterial = overlay.GetComponent<MeshRenderer>().material;
-            overlayMaterial.SetPass(0);
-            Graphics.DrawMeshNow(overlayMesh, overlay.transform.localToWorldMatrix);
+            if (overlay != null)
+            {
+                var overlayMesh = overlay.GetComponent<MeshFilter>().mesh;
+                var overlayMaterial = overlay.GetComponent<MeshRenderer>().material;
+                overlayMaterial.SetPass(0);
+                Graphics.DrawMeshNow(overlayMesh, overlay.transform.localToWorldMatrix);
+            }
 
-            var headingMesh = heading.GetComponent<MeshFilter>().mesh;
-            var headingMaterial = heading.GetComponent<MeshRenderer>().material;
-            headingMaterial.SetPass(0);
-            Graphics.DrawMeshNow(headingMesh, heading.transform.localToWorldMatrix);
+            if (heading != null)
+            {
+                var headingMesh = heading.GetComponent<MeshFilter>().mesh;
+                var headingMaterial = heading.GetComponent<MeshRenderer>().material;
+                headingMaterial.SetPass(0);
+                Graphics.DrawMeshNow(headingMesh, heading.transform.localToWorldMatrix);
+            }
 
             GL.PopMatrix();
 
