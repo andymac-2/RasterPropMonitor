@@ -220,11 +220,12 @@ namespace JSI
 
         public static void CreateButton(InternalProp thatProp, string buttonName, Action handlerFunction, Action releaseHandlerFunction = null, InternalModel thatModel = null)
         {
-            SmarterButton buttonBehaviour;
-            if ((buttonBehaviour = AttachBehaviour(thatProp, thatModel, buttonName)) == null)
+            SmarterButton buttonBehaviour = AttachBehaviour(thatProp, thatModel, buttonName);
+            if (buttonBehaviour == null)
             {
                 return;
             }
+            buttonBehaviour.gameObject.layer = 20; // everything clickable needs to be on layer 20 because FreeIva disables mouse interaction with layer 16.
             buttonBehaviour.clickHandlers.Add(handlerFunction);
             if (releaseHandlerFunction != null)
             {
