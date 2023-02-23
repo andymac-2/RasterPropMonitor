@@ -234,9 +234,12 @@ namespace JSI
 
             Quaternion gymbal = comp.AttitudeGymbal;
 
+            double speedInCurrentMode = 0;
+
             if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
             {
                 Vector3 velocityVesselOrbitUnit = comp.Prograde;
+                speedInCurrentMode = FlightGlobals.ship_obtSpeed;
                 Vector3 radialPlus = comp.RadialOut;
                 Vector3 normalPlus = comp.NormalPlus;
                 // stockNavBall.relativeGymbal * (stockNavBall.progradeVector.localRotation * stockNavBall.progradeVector.right == gymbal * velocityVesselOrbitUnit
@@ -259,16 +262,22 @@ namespace JSI
             else if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Surface)
             {
                 Vector3 velocityVesselSurfaceUnit = vessel.srf_velocity.normalized;
+                speedInCurrentMode = FlightGlobals.ship_srfSpeed;
                 MoveMarker(markerPrograde, velocityVesselSurfaceUnit, gymbal);
                 MoveMarker(markerRetrograde, -velocityVesselSurfaceUnit, gymbal);
             }
             else // FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Target
             {
                 Vector3 targetDirection = FlightGlobals.ship_tgtVelocity.normalized;
+                speedInCurrentMode = FlightGlobals.ship_tgtSpeed;
 
                 MoveMarker(markerPrograde, targetDirection, gymbal);
                 MoveMarker(markerRetrograde, -targetDirection, gymbal);
             }
+
+            bool progradeVisible = speedInCurrentMode >= 0.05;
+            markerPrograde.visible = progradeVisible;
+            markerRetrograde.visible = progradeVisible;
 
             if (vessel.patchedConicSolver != null && vessel.patchedConicSolver.maneuverNodes.Count > 0)
             {
@@ -340,9 +349,6 @@ namespace JSI
                 markerTargetMinus.visible = true;
             }
 
-            markerPrograde.visible = true;
-            markerRetrograde.visible = true;
-
             // I wonder if doing this as a command buffer might be more efficient?
 
             GL.PushMatrix();
@@ -365,6 +371,19 @@ namespace JSI
             DrawMarker(markerRadialMinus);
             DrawMarker(markerDockingAlignment);
             DrawMarker(markerNavWaypoint);
+
+            markerPrograde.visible = false;
+            markerRetrograde.visible = false;
+            markerManeuver.visible = false;
+            markerManeuverMinus.visible = false;
+            markerTarget.visible = false;
+            markerTargetMinus.visible = false;
+            markerNormal.visible = false;
+            markerNormalMinus.visible = false;
+            markerRadial.visible = false;
+            markerRadialMinus.visible = false;
+            markerDockingAlignment.visible = false;
+            markerNavWaypoint.visible = false;
 
             if (overlay != null)
             {
