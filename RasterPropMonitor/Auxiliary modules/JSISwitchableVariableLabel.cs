@@ -35,6 +35,8 @@ namespace JSI
         [KSPField]
         public string switchTransform = string.Empty;
         [KSPField]
+        public string decrementSwitchTransform = string.Empty;
+        [KSPField]
         public string switchSound = "Squad/Sounds/sound_click_flick";
         [KSPField]
         public float switchSoundVolume = 0.5f;
@@ -42,6 +44,9 @@ namespace JSI
         public string coloredObject = string.Empty;
         [KSPField]
         public string colorName = "_EmissiveColor";
+        [KSPField]
+        public string alignment = "TopLeft";
+
         private int colorNameId = -1;
         private readonly List<VariableLabelSet> labelsEx = new List<VariableLabelSet>();
         private int activeLabel;
@@ -65,10 +70,15 @@ namespace JSI
                 rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
 
                 textObjTransform = JUtil.FindPropTransform(internalProp, labelTransform);
-                textObj = InternalComponents.Instance.CreateText(fontName, fontSize * 15.5f, textObjTransform, "", Color.green, false, "TopLeft");
+                textObj = InternalComponents.Instance.CreateText(fontName, fontSize * 15.5f, textObjTransform, "", Color.green, false, alignment);
                 activeLabel = 0;
 
                 SmarterButton.CreateButton(internalProp, switchTransform, Click);
+
+                if (decrementSwitchTransform != string.Empty)
+                {
+                    SmarterButton.CreateButton(internalProp, decrementSwitchTransform, DecremenetClick);
+                }
 
                 ConfigNode moduleConfig = null;
                 foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
@@ -188,14 +198,21 @@ namespace JSI
             }
         }
 
+        private void DecremenetClick()
+        {
+            UpdateActiveLabel(-1);
+        }
+
         public void Click()
         {
-            activeLabel++;
+            UpdateActiveLabel(+1);
+        }
 
-            if (activeLabel == labelsEx.Count)
-            {
-                activeLabel = 0;
-            }
+        void UpdateActiveLabel(int direction)
+        {
+            if (labelsEx.Count == 0) return;
+
+            activeLabel = (activeLabel + direction + labelsEx.Count) % labelsEx.Count;
 
             if (labelsEx.Count > 1 && !labelsEx[activeLabel].oneShot)
             {
