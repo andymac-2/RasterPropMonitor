@@ -46,10 +46,13 @@ namespace JSI
         public string colorName = "_EmissiveColor";
         [KSPField]
         public string alignment = "TopLeft";
+        [KSPField]
+        public bool persistActiveLabel = false;
 
         private int colorNameId = -1;
         private readonly List<VariableLabelSet> labelsEx = new List<VariableLabelSet>();
-        private int activeLabel;
+        private int activeLabel = 0;
+        private string persistentVariableName;
         private const string fontName = "Arial";
         private InternalText textObj;
         private Transform textObjTransform;
@@ -71,7 +74,16 @@ namespace JSI
 
                 textObjTransform = JUtil.FindPropTransform(internalProp, labelTransform);
                 textObj = InternalComponents.Instance.CreateText(fontName, fontSize * 15.5f, textObjTransform, "", Color.green, false, alignment);
-                activeLabel = 0;
+                
+                if (persistActiveLabel)
+                {
+                    persistentVariableName = "switchableLabel_" + internalProp.propID + "_" + moduleID;
+                    activeLabel = (int)rpmComp.GetPersistentVariable(persistentVariableName, activeLabel, false);
+                }
+                else
+                {
+                    activeLabel = 0;
+                }
 
                 SmarterButton.CreateButton(internalProp, switchTransform, Click);
 
@@ -213,6 +225,11 @@ namespace JSI
             if (labelsEx.Count == 0) return;
 
             activeLabel = (activeLabel + direction + labelsEx.Count) % labelsEx.Count;
+
+            if (persistActiveLabel)
+            {
+                rpmComp.SetPersistentVariable(persistentVariableName, activeLabel, false);
+            }
 
             if (labelsEx.Count > 1 && !labelsEx[activeLabel].oneShot)
             {
