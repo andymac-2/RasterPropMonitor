@@ -519,11 +519,11 @@ namespace JSI
 
         public bool UpdateText(MonitorPage activePage)
         {
-            bool textDirty = (cachedText != activePage.Text) || (cachedOverlayText != activePage.textOverlay);
+            bool textDirty = (cachedText != activePage.ProcessedText) || (cachedOverlayText != activePage.textOverlay);
 
             if (textDirty)
             {
-                cachedText = activePage.Text;
+                cachedText = activePage.ProcessedText;
                 cachedOverlayText = activePage.textOverlay;
 
                 for (int i = 0; i < fontRenderer.Count; ++i)
@@ -531,9 +531,9 @@ namespace JSI
                     fontRenderer[i].Clear();
                 }
 
-                if (!string.IsNullOrEmpty(activePage.Text))
+                if (!string.IsNullOrEmpty(activePage.ProcessedText))
                 {
-                    ParseText(activePage.Text, activePage.screenXMin, activePage.screenYMin, activePage.defaultColor, activePage.pageFont);
+                    ParseText(activePage.ProcessedText, activePage.screenXMin, activePage.screenYMin, activePage.defaultColor, activePage.pageFont);
                 }
 
                 if (!string.IsNullOrEmpty(activePage.textOverlay))

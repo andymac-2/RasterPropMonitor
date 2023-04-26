@@ -455,7 +455,7 @@ namespace JSI
 				// Actual rendering of the background is delegated to the page object.
 				activePage.RenderBackground(screenTexture);
 
-				if (!string.IsNullOrEmpty(activePage.Text))
+				if (!string.IsNullOrEmpty(activePage.ProcessedText))
 				{
 					textRenderer.Render(screenTexture);
 				}

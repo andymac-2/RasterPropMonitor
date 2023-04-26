@@ -37,23 +37,15 @@ namespace JSI
         private StringProcessorFormatter[] spf;
         private string[] outputLines;
         bool allTextConstant;
-        private string processedText = string.Empty;
 
-        public string Text
+        public string ProcessedText
         {
-            get
-            {
-                return processedText;
-            }
+            get; private set;
         }
 
-        private bool isActive;
         public bool IsActive
         {
-            get
-            {
-                return isActive;
-            }
+            get; private set;
         }
 
         public readonly string textOverlay = string.Empty;
@@ -128,7 +120,7 @@ namespace JSI
 
                 if (text.IndexOf(JUtil.VariableListSeparator[0]) == -1)
                 {
-                    processedText = text;
+                    ProcessedText = text;
                     spf = null;
                     outputLines = null;
                     allTextConstant = true;
@@ -169,7 +161,7 @@ namespace JSI
                         }
                     }
 
-                    processedText = string.Join(Environment.NewLine, outputLines);
+                    ProcessedText = string.Join(Environment.NewLine, outputLines);
 
                     if (allTextConstant)
                     {
@@ -616,7 +608,7 @@ namespace JSI
 
         public void Active(bool state)
         {
-            isActive = state;
+            IsActive = state;
             if (pageHandlerS.activate != null)
             {
                 pageHandlerS.activate(state, pageNumber);
