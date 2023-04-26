@@ -123,6 +123,9 @@ namespace JSI
                         font = (Texture2D)thisProp.FindModelTransform(location).GetComponent<Renderer>().material.mainTexture;
                         JUtil.LogMessage(caller, "Loading font texture from a transform named \"{0}\"", location);
                     }
+
+                    font.filterMode = FilterMode.Point;
+                    font.requestedMipmapLevel = 0;
                 }
                 catch (Exception)
                 {
@@ -176,7 +179,7 @@ namespace JSI
 
                 // Now that is done, proceed to setting up the screen.
 
-                screenTexture = new RenderTexture(screenPixelWidth, screenPixelHeight, 24, RenderTextureFormat.ARGB32);
+                screenTexture = new RenderTexture(screenPixelWidth, screenPixelHeight, 24, RenderTextureFormat.ARGB32, 0);
                 screenObject = internalProp.FindModelTransform(screenTransform).gameObject;
                 var renderer = screenObject.AddComponent<VisibilityEnabler>();
                 renderer.Initialize(this);
