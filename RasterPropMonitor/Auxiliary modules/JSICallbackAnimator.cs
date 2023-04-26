@@ -560,6 +560,7 @@ namespace JSI
                     break;
                 case Mode.Animation:
                     onAnim[animationName].normalizedTime = reverse ? 0f : 1f;
+                    onAnim.Play();
                     break;
                 case Mode.LoopingAnimation:
                     onAnim[animationName].speed = animationSpeed;
@@ -604,6 +605,7 @@ namespace JSI
                     break;
                 case Mode.Animation:
                     onAnim[animationName].normalizedTime = reverse ? 1f : 0f;
+                    onAnim.Play();
                     break;
                 case Mode.LoopingAnimation:
                     if (offAnim != null)
