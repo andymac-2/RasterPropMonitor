@@ -276,13 +276,12 @@ namespace JSI
                                 else if (module is ModuleResourceConverter)
                                 {
                                     ModuleResourceConverter gen = module as ModuleResourceConverter;
-                                    ConversionRecipe recipe = gen.Recipe;
-                                    for (int i = 0; i < recipe.Outputs.Count; ++i)
+                                    foreach (var output in gen.outputList)
                                     {
-                                        if (recipe.Outputs[i].ResourceName == "ElectricCharge")
+                                        if (output.ResourceName == "ElectricCharge")
                                         {
                                             availableFuelCells.Add(gen);
-                                            availableFuelCellOutput.Add((float)recipe.Outputs[i].Ratio);
+                                            availableFuelCellOutput.Add((float)output.Ratio);
                                             break;
                                         }
                                     }
