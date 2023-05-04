@@ -19,88 +19,14 @@
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 using System;
+using JSI.Core;
 using UnityEngine;
 
 namespace JSI
 {
     public partial class RPMVesselComputer : VesselModule
     {
-        /// <summary>
-        /// Do a "broadcast" GetPersistentVariable, where we iterate over every
-        /// part in the craft and find each RasterPropMonitorComputer.  Return
-        /// the value from the first one that contains the variable, or the
-        /// default value otherwise.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="defaultValue"></param>
-        /// <returns></returns>
-        internal double GetPersistentVariable(string name, double defaultValue)
-        {
-            if (vessel != null)
-            {
-                for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
-                {
-                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
-                    if (rpmc != null)
-                    {
-                        if (rpmc.HasPersistentVariable(name, false))
-                        {
-                            return rpmc.GetPersistentVariable(name, defaultValue, false);
-                        }
-                    }
-                }
-            }
-
-            return defaultValue;
-        }
-
-        /// <summary>
-        /// Iterate over every part in the craft to see if any
-        /// RasterPropMonitorComputer instances have the specified persistent
-        /// variable.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        internal bool HasPersistentVariable(string name)
-        {
-            if (vessel != null)
-            {
-                for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
-                {
-                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
-                    if (rpmc != null)
-                    {
-                        if (rpmc.HasPersistentVariable(name, false))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Iterate over all RPMC objects in the craft and set the specified
-        /// persistent var to the same value.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
-        internal void SetPersistentVariable(string name, double value)
-        {
-            if (vessel != null)
-            {
-                for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
-                {
-                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
-                    if (rpmc != null)
-                    {
-                        rpmc.SetPersistentVariable(name, value, false);
-                    }
-                }
-            }
-        }
+        internal readonly PersistentVariableCollection PersistentVariables = new PersistentVariableCollection();
         
         //--- Fallback evaluators
         #region FallbackEvaluators

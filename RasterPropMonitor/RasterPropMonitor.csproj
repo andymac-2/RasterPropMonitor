@@ -114,6 +114,7 @@
     <Compile Include="Core\CustomVariable.cs" />
     <Compile Include="Core\JSITextMesh.cs" />
     <Compile Include="Core\MathVariable.cs" />
+    <Compile Include="Core\PersistentVariableCollection.cs" />
     <Compile Include="Core\RPMCEvaluators.cs" />
     <Compile Include="Core\RPMCPersistence.cs" />
     <Compile Include="Core\RPMGlobals.cs" />

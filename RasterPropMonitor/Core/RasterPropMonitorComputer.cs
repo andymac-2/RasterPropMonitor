@@ -237,6 +237,16 @@ namespace JSI
             return vc;
         }
 
+        public override void OnLoad(ConfigNode node)
+        {
+            m_persistentVariables.Load(node);
+        }
+
+        public override void OnSave(ConfigNode node)
+        {
+            m_persistentVariables.Save(node);
+        }
+
         /// <summary>
         /// Set the refresh rate (number of Update() calls per triggered update).
         /// The lower of the current data rate and the new data rate is used.
@@ -343,11 +353,6 @@ namespace JSI
                 if (!string.IsNullOrEmpty(vesselDescription))
                 {
                     comp.SetVesselDescription(vesselDescription);
-                }
-                var restoredPersistents = comp.RestorePersistents(id);
-                if (restoredPersistents != null)
-                {
-                    persistentVars = restoredPersistents;
                 }
 
                 // Make sure we have the description strings parsed.

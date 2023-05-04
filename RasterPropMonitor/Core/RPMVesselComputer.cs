@@ -410,9 +410,6 @@ namespace JSI
         //    return Activation.FlightScene;
         //}
 
-        private Dictionary<Guid, Dictionary<string, double>> persistentNodeData = new Dictionary<Guid, Dictionary<string, double>>();
-        private bool anyRestored = false;
-
         /// <summary>
         /// Load and parse persistent variables
         /// </summary>
@@ -423,117 +420,11 @@ namespace JSI
 
             try
             {
-                ConfigNode[] pers = node.GetNodes("RPM_PERSISTENT_VARS");
-                for (int nodeIdx = 0; nodeIdx < pers.Length; ++nodeIdx)
-                {
-                    string nodeName = string.Empty;
-                    if (pers[nodeIdx].TryGetValue("name", ref nodeName))
-                    {
-                        Dictionary<string, double> myPersistentVars = new Dictionary<string, double>();
-
-                        for (int i = 0; i < pers[nodeIdx].CountValues; ++i)
-                        {
-                            ConfigNode.Value val = pers[nodeIdx].values[i];
-
-                            string[] value = val.value.Split(',');
-                            if (value.Length > 2) // urk.... commas in the stored string
-                            {
-                                string s = value[1].Trim();
-                                for (int j = 2; j < value.Length; ++j)
-                                {
-                                    s = s + ',' + value[i].Trim();
-                                }
-                                value[1] = s;
-                            }
-
-                            if (value[0] != nodeName)
-                            {
-                                switch (value[0].Trim())
-                                {
-                                    case "System.Boolean":
-                                        bool vb = false;
-                                        if (Boolean.TryParse(value[1].Trim(), out vb))
-                                        {
-                                            myPersistentVars[val.name.Trim()] = vb ? 1 : 0;
-                                        }
-                                        else
-                                        {
-                                            JUtil.LogErrorMessage(this, "Failed to parse {0} as a boolean", val.name);
-                                        }
-                                        break;
-                                    case "System.Int32":
-                                        int vi = 0;
-                                        if (Int32.TryParse(value[1].Trim(), out vi))
-                                        {
-                                            myPersistentVars[val.name.Trim()] = vi;
-                                        }
-                                        else
-                                        {
-                                            JUtil.LogErrorMessage(this, "Failed to parse {0} as an int", val.name);
-                                        }
-                                        break;
-                                    case "System.Single":
-                                        float vf = 0.0f;
-                                        if (Single.TryParse(value[1].Trim(), out vf))
-                                        {
-                                            myPersistentVars[val.name.Trim()] = vf;
-                                        }
-                                        else
-                                        {
-                                            JUtil.LogErrorMessage(this, "Failed to parse {0} as a float", val.name);
-                                        }
-                                        break;
-                                    case "System.Double":
-                                        if (double.TryParse(value[1].Trim(), out double vd))
-                                        {
-                                            myPersistentVars[val.name.Trim()] = vd;
-                                        }
-                                        else
-                                        {
-                                            JUtil.LogErrorMessage(this, "Failed to parse {0} as a double", val.name);
-                                        }
-                                        break;
-                                    default:
-                                        JUtil.LogErrorMessage(this, "Found unknown persistent type {0}", value[0]);
-                                        break;
-                                }
-                            }
-                        }
-
-                        persistentNodeData.Add(new Guid(nodeName), myPersistentVars);
-                    }
-                }
-
-                if (persistentNodeData.Count > 0)
-                {
-                    JUtil.LogMessage(this, "OnLoad for vessel {0}", vessel.id);
-                }
+                PersistentVariables.Load(node);
             }
             catch (Exception e)
             {
                 JUtil.LogErrorMessage(this, "OnLoad threw an exception {0}", e);
-            }
-        }
-
-        /// <summary>
-        /// When the RPMC object is restored, it needs to query here to get its
-        /// persistent data, since it didn't exist during OnLoad.
-        /// </summary>
-        /// <param name="rpmcId"></param>
-        /// <returns></returns>
-        internal Dictionary<string, double> RestorePersistents(Guid rpmcId)
-        {
-            // Whether we have the persistent data or not, we want to flag
-            // that we did indeed have someone ask for persistents, which
-            // means we have an active vessel.
-            anyRestored = true;
-            if (persistentNodeData.ContainsKey(rpmcId))
-            {
-                return persistentNodeData[rpmcId];
-            }
-            else
-            {
-                return null;
             }
         }
 
@@ -548,56 +439,8 @@ namespace JSI
             // Are null vessels still possible?
             if (vessel != null)
             {
-                // If anyRestored is true, at least one PartModule was found on
-                // this vessel, and it was loaded.  In that case, we want to
-                // iterate over the RasterPropMonitorComputer modules so we can
-                // save any updated persistent data.
-                if (anyRestored)
-                {
-                    JUtil.LogMessage(this, "OnSave for vessel {0}", vessel.id);
-                    for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
-                    {
-                        RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
-                        if (rpmc != null && rpmc.persistentVars.Count > 0)
-                        {
-                            JUtil.LogMessage(this, "Storing RPMC {0} persistents", rpmc.RPMCid);
-                            ConfigNode rpmcPers = new ConfigNode("RPM_PERSISTENT_VARS");
-                            rpmcPers.AddValue("name", rpmc.RPMCid);
-                            foreach (var val in rpmc.persistentVars)
-                            {
-                                string value = string.Format("{0},{1}", val.Value.GetType().ToString(), val.Value.ToString());
-                                rpmcPers.AddValue(val.Key, value);
-                            }
-                            node.AddNode(rpmcPers);
-                        }
-                    }
-                }
-                else
-                {
-                    // If anyRestored was false, our vessel did not load, so all we need
-                    // to do is re-save the data we cached in OnLoad.
-                    if (persistentNodeData.Count > 0)
-                    {
-                        JUtil.LogMessage(this, "OnSave for vessel {0}", vessel.id);
-                        foreach (var dict in persistentNodeData)
-                        {
-                            JUtil.LogMessage(this, "Storing RPMC {0} persistents", dict.Key);
-                            ConfigNode rpmcPers = new ConfigNode("RPM_PERSISTENT_VARS");
-                            rpmcPers.AddValue("name", dict.Key.ToString());
-                            foreach (var val in dict.Value)
-                            {
-                                string value = string.Format("{0},{1}", val.Value.GetType().ToString(), val.Value.ToString());
-                                rpmcPers.AddValue(val.Key, value);
-                            }
-                            node.AddNode(rpmcPers);
-                        }
-                    }
-                }
+                PersistentVariables.Save(node);
             }
-            //else if (vid != Guid.Empty)
-            //{
-            //    JUtil.LogErrorMessage(this, "OnSave vessel is null? expected for {0}", vid);
-            //}
         }
 
         public override void OnAwake()
