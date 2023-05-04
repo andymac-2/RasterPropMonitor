@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using UnityEngine.Profiling;
 
 namespace JSI
@@ -101,33 +102,16 @@ namespace JSI
         private ExternalVariableHandlers plugins = null;
         internal Dictionary<string, Color32> overrideColors = new Dictionary<string, Color32>();
 
-        /// <summary>
-        /// Request the instance, create it if one doesn't exist.
-        /// </summary>
-        /// <param name="referenceLocation">Prop or part where the RPMC should be.</param>
-        /// <param name="createIfMissing">Create the RPMC if it's not already present.</param>
-        /// <returns>The RPMC, or null if it can't be or wasn't created.</returns>
-        public static RasterPropMonitorComputer Instantiate(MonoBehaviour referenceLocation, bool createIfMissing)
+        public static RasterPropMonitorComputer FindFromProp(InternalProp prop)
         {
-            var thatProp = referenceLocation as InternalProp;
-            var thatPart = referenceLocation as Part;
-            if (thatPart == null)
+            var rpmc = prop.part.FindModuleImplementing<RasterPropMonitorComputer>();
+
+            if (rpmc == null)
             {
-                if (thatProp == null)
-                {
-                    //throw new ArgumentException("Cannot instantiate RPMC in this location.");
-                    return null;
-                }
-                thatPart = thatProp.part;
+                JUtil.LogErrorMessage(null, "No RasterPropMonitorComputer module found on part {0} for prop {1} in internal {2}", prop.part.partInfo.name, prop.propName, prop.internalModel.internalName);
             }
-            for (int i = 0; i < thatPart.Modules.Count; i++)
-            {
-                if (thatPart.Modules[i].ClassName == typeof(RasterPropMonitorComputer).Name)
-                {
-                    return thatPart.Modules[i] as RasterPropMonitorComputer;
-                }
-            }
-            return (createIfMissing) ? thatPart.AddModule(typeof(RasterPropMonitorComputer).Name) as RasterPropMonitorComputer : null;
+
+            return rpmc;
         }
 
         // Page handler interface for vessel description page.

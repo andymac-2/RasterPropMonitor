@@ -68,7 +68,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
 				if (lineMaterial == null)
 				{

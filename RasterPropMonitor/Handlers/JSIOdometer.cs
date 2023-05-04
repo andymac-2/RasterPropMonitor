@@ -399,7 +399,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
                 if (!string.IsNullOrEmpty(odometerMode) && modeList.ContainsKey(odometerMode))
                 {

@@ -70,7 +70,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
                 textObjTransform = JUtil.FindPropTransform(internalProp, labelTransform);
                 textObj = InternalComponents.Instance.CreateText(fontName, fontSize * 15.5f, textObjTransform, "", Color.green, false, alignment);
@@ -105,7 +105,7 @@ namespace JSI
                         {
                             try
                             {
-                                labelsEx.Add(new VariableLabelSet(variableNodes[i], part));
+                                labelsEx.Add(new VariableLabelSet(variableNodes[i], internalProp));
                             }
                             catch (ArgumentException e)
                             {
@@ -121,7 +121,7 @@ namespace JSI
                 {
                     try
                     {
-                        labelsEx.Add(new VariableLabelSet(moduleConfig, part));
+                        labelsEx.Add(new VariableLabelSet(moduleConfig, internalProp));
                     }
                     catch (ArgumentException e)
                     {
@@ -265,14 +265,14 @@ namespace JSI
         public readonly Color color;
         public readonly bool hasColor;
 
-        public VariableLabelSet(ConfigNode node, Part part)
+        public VariableLabelSet(ConfigNode node, InternalProp prop)
         {
             RasterPropMonitorComputer rpmComp = null;
             if (node.HasValue("labelText"))
             {
                 string labelText = node.GetValue("labelText").Trim().UnMangleConfigText();
                 hasText = true;
-                rpmComp = RasterPropMonitorComputer.Instantiate(part, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(prop);
                 label = new StringProcessorFormatter(labelText, rpmComp);
                 oneShot = label.IsConstant;
             }
@@ -284,7 +284,7 @@ namespace JSI
 
             if (node.HasValue("color"))
             {
-                color = JUtil.ParseColor32(node.GetValue("color").Trim(), part, ref rpmComp);
+                color = JUtil.ParseColor32(node.GetValue("color").Trim(), rpmComp);
                 hasColor = true;
             }
             else

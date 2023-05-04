@@ -572,7 +572,7 @@ namespace JSI
             if (HighLogic.LoadedSceneIsEditor)
                 return;
 
-            rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
             // remove the page until it's active
             rpmComp.RemoveInternalModule(this);

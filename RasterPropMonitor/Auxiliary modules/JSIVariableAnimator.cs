@@ -57,7 +57,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 useNewMode = RPMGlobals.useNewVariableAnimator;
 
                 ConfigNode moduleConfig = null;
@@ -387,13 +387,13 @@ namespace JSI
 
                 if (reverse)
                 {
-                    activeColor = JUtil.ParseColor32(node.GetValue("passiveColor"), thisProp.part, ref rpmComp);
-                    passiveColor = JUtil.ParseColor32(node.GetValue("activeColor"), thisProp.part, ref rpmComp);
+                    activeColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
+                    passiveColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
                 else
                 {
-                    passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), thisProp.part, ref rpmComp);
-                    activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), thisProp.part, ref rpmComp);
+                    passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
+                    activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
                 Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(node.GetValue("coloredObject"));
                 affectedMaterial = colorShiftRenderer.material;
@@ -1072,13 +1072,13 @@ namespace JSI
 
                 if (reverse)
                 {
-                    activeColor = JUtil.ParseColor32(node.GetValue("passiveColor"), thisProp.part, ref rpmComp);
-                    passiveColor = JUtil.ParseColor32(node.GetValue("activeColor"), thisProp.part, ref rpmComp);
+                    activeColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
+                    passiveColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
                 else
                 {
-                    passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), thisProp.part, ref rpmComp);
-                    activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), thisProp.part, ref rpmComp);
+                    passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
+                    activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
                 Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(node.GetValue("coloredObject"));
                 affectedMaterial = colorShiftRenderer.material;

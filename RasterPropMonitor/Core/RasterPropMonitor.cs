@@ -151,7 +151,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 JUtil.LogMessage(this, "Attaching monitor {2}-{1} to {0}", rpmComp.RPMCid, internalProp.propID, internalProp.internalModel.internalName);
 
                 // Install the calculator module.

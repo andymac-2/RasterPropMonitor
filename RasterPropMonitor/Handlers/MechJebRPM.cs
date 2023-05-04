@@ -287,7 +287,7 @@ namespace JSI
             topMenu.selectedColor = JUtil.ColorToColorTag(selectedColorValue);
             topMenu.disabledColor = JUtil.ColorToColorTag(unavailableColorValue);
 
-            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
             Func<bool> isMjAvailable = (Func<bool>)rpmComp.GetMethod("JSIMechJeb:GetMechJebAvailable", internalProp, typeof(Func<bool>));
             if (isMjAvailable == null)
             {
@@ -335,7 +335,7 @@ namespace JSI
         {
             if (JUtil.IsActiveVessel(vessel))
             {
-                RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 UpdateMethods(rpmComp);
             }
         }

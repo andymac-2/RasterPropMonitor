@@ -26,7 +26,7 @@ namespace JSI
                 return;
             }
 
-            rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
             if (string.IsNullOrEmpty(soundURL))
             {
                 JUtil.LogMessage(this, "JSIInternalBackgroundNoise called with no soundURL");

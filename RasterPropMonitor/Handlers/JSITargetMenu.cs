@@ -689,7 +689,7 @@ namespace JSI
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
             // Grrrrrr.
             if (!string.IsNullOrEmpty(nameColor))

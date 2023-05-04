@@ -149,7 +149,7 @@ namespace JSI
                 return;
             }
 
-            rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
             if (string.IsNullOrEmpty(definitionIn) && definitions != null)
             {

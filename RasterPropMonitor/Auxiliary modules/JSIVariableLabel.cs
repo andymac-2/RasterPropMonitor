@@ -70,7 +70,7 @@ namespace JSI
 
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
                 Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
                 textObj = InternalComponents.Instance.CreateText("Arial", fontSize * 15.5f, textObjTransform, "", Color.green, false, "TopLeft");
@@ -95,9 +95,9 @@ namespace JSI
 
                 if (!(string.IsNullOrEmpty(variableName) || string.IsNullOrEmpty(positiveColor) || string.IsNullOrEmpty(negativeColor) || string.IsNullOrEmpty(zeroColor)))
                 {
-                    positiveColorValue = JUtil.ParseColor32(positiveColor, part, ref rpmComp);
-                    negativeColorValue = JUtil.ParseColor32(negativeColor, part, ref rpmComp);
-                    zeroColorValue = JUtil.ParseColor32(zeroColor, part, ref rpmComp);
+                    positiveColorValue = JUtil.ParseColor32(positiveColor, rpmComp);
+                    negativeColorValue = JUtil.ParseColor32(negativeColor, rpmComp);
+                    zeroColorValue = JUtil.ParseColor32(zeroColor, rpmComp);
                     del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
                     rpmComp.RegisterVariableCallback(variableName, del);
                     registeredVessel = vessel.id;

@@ -40,7 +40,7 @@ namespace JSI
             {
                 for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
                 {
-                    RasterPropMonitorComputer rpmc = RasterPropMonitorComputer.Instantiate(vessel.parts[partIdx], false);
+                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
                     if (rpmc != null)
                     {
                         if (rpmc.HasPersistentVariable(name, false))
@@ -67,7 +67,7 @@ namespace JSI
             {
                 for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
                 {
-                    RasterPropMonitorComputer rpmc = RasterPropMonitorComputer.Instantiate(vessel.parts[partIdx], false);
+                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
                     if (rpmc != null)
                     {
                         if (rpmc.HasPersistentVariable(name, false))
@@ -93,7 +93,7 @@ namespace JSI
             {
                 for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
                 {
-                    RasterPropMonitorComputer rpmc = RasterPropMonitorComputer.Instantiate(vessel.parts[partIdx], false);
+                    RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
                     if (rpmc != null)
                     {
                         rpmc.SetPersistentVariable(name, value, false);

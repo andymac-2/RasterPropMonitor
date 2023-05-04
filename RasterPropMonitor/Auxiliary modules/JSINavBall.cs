@@ -55,7 +55,7 @@ namespace JSI
                 return;
             }
 
-            rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+            rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
             lastOrientation = navBall.rotation;
 

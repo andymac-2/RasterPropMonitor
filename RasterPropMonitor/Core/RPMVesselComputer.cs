@@ -557,7 +557,7 @@ namespace JSI
                     JUtil.LogMessage(this, "OnSave for vessel {0}", vessel.id);
                     for (int partIdx = 0; partIdx < vessel.parts.Count; ++partIdx)
                     {
-                        RasterPropMonitorComputer rpmc = RasterPropMonitorComputer.Instantiate(vessel.parts[partIdx], false);
+                        RasterPropMonitorComputer rpmc = vessel.parts[partIdx].FindModuleImplementing<RasterPropMonitorComputer>();
                         if (rpmc != null && rpmc.persistentVars.Count > 0)
                         {
                             JUtil.LogMessage(this, "Storing RPMC {0} persistents", rpmc.RPMCid);

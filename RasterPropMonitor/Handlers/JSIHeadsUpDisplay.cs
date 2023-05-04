@@ -540,7 +540,7 @@ namespace JSI
             }
             try
             {
-                rpmComp = RasterPropMonitorComputer.Instantiate(internalProp, true);
+                rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
                 backgroundColorValue = ConfigNode.ParseColor32(backgroundColor);
 

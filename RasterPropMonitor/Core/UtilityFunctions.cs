@@ -325,13 +325,12 @@ namespace JSI
         /// table.
         /// </summary>
         /// <param name="colorString">The color string to parse.</param>
-        /// <param name="part">The part containing the prop that is asking for
-        /// the color parsing.</param>
         /// <param name="rpmComp">The rpmComp for the specified part; if null,
         /// ParseColor32 looks up the RPMC module.</param>
+        /// 
         /// <returns>Color32; white if colorString is empty, obnoxious magenta
         /// if an unknown COLOR_ string is provided.</returns>
-        internal static Color32 ParseColor32(string colorString, Part part, ref RasterPropMonitorComputer rpmComp)
+        internal static Color32 ParseColor32(string colorString, RasterPropMonitorComputer rpmComp)
         {
             if (string.IsNullOrEmpty(colorString))
             {
@@ -341,20 +340,9 @@ namespace JSI
             colorString = colorString.Trim();
             if (colorString.StartsWith("COLOR_"))
             {
-                if (part != null)
+                if (rpmComp != null && rpmComp.overrideColors.ContainsKey(colorString))
                 {
-                    if (rpmComp == null)
-                    {
-                        rpmComp = RasterPropMonitorComputer.Instantiate(part, false);
-                    }
-
-                    if (rpmComp != null)
-                    {
-                        if (rpmComp.overrideColors.ContainsKey(colorString))
-                        {
-                            return rpmComp.overrideColors[colorString];
-                        }
-                    }
+                    return rpmComp.overrideColors[colorString];
                 }
 
                 if (globalColors.ContainsKey(colorString))
