@@ -240,6 +240,22 @@ namespace JSI
         public override void OnLoad(ConfigNode node)
         {
             m_persistentVariables.Load(node);
+
+            foreach (var overrideColorSetup in node.GetNodes("RPM_COLOROVERRIDE"))
+            {
+                foreach (var colorConfig in overrideColorSetup.GetNodes("COLORDEFINITION"))
+                {
+                    string name = colorConfig.GetValue("name");
+                    Color32 color = default(Color);
+                    
+                    if (name != null && colorConfig.TryGetValue("color", ref color))
+                    {
+                        name = "COLOR_" + name.Trim();
+
+                        overrideColors[name] = color;
+                    }
+                }
+            }
         }
 
         public override void OnSave(ConfigNode node)
@@ -393,35 +409,6 @@ namespace JSI
                     for (int i = 0; i < varstring.Length; ++i)
                     {
                         AddTriggeredEvent(varstring[i].Trim());
-                    }
-                }
-
-                ConfigNode[] moduleConfigs = part.partInfo.partConfig.GetNodes("MODULE");
-                for (int moduleId = 0; moduleId < moduleConfigs.Length; ++moduleId)
-                {
-                    if (moduleConfigs[moduleId].GetValue("name") == moduleName)
-                    {
-                        ConfigNode[] overrideColorSetup = moduleConfigs[moduleId].GetNodes("RPM_COLOROVERRIDE");
-                        for (int colorGrp = 0; colorGrp < overrideColorSetup.Length; ++colorGrp)
-                        {
-                            ConfigNode[] colorConfig = overrideColorSetup[colorGrp].GetNodes("COLORDEFINITION");
-                            for (int defIdx = 0; defIdx < colorConfig.Length; ++defIdx)
-                            {
-                                if (colorConfig[defIdx].HasValue("name") && colorConfig[defIdx].HasValue("color"))
-                                {
-                                    string name = "COLOR_" + (colorConfig[defIdx].GetValue("name").Trim());
-                                    Color32 color = ConfigNode.ParseColor32(colorConfig[defIdx].GetValue("color").Trim());
-                                    if (overrideColors.ContainsKey(name))
-                                    {
-                                        overrideColors[name] = color;
-                                    }
-                                    else
-                                    {
-                                        overrideColors.Add(name, color);
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
 
