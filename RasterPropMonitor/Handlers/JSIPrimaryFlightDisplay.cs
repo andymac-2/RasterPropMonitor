@@ -352,7 +352,7 @@ namespace JSI
             // I wonder if doing this as a command buffer might be more efficient?
 
             GL.PushMatrix();
-            GL.LoadProjectionMatrix(Matrix4x4.Ortho(-cameraSpan, cameraSpan, -cameraSpan, cameraSpan, 0, navballRadius * 3));
+            GL.LoadProjectionMatrix(Matrix4x4.Ortho(-cameraSpan, cameraSpan, -cameraSpan, cameraSpan, 0, 1.5f + navballRadius * 3));
 
             var navballMeshFilter = navBall.GetComponent<MeshFilter>();
             var navballRenderer = navBall.GetComponent<MeshRenderer>();
