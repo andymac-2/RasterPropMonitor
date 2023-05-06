@@ -7,11 +7,48 @@ using UnityEngine;
 
 namespace JSI.Auxiliary_modules
 {
+    class BatchDefinition
+    {
+        static List<BatchDefinition> x_batchDefinitions = null;
+
+        static void LoadBatchDefinitions()
+        {
+            var batchNodes = GameDatabase.Instance.GetConfigNodes("PROP_BATCH");
+            x_batchDefinitions = new List<BatchDefinition>(batchNodes.Length);
+            foreach (var batchNode in batchNodes)
+            {
+                x_batchDefinitions.Add(new BatchDefinition(batchNode));
+            }
+        }
+
+        public static BatchDefinition FindBatchDefinitionForProp(InternalProp prop)
+        {
+            if (x_batchDefinitions == null) LoadBatchDefinitions();
+
+            foreach (var batchDefinition in x_batchDefinitions)
+            {
+                if (batchDefinition.propName == prop.propName)
+                {
+                    return batchDefinition;
+                }
+            }
+
+            return null;
+        }
+
+        BatchDefinition(ConfigNode node)
+        {
+            propName = node.GetValue(nameof(propName));
+            transformName = node.GetValue(nameof(transformName));
+        }
+
+        public string propName;
+        public string transformName;
+    }
+
+
     public class PropBatcher : InternalModule
     {
-        [KSPField] public string propName = string.Empty; // probably should be a model path
-        [KSPField] public string transformName = string.Empty;
-
         public override void OnLoad(ConfigNode node)
         {
             if (HighLogic.LoadedScene != GameScenes.LOADING) return;
@@ -24,7 +61,8 @@ namespace JSI.Auxiliary_modules
             foreach(var oldProp in internalModel.props)
             {
                 bool keepProp = true;
-                if (oldProp.propName == propName)
+                var batchDefinition = BatchDefinition.FindBatchDefinitionForProp(oldProp);
+                if (batchDefinition != null)
                 {
                     if (firstProp == null)
                     {
@@ -40,7 +78,7 @@ namespace JSI.Auxiliary_modules
                         keepProp = false;
                     }
 
-                    var childTransform = JUtil.FindPropTransform(oldProp, transformName);
+                    var childTransform = JUtil.FindPropTransform(oldProp, batchDefinition.transformName);
                     if (childTransform != null)
                     {
                         childTransform.SetParent(batchRoot, true);
