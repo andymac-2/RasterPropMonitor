@@ -69,13 +69,13 @@ namespace JSI.Auxiliary_modules
             }
         }
 
-        static BatchFilter GetBatchFilterForProp(InternalProp prop)
+        static IEnumerable<BatchFilter> GetBatchFilterForProp(InternalProp prop)
         {
-            if (!prop.hasModel) return null;
+            if (!prop.hasModel) yield break;
 
             if (x_propNameToFilter.TryGetValue(prop.propName, out var batchFilter))
             {
-                return batchFilter;
+                yield return batchFilter;
             }
 
             var modelRoot = prop.transform.Find("model");
@@ -84,11 +84,18 @@ namespace JSI.Auxiliary_modules
                 var model = modelRoot.GetChild(childIndex);
                 if (x_modelPathToFilter.TryGetValue(model.name, out batchFilter))
                 {
-                    return batchFilter;
+                    yield return batchFilter;
                 }
             }
+        }
 
-            return null;
+        void AttachChildrenRecursively(Transform newParent, Transform child)
+        {
+            child.SetParent(newParent, true);
+            for (int i = 0; i < child.childCount; i++)
+            {
+                AttachChildrenRecursively(newParent, child.GetChild(i));
+            }
         }
 
         public override void OnLoad(ConfigNode node)
@@ -101,8 +108,7 @@ namespace JSI.Auxiliary_modules
             foreach(var oldProp in internalModel.props)
             {
                 bool keepProp = true;
-                var batchFilter = GetBatchFilterForProp(oldProp);
-                if (batchFilter != null)
+                foreach (var batchFilter in GetBatchFilterForProp(oldProp))
                 {
                     var childTransform = JUtil.FindPropTransform(oldProp, batchFilter.transformName);
                     if (childTransform != null)
@@ -122,7 +128,7 @@ namespace JSI.Auxiliary_modules
                             batchRoots[batchFilter.batchID] = batchRoot;
                         }
 
-                        childTransform.SetParent(batchRoot, true);
+                        AttachChildrenRecursively(batchRoot, childTransform);
                     }
                     else
                     {
