@@ -1542,7 +1542,14 @@ namespace JSI
         {
             if (nameOrPath.IndexOf('/') == -1)
             {
-                return prop.FindModelTransform(nameOrPath);
+                if (prop.hasModel)
+                {
+                    return InternalProp.FindHeirarchyTransform(prop.transform.Find("model"), nameOrPath);
+                }
+                else
+                {
+                    return prop.internalModel.FindModelTransform(nameOrPath);
+                }
             }
             else
             {

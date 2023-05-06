@@ -392,7 +392,7 @@ namespace JSI
                     activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
                 Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(node.GetValue("coloredObject"));
-                affectedMaterial = colorShiftRenderer.material;
+                affectedMaterial = colorShiftRenderer.isPartOfStaticBatch ? colorShiftRenderer.sharedMaterial : colorShiftRenderer.material;
                 affectedMaterial.SetColor(colorName, passiveColor);
                 mode = Mode.Color;
             }
