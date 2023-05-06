@@ -3,85 +3,110 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace JSI.Auxiliary_modules
 {
-    class BatchDefinition
+    class BatchFilter
     {
-        static List<BatchDefinition> x_batchDefinitions = null;
-
-        static void LoadBatchDefinitions()
+        public BatchFilter(ConfigNode node, int batchID)
         {
+            this.batchID = batchID;
+            propName = node.GetValue(nameof(propName));
+            transformName = node.GetValue(nameof(transformName));
+            node.TryGetValue(nameof(keepProp), ref keepProp);
+        }
+
+        public readonly int batchID;
+        public readonly string propName;
+        public readonly string transformName;
+        public readonly bool keepProp = true;
+        
+    }
+
+    public class PropBatcher : InternalModule
+    {
+        static Dictionary<string, BatchFilter> x_propNameToFilter;
+        
+        public static void ModuleManagerPostLoad()
+        {
+            x_propNameToFilter = new Dictionary<string, BatchFilter>();
+
             var batchNodes = GameDatabase.Instance.GetConfigNodes("PROP_BATCH");
-            x_batchDefinitions = new List<BatchDefinition>(batchNodes.Length);
+            int nextBatchID = 0;
             foreach (var batchNode in batchNodes)
             {
-                x_batchDefinitions.Add(new BatchDefinition(batchNode));
+                foreach (var filterNode in batchNode.GetNodes("FILTER"))
+                {
+                    var batchFilter = new BatchFilter(filterNode, nextBatchID);
+                    
+                    if (batchFilter.propName != null)
+                    {
+                        if (x_propNameToFilter.ContainsKey(batchFilter.propName))
+                        {
+                            JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add prop {0} to multiple filters", batchFilter.propName);
+                        }
+                        else
+                        {
+                            x_propNameToFilter.Add(batchFilter.propName, batchFilter);
+                        }
+                    }
+                }
+
+                ++nextBatchID;
             }
         }
 
-        public static BatchDefinition FindBatchDefinitionForProp(InternalProp prop)
+        static BatchFilter GetBatchFilterForProp(InternalProp prop)
         {
-            if (x_batchDefinitions == null) LoadBatchDefinitions();
+            if (!prop.hasModel) return null;
 
-            foreach (var batchDefinition in x_batchDefinitions)
+            // currently, we only support matching by propName but that will change eventually
+            if (x_propNameToFilter.TryGetValue(prop.propName, out var batchFilter))
             {
-                if (batchDefinition.propName == prop.propName)
-                {
-                    return batchDefinition;
-                }
+                return batchFilter;
             }
 
             return null;
         }
 
-        BatchDefinition(ConfigNode node)
-        {
-            propName = node.GetValue(nameof(propName));
-            transformName = node.GetValue(nameof(transformName));
-        }
-
-        public string propName;
-        public string transformName;
-    }
-
-
-    public class PropBatcher : InternalModule
-    {
         public override void OnLoad(ConfigNode node)
         {
             if (HighLogic.LoadedScene != GameScenes.LOADING) return;
 
             var newProps = new List<InternalProp>(internalModel.props.Count);
-
-            InternalProp firstProp = null;
-            Transform batchRoot = null;
+            var batchRoots = new Dictionary<int, Transform>();
 
             foreach(var oldProp in internalModel.props)
             {
                 bool keepProp = true;
-                var batchDefinition = BatchDefinition.FindBatchDefinitionForProp(oldProp);
-                if (batchDefinition != null)
+                var batchFilter = GetBatchFilterForProp(oldProp);
+                if (batchFilter != null)
                 {
-                    if (firstProp == null)
+                    var childTransform = JUtil.FindPropTransform(oldProp, batchFilter.transformName);
+                    if (childTransform != null)
                     {
-                        firstProp = oldProp;
-                        firstProp.transform.localPosition = Vector3.zero;
-                        firstProp.transform.localRotation = Quaternion.identity;
-                        firstProp.transform.localScale = Vector3.one;
-                        batchRoot = new GameObject("batchRoot").transform;
-                        batchRoot.SetParent(firstProp.transform, false);
+                        if (batchRoots.TryGetValue(batchFilter.batchID, out var batchRoot))
+                        {
+                            keepProp = batchFilter.keepProp;
+                        }
+                        else
+                        {
+                            childTransform.SetParent(null, true); // detach early so the transform change below doesn't move it
+                            oldProp.transform.localPosition = Vector3.zero;
+                            oldProp.transform.localRotation = Quaternion.identity;
+                            oldProp.transform.localScale = Vector3.one;
+                            batchRoot = new GameObject("batchRoot").transform;
+                            batchRoot.SetParent(oldProp.transform, false);
+                            batchRoots[batchFilter.batchID] = batchRoot;
+                        }
+
+                        childTransform.SetParent(batchRoot, true);
                     }
                     else
                     {
-                        keepProp = false;
-                    }
-
-                    var childTransform = JUtil.FindPropTransform(oldProp, batchDefinition.transformName);
-                    if (childTransform != null)
-                    {
-                        childTransform.SetParent(batchRoot, true);
+                        JUtil.LogErrorMessage(null, "PROP_BATCH: Could not find transform named {0} in prop {1}", batchFilter.transformName, oldProp.propName);
                     }
                 }
 
@@ -92,16 +117,21 @@ namespace JSI.Auxiliary_modules
                 }
                 else
                 {
-                    oldProp.transform.SetParent(null, false);
+                    GameObject.Destroy(oldProp.gameObject);
                 }
             }
 
-            if (batchRoot != null)
+            if (batchRoots.Count > 0)
             {
-                StaticBatchingUtility.Combine(batchRoot.gameObject);
-            }
+                foreach (var batchRoot in batchRoots.Values)
+                {
+                    StaticBatchingUtility.Combine(batchRoot.gameObject);
+                    JUtil.LogMessage(null, "PROP_BATCH: batching {0} transforms under {1}", batchRoot.childCount, batchRoot.parent.name);
+                }
 
-            internalModel.props = newProps;
+                JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}", internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count);
+                internalModel.props = newProps;
+            }
         }
     }
 }
