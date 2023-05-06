@@ -101,7 +101,7 @@ namespace JSI
             }
             catch
             {
-                JUtil.LogErrorMessage(this, $"{internalProp.propName} - {variableName}");
+                JUtil.LogErrorMessage(this, $"{internalProp.propName} - {internalProp.propID} - {variableName} - {internalModel?.internalName}");
                 JUtil.AnnoyUser(this);
                 enabled = false;
                 throw;
@@ -391,10 +391,18 @@ namespace JSI
                     passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
                     activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
                 }
-                Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(node.GetValue("coloredObject"));
-                affectedMaterial = colorShiftRenderer.isPartOfStaticBatch ? colorShiftRenderer.sharedMaterial : colorShiftRenderer.material;
-                affectedMaterial.SetColor(colorName, passiveColor);
-                mode = Mode.Color;
+                string coloredObjectName = node.GetValue("coloredObject");
+                Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(coloredObjectName);
+                if (colorShiftRenderer != null)
+                {
+                    affectedMaterial = colorShiftRenderer.isPartOfStaticBatch ? colorShiftRenderer.sharedMaterial : colorShiftRenderer.material;
+                    affectedMaterial.SetColor(colorName, passiveColor);
+                    mode = Mode.Color;
+                }
+                else
+                {
+                    throw new ArgumentException($"Could not find transform {coloredObjectName} in prop {thisProp.propName}");
+                }
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localRotationStart") && node.HasValue("localRotationEnd"))
             {
