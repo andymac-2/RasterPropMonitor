@@ -97,6 +97,7 @@ namespace JSI
 
                 del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
                 rpmComp.RegisterVariableCallback(variableName, del);
+                rpmComp.RemoveInternalModule(this);
                 JUtil.LogMessage(this, "Configuration complete in prop {1} ({2}), supporting {0} callback animators.", variableSets.Count, internalProp.propID, internalProp.propName);
             }
             catch
