@@ -1540,7 +1540,11 @@ namespace JSI
 
         internal static Transform FindPropTransform(InternalProp prop, string nameOrPath)
         {
-            if (nameOrPath.IndexOf('/') == -1)
+            if (nameOrPath == null)
+            {
+                return null;
+            }
+            else if (nameOrPath.IndexOf('/') == -1)
             {
                 if (prop.hasModel)
                 {
