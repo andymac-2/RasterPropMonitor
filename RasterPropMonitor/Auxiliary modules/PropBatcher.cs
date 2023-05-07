@@ -8,29 +8,45 @@ using UnityEngine;
 
 namespace JSI.Auxiliary_modules
 {
-    class BatchFilter
-    {
-        public BatchFilter(ConfigNode node, int batchID)
-        {
-            this.batchID = batchID;
-            propName = node.GetValue(nameof(propName));
-            modelPath = node.GetValue(nameof(modelPath));
-            transformName = node.GetValue(nameof(transformName));
-            node.TryGetValue(nameof(keepProp), ref keepProp);
-        }
-
-        public readonly int batchID;
-        public readonly string propName;
-        public readonly string modelPath;
-        public readonly string transformName;
-        public readonly bool keepProp = true;
-    }
-
     public class PropBatcher : InternalModule
     {
         static Dictionary<string, BatchFilter> x_propNameToFilter = new Dictionary<string, BatchFilter>();
-        static Dictionary<string, BatchFilter> x_modelPathToFilter = new Dictionary<string, BatchFilter>();
-        
+        static Dictionary<string, BatchFilter> x_modelNameToFilter = new Dictionary<string, BatchFilter>();
+
+        class BatchFilter
+        {
+            public BatchFilter(ConfigNode node, int batchID)
+            {
+                this.batchID = batchID;
+                transformName = node.GetValue(nameof(transformName));
+                node.TryGetValue(nameof(keepProp), ref keepProp);
+
+                string propName = node.GetValue(nameof(propName));
+                if (propName != null && !TryAdd(x_propNameToFilter, propName, this))
+                {
+                    JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add prop {0} to multiple batches", propName);
+                }
+
+                // models added with a MODEL node get their full path plus "(Clone)" as a top-level child of the "model" child of the prop
+                string modelPath = node.GetValue(nameof(modelPath));
+                if (modelPath != null && !TryAdd(x_modelNameToFilter, modelPath + "(Clone)", this))
+                {
+                    JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add modelPath {0} to multiple batches", modelPath);
+                }
+
+                // models that are implicitly added to props by virtue of being in the same directory are just directly added as children of the "model" node
+                string modelName = node.GetValue(nameof(modelName));
+                if (modelName != null &&  !TryAdd(x_modelNameToFilter, modelName, this))
+                {
+                    JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add modelName {0} to multiple batches", modelName);
+                }
+            }
+
+            public readonly int batchID;
+            public readonly string transformName;
+            public readonly bool keepProp = true;
+        }
+
         static bool TryAdd(Dictionary<string, BatchFilter> dict, string key, BatchFilter value)
         {
             if (dict.ContainsKey(key))
@@ -44,7 +60,7 @@ namespace JSI.Auxiliary_modules
         public static void ModuleManagerPostLoad()
         {
             x_propNameToFilter.Clear();
-            x_modelPathToFilter.Clear();
+            x_modelNameToFilter.Clear();
 
             var batchNodes = GameDatabase.Instance.GetConfigNodes("PROP_BATCH");
             int nextBatchID = 0;
@@ -52,17 +68,7 @@ namespace JSI.Auxiliary_modules
             {
                 foreach (var filterNode in batchNode.GetNodes("FILTER"))
                 {
-                    var batchFilter = new BatchFilter(filterNode, nextBatchID);
-                    
-                    if (batchFilter.propName != null && !TryAdd(x_propNameToFilter, batchFilter.propName, batchFilter))
-                    {
-                        JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add prop {0} to multiple batches", batchFilter.propName);
-                    }
-
-                    if (batchFilter.modelPath != null && !TryAdd(x_modelPathToFilter, batchFilter.modelPath + "(Clone)", batchFilter))
-                    {
-                        JUtil.LogErrorMessage(null, "PROP_BATCH: Tried to add model {0} to multipler batches", batchFilter.modelPath);
-                    }
+                    new BatchFilter(filterNode, nextBatchID);
                 }
 
                 ++nextBatchID;
@@ -82,7 +88,7 @@ namespace JSI.Auxiliary_modules
             for (int childIndex = 0; childIndex < modelRoot.childCount; ++childIndex)
             {
                 var model = modelRoot.GetChild(childIndex);
-                if (x_modelPathToFilter.TryGetValue(model.name, out batchFilter))
+                if (x_modelNameToFilter.TryGetValue(model.name, out batchFilter))
                 {
                     yield return batchFilter;
                 }
@@ -103,7 +109,7 @@ namespace JSI.Auxiliary_modules
             if (HighLogic.LoadedScene != GameScenes.LOADING) return;
 
             var newProps = new List<InternalProp>(internalModel.props.Count);
-            var batchRoots = new Dictionary<int, Transform>();
+            var batchLists = new Dictionary<int, List<GameObject>>();
 
             foreach(var oldProp in internalModel.props)
             {
@@ -113,22 +119,34 @@ namespace JSI.Auxiliary_modules
                     var childTransform = JUtil.FindPropTransform(oldProp, batchFilter.transformName);
                     if (childTransform != null)
                     {
-                        if (batchRoots.TryGetValue(batchFilter.batchID, out var batchRoot))
+                        if (batchLists.TryGetValue(batchFilter.batchID, out var batchList))
                         {
                             keepProp = batchFilter.keepProp;
+
+                            if (!keepProp)
+                            {
+                                childTransform.SetParent(batchList[0].transform.parent, true);
+                            }
                         }
                         else
                         {
-                            childTransform.SetParent(null, true); // detach early so the transform change below doesn't move it
-                            oldProp.transform.localPosition = Vector3.zero;
-                            oldProp.transform.localRotation = Quaternion.identity;
-                            oldProp.transform.localScale = Vector3.one;
-                            batchRoot = new GameObject("batchRoot").transform;
-                            batchRoot.SetParent(oldProp.transform, false);
-                            batchRoots[batchFilter.batchID] = batchRoot;
+                            batchList = new List<GameObject>();
+                            batchLists[batchFilter.batchID] = batchList;
+
+                            // if we're not keeping the other props, we need to attach all of their models to the first one
+                            if (!batchFilter.keepProp)
+                            {
+                                childTransform.SetParent(null, true); // detach early so the transform change below doesn't move it
+                                oldProp.transform.localPosition = Vector3.zero;
+                                oldProp.transform.localRotation = Quaternion.identity;
+                                oldProp.transform.localScale = Vector3.one;
+                                var batchRoot = new GameObject(oldProp.propName + " batchRoot").transform;
+                                batchRoot.SetParent(oldProp.transform, false);
+                                childTransform.SetParent(batchRoot.transform, true);
+                            }
                         }
 
-                        AttachChildrenRecursively(batchRoot, childTransform);
+                        batchList.Add(childTransform.gameObject);
                     }
                     else
                     {
@@ -147,14 +165,21 @@ namespace JSI.Auxiliary_modules
                 }
             }
 
-            if (batchRoots.Count > 0)
+            if (batchLists.Count > 0)
             {
                 int batchedTransforms = 0;
-                foreach (var batchRoot in batchRoots.Values)
+                foreach (var batchList in batchLists.Values)
                 {
-                    batchedTransforms += batchRoot.childCount;
-                    StaticBatchingUtility.Combine(batchRoot.gameObject);
-                    JUtil.LogMessage(null, "PROP_BATCH: batching {0} transforms under {1}", batchRoot.childCount, batchRoot.parent.name);
+                    // make sure everything is using the same material
+                    var sharedMaterial = batchList[0].GetComponent<MeshRenderer>().sharedMaterial;
+                    foreach (var child in  batchList)
+                    {
+                        child.GetComponent<MeshRenderer>().material = sharedMaterial;
+                    }
+
+                    batchedTransforms += batchList.Count;
+                    StaticBatchingUtility.Combine(batchList.ToArray(), batchList[0].transform.parent.gameObject);
+                    JUtil.LogMessage(null, "PROP_BATCH: batching {0} transforms under {1}", batchList.Count, batchList[0].transform.parent.name);
                 }
 
                 JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}; total batched transforms {3}", internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransforms);
