@@ -95,15 +95,6 @@ namespace JSI.Auxiliary_modules
             }
         }
 
-        void AttachChildrenRecursively(Transform newParent, Transform child)
-        {
-            child.SetParent(newParent, true);
-            for (int i = 0; i < child.childCount; i++)
-            {
-                AttachChildrenRecursively(newParent, child.GetChild(i));
-            }
-        }
-
         public override void OnLoad(ConfigNode node)
         {
             if (HighLogic.LoadedScene != GameScenes.LOADING) return;
@@ -141,6 +132,7 @@ namespace JSI.Auxiliary_modules
                                 oldProp.transform.localRotation = Quaternion.identity;
                                 oldProp.transform.localScale = Vector3.one;
                                 var batchRoot = new GameObject(oldProp.propName + " batchRoot").transform;
+                                batchRoot.gameObject.layer = 20;
                                 batchRoot.SetParent(oldProp.transform, false);
                                 childTransform.SetParent(batchRoot.transform, true);
                             }
@@ -170,15 +162,30 @@ namespace JSI.Auxiliary_modules
                 int batchedTransforms = 0;
                 foreach (var batchList in batchLists.Values)
                 {
-                    // make sure everything is using the same material
-                    var sharedMaterial = batchList[0].GetComponent<MeshRenderer>().sharedMaterial;
-                    foreach (var child in  batchList)
+                    CombineInstance[] instances = new CombineInstance[batchList.Count];
+                    Material material = batchList[0].GetComponent<MeshRenderer>().material;
+                    var worldToLocal = batchList[0].transform.worldToLocalMatrix;
+                    
+                    for (int i = 0; i < batchList.Count; i++)
                     {
-                        child.GetComponent<MeshRenderer>().material = sharedMaterial;
+                        var instance = new CombineInstance();
+                        instance.mesh = batchList[i].GetComponent<MeshFilter>().mesh;
+                        instance.transform = worldToLocal * batchList[i].transform.localToWorldMatrix;
+                        
+                        if (i > 0)
+                        {
+                            Component.Destroy(batchList[i].GetComponent<MeshRenderer>());
+                        }
+
+                        instances[i] = instance;
                     }
 
                     batchedTransforms += batchList.Count;
-                    StaticBatchingUtility.Combine(batchList.ToArray(), batchList[0].transform.parent.gameObject);
+                    
+                    Mesh mesh = new Mesh();
+                    mesh.CombineMeshes(instances);
+                    batchList[0].GetComponent<MeshFilter>().sharedMesh = mesh;
+
                     JUtil.LogMessage(null, "PROP_BATCH: batching {0} transforms under {1}", batchList.Count, batchList[0].transform.parent.name);
                 }
 
