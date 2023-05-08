@@ -12,30 +12,17 @@ namespace JSI.Core
 
         public double GetPersistentVariable(string name, double defaultValue)
         {
-            double val;
-            if (persistentVars.TryGetValue(name, out val))
+            if (persistentVars.TryGetValue(name, out double val))
             {
-
+                return val;
             }
-            else
-            {
-                val = defaultValue;
-                persistentVars[name] = defaultValue;
-            }
-
-            return val;
+            return defaultValue;
         }
 
         public bool GetPersistentVariable(string name, bool defaultValue)
         {
             double val = GetPersistentVariable(name, defaultValue ? 1 : 0);
 
-            // HACK: if someone had tried to access this persistent var, it will have defaulted to -1 which would be "true"
-            if (val == -1.0)
-            {
-                SetPersistentVariable(name, defaultValue ? 1 : 0);
-                return defaultValue;
-            }
             return val != 0;
         }
 

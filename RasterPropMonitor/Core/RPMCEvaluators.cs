@@ -483,7 +483,9 @@ namespace JSI
                             updateType = VariableUpdateType.Pushed;
                             return (RPMVesselComputer comp) =>
                             {
-                                return GetPersistentVariable(substring, -1.0, false);
+                                return HasPersistentVariable(substring, false)
+                                    ? GetPersistentVariable(substring, -1.0, false)
+                                    : GetPersistentVariable(substring, -1.0, true);
                             };
                         }
                     case "PLUGIN":
