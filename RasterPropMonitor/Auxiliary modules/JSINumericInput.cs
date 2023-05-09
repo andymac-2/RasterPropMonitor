@@ -27,6 +27,8 @@ namespace JSI
 {
     class JSINumericInput : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string perPodPersistenceName = string.Empty;
 
@@ -56,6 +58,12 @@ namespace JSI
         private VariableOrNumber maxRange;
 
         private float remainder = 0.0f;
+
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
 
         public void Start()
         {
@@ -117,28 +125,18 @@ namespace JSI
                     rpmComp.SetPersistentVariable(perPodPersistenceName, value, perPodPersistenceIsGlobal);
                 }
 
-                ConfigNode moduleConfig = null;
-                foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                ConfigNode[] inputNodes = moduleConfig.Node.GetNodes("USERINPUTSET");
+
+                for (int i = 0; i < inputNodes.Length; i++)
                 {
-                    if (node.GetValue("name") == internalProp.propName)
+                    try
                     {
-
-                        moduleConfig = node.GetNodes("MODULE")[moduleID];
-                        ConfigNode[] inputNodes = moduleConfig.GetNodes("USERINPUTSET");
-
-                        for (int i = 0; i < inputNodes.Length; i++)
-                        {
-                            try
-                            {
-                                numericInputs.Add(new NumericInput(inputNodes[i], internalProp));
-                                //JUtil.LogMessage(this, "Added USERINPUTSET {0}", inputNodes[i].GetValue("switchTransform"));
-                            }
-                            catch (ArgumentException e)
-                            {
-                                JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
-                            }
-                        }
-                        break;
+                        numericInputs.Add(new NumericInput(inputNodes[i], internalProp));
+                        //JUtil.LogMessage(this, "Added USERINPUTSET {0}", inputNodes[i].GetValue("switchTransform"));
+                    }
+                    catch (ArgumentException e)
+                    {
+                        JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
                     }
                 }
 

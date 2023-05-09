@@ -27,6 +27,8 @@ namespace JSI
     // Note 1: http://docs.unity3d.com/Manual/StyledText.html details the "richText" abilities
     public class JSILabel : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string labelText = "uninitialized";
         [KSPField]
@@ -34,10 +36,9 @@ namespace JSI
         [KSPField]
         public Vector2 transformOffset = Vector2.zero;
         [KSPField]
-        public string emissive = string.Empty;
-        private EmissiveMode emissiveMode = EmissiveMode.always;
+        public EmissiveMode emissive;
         float lastEmissiveValue = -1;
-        enum EmissiveMode
+        public enum EmissiveMode
         {
             always,
             never,
@@ -105,6 +106,12 @@ namespace JSI
         private Guid registeredVessel = Guid.Empty;
         RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
+
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
 
         /// <summary>
         /// Start everything up and get it configured.
@@ -192,43 +199,34 @@ namespace JSI
                     SmarterButton.CreateButton(internalProp, switchTransform, Click);
                     audioOutput = JUtil.SetupIVASound(internalProp, switchSound, switchSoundVolume, false);
 
-                    foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
-                    {
-                        if (node.GetValue("name") == internalProp.propName)
-                        {
-                            ConfigNode moduleConfig = node.GetNodes("MODULE")[moduleID];
-                            ConfigNode[] variableNodes = moduleConfig.GetNodes("VARIABLESET");
+                    ConfigNode[] variableNodes = moduleConfig.Node.GetNodes("VARIABLESET");
 
-                            for (int i = 0; i < variableNodes.Length; i++)
+                    for (int i = 0; i < variableNodes.Length; i++)
+                    {
+                        try
+                        {
+                            bool lOneshot = false;
+                            if (variableNodes[i].HasValue("oneshot"))
                             {
-                                try
+                                bool.TryParse(variableNodes[i].GetValue("oneshot"), out lOneshot);
+                            }
+                            if (variableNodes[i].HasValue("labelText"))
+                            {
+                                string lText = variableNodes[i].GetValue("labelText");
+                                string sourceString = lText.UnMangleConfigText();
+                                lOneshot |= !lText.Contains("$&$");
+                                labels.Add(new JSILabelSet(sourceString, rpmComp, lOneshot));
+                                if (!lOneshot)
                                 {
-                                    bool lOneshot = false;
-                                    if (variableNodes[i].HasValue("oneshot"))
-                                    {
-                                        bool.TryParse(variableNodes[i].GetValue("oneshot"), out lOneshot);
-                                    }
-                                    if (variableNodes[i].HasValue("labelText"))
-                                    {
-                                        string lText = variableNodes[i].GetValue("labelText");
-                                        string sourceString = lText.UnMangleConfigText();
-                                        lOneshot |= !lText.Contains("$&$");
-                                        labels.Add(new JSILabelSet(sourceString, rpmComp, lOneshot));
-                                        if (!lOneshot)
-                                        {
-                                            rpmComp.UpdateDataRefreshRate(refreshRate);
-                                        }
-                                    }
-                                }
-                                catch (ArgumentException e)
-                                {
-                                    JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
+                                    rpmComp.UpdateDataRefreshRate(refreshRate);
                                 }
                             }
-                            break;
+                        }
+                        catch (ArgumentException e)
+                        {
+                            JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
                         }
                     }
-
                 }
 
                 if (!string.IsNullOrEmpty(zeroColor))
@@ -237,51 +235,24 @@ namespace JSI
                     textObj.color = zeroColorValue;
                 }
 
-                bool usesMultiColor = false;
                 if (!(string.IsNullOrEmpty(variableName) || string.IsNullOrEmpty(positiveColor) || string.IsNullOrEmpty(negativeColor) || string.IsNullOrEmpty(zeroColor)))
                 {
-                    usesMultiColor = true;
                     positiveColorValue = JUtil.ParseColor32(positiveColor, rpmComp);
                     negativeColorValue = JUtil.ParseColor32(negativeColor, rpmComp);
                     del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
                     rpmComp.RegisterVariableCallback(variableName, del);
                     registeredVessel = vessel.id;
 
+                    emissive = EmissiveMode.active;
+
                     // Initialize the text color.  Actually, callback registration takes care of that.
                 }
 
-                if (string.IsNullOrEmpty(emissive))
-                {
-                    if (usesMultiColor)
-                    {
-                        emissiveMode = EmissiveMode.active;
-                    }
-                    else
-                    {
-                        emissiveMode = EmissiveMode.always;
-                    }
-                }
-                else if (emissive.ToLower() == EmissiveMode.always.ToString())
-                {
-                    emissiveMode = EmissiveMode.always;
-                }
-                else if (emissive.ToLower() == EmissiveMode.never.ToString())
-                {
-                    emissiveMode = EmissiveMode.never;
-                }
-                else if (emissive.ToLower() == EmissiveMode.active.ToString())
-                {
-                    emissiveMode = EmissiveMode.active;
-                }
-                else if (emissive.ToLower() == EmissiveMode.passive.ToString())
-                {
-                    emissiveMode = EmissiveMode.passive;
-                }
-                else if (emissive.ToLower() == EmissiveMode.flash.ToString())
+                if (emissive == EmissiveMode.flash)
                 {
                     if (flashRate > 0.0f)
                     {
-                        emissiveMode = EmissiveMode.flash;
+                        emissive = EmissiveMode.flash;
                         fm = JUtil.InstallFlashModule(part, flashRate);
                         if (fm != null)
                         {
@@ -290,13 +261,8 @@ namespace JSI
                     }
                     else
                     {
-                        emissiveMode = EmissiveMode.active;
+                        emissive = EmissiveMode.active;
                     }
-                }
-                else
-                {
-                    JUtil.LogErrorMessage(this, "Unrecognized emissive mode '{0}' in config for {1} ({2})", emissive, internalProp.propID, internalProp.propName);
-                    emissiveMode = EmissiveMode.always;
                 }
 
                 UpdateShader();
@@ -359,19 +325,19 @@ namespace JSI
         private void UpdateShader()
         {
             float emissiveValue;
-            if (emissiveMode == EmissiveMode.always)
+            if (emissive == EmissiveMode.always)
             {
                 emissiveValue = 1.0f;
             }
-            else if (emissiveMode == EmissiveMode.never)
+            else if (emissive == EmissiveMode.never)
             {
                 emissiveValue = 0.0f;
             }
-            else if (emissiveMode == EmissiveMode.flash)
+            else if (emissive == EmissiveMode.flash)
             {
                 emissiveValue = (variablePositive && flashOn) ? 1.0f : 0.0f;
             }
-            else if (variablePositive ^ (emissiveMode == EmissiveMode.passive))
+            else if (variablePositive ^ (emissive == EmissiveMode.passive))
             {
                 emissiveValue = 1.0f;
             }

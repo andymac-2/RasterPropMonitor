@@ -32,6 +32,8 @@ namespace JSI
     /// </summary>
     public class JSICallbackAnimator : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string variableName = string.Empty;
         [KSPField]
@@ -41,6 +43,12 @@ namespace JSI
         private Action<float> del;
         private RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
+
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
 
         /// <summary>
         /// Start and initialize all the things!
@@ -56,32 +64,23 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
-                ConfigNode moduleConfig = null;
-                foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                if (string.IsNullOrEmpty(variableName))
                 {
-                    if (node.GetValue("name") == internalProp.propName)
+                    JUtil.LogErrorMessage(this, "Configuration failed in prop {0} ({1}), no variableName.", internalProp.propID, internalProp.propName);
+                    throw new ArgumentNullException();
+                }
+
+                ConfigNode[] variableNodes = moduleConfig.Node.GetNodes("VARIABLESET");
+
+                for (int i = 0; i < variableNodes.Length; i++)
+                {
+                    try
                     {
-                        if (string.IsNullOrEmpty(variableName))
-                        {
-                            JUtil.LogErrorMessage(this, "Configuration failed in prop {0} ({1}), no variableName.", internalProp.propID, internalProp.propName);
-                            throw new ArgumentNullException();
-                        }
-
-                        moduleConfig = node.GetNodes("MODULE")[moduleID];
-                        ConfigNode[] variableNodes = moduleConfig.GetNodes("VARIABLESET");
-
-                        for (int i = 0; i < variableNodes.Length; i++)
-                        {
-                            try
-                            {
-                                variableSets.Add(new CallbackAnimationSet(variableNodes[i], variableName, internalProp));
-                            }
-                            catch (ArgumentException e)
-                            {
-                                JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
-                            }
-                        }
-                        break;
+                        variableSets.Add(new CallbackAnimationSet(variableNodes[i], variableName, internalProp));
+                    }
+                    catch (ArgumentException e)
+                    {
+                        JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
                     }
                 }
 

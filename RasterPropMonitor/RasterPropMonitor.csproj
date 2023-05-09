@@ -110,6 +110,7 @@
     <Compile Include="Auxiliary modules\JSIRadar.cs" />
     <Compile Include="Auxiliary modules\JSIThrustReverser.cs" />
     <Compile Include="Auxiliary modules\PropBatcher.cs" />
+    <Compile Include="Core\ConfigNodeHolder.cs" />
     <Compile Include="Core\JSIVesselRecovery.cs" />
     <Compile Include="Core\AeroExtensions.cs" />
     <Compile Include="Core\CustomVariable.cs" />

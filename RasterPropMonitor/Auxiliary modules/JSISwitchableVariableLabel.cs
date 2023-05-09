@@ -26,6 +26,8 @@ namespace JSI
 {
     public class JSISwitchableVariableLabel : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string labelTransform = string.Empty;
         [KSPField]
@@ -61,6 +63,12 @@ namespace JSI
         private FXGroup audioOutput;
         private RasterPropMonitorComputer rpmComp;
 
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
+
         public void Start()
         {
             if (HighLogic.LoadedSceneIsEditor)
@@ -92,36 +100,26 @@ namespace JSI
                     SmarterButton.CreateButton(internalProp, decrementSwitchTransform, DecremenetClick);
                 }
 
-                ConfigNode moduleConfig = null;
-                foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                ConfigNode[] variableNodes = moduleConfig.Node.GetNodes("VARIABLESET");
+
+                for (int i = 0; i < variableNodes.Length; i++)
                 {
-                    if (node.GetValue("name") == internalProp.propName)
+                    try
                     {
-
-                        moduleConfig = node.GetNodes("MODULE")[moduleID];
-                        ConfigNode[] variableNodes = moduleConfig.GetNodes("VARIABLESET");
-
-                        for (int i = 0; i < variableNodes.Length; i++)
-                        {
-                            try
-                            {
-                                labelsEx.Add(new VariableLabelSet(variableNodes[i], internalProp));
-                            }
-                            catch (ArgumentException e)
-                            {
-                                JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
-                            }
-                        }
-                        break;
+                        labelsEx.Add(new VariableLabelSet(variableNodes[i], internalProp));
+                    }
+                    catch (ArgumentException e)
+                    {
+                        JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
                     }
                 }
 
                 // Fallback: If there are no VARIABLESET blocks, we treat the module configuration itself as a variableset block.
-                if (labelsEx.Count < 1 && moduleConfig != null)
+                if (labelsEx.Count < 1)
                 {
                     try
                     {
-                        labelsEx.Add(new VariableLabelSet(moduleConfig, internalProp));
+                        labelsEx.Add(new VariableLabelSet(moduleConfig.Node, internalProp));
                     }
                     catch (ArgumentException e)
                     {

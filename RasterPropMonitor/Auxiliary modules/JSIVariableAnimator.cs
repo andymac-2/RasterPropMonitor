@@ -27,6 +27,8 @@ namespace JSI
 {
     public class JSIVariableAnimator : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public int refreshRate = 10;
         private bool startupComplete;
@@ -48,6 +50,12 @@ namespace JSI
             return false;
         }
 
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
+
         public void Start()
         {
             if (HighLogic.LoadedSceneIsEditor)
@@ -60,49 +68,39 @@ namespace JSI
                 rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 useNewMode = RPMGlobals.useNewVariableAnimator;
 
-                ConfigNode moduleConfig = null;
-                foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
-                {
-                    if (node.GetValue("name") == internalProp.propName)
-                    {
+                ConfigNode[] variableNodes = moduleConfig.Node.GetNodes("VARIABLESET");
 
-                        moduleConfig = node.GetNodes("MODULE")[moduleID];
-                        ConfigNode[] variableNodes = moduleConfig.GetNodes("VARIABLESET");
-
-                        for (int i = 0; i < variableNodes.Length; i++)
-                        {
-                            try
-                            {
-                                if (useNewMode)
-                                {
-                                    variableSets.Add(new VariableAnimationSet(variableNodes[i], internalProp, rpmComp, this));
-                                }
-                                else
-                                {
-                                    variableSets.Add(new VariableAnimationSet(variableNodes[i], internalProp, rpmComp));
-                                }
-                            }
-                            catch (ArgumentException e)
-                            {
-                                JUtil.LogMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                // Fallback: If there are no VARIABLESET blocks, we treat the module configuration itself as a variableset block.
-                if (variableSets.Count < 1 && moduleConfig != null)
+                for (int i = 0; i < variableNodes.Length; i++)
                 {
                     try
                     {
                         if (useNewMode)
                         {
-                            variableSets.Add(new VariableAnimationSet(moduleConfig, internalProp, rpmComp, this));
+                            variableSets.Add(new VariableAnimationSet(variableNodes[i], internalProp, rpmComp, this));
                         }
                         else
                         {
-                            variableSets.Add(new VariableAnimationSet(moduleConfig, internalProp, rpmComp));
+                            variableSets.Add(new VariableAnimationSet(variableNodes[i], internalProp, rpmComp));
+                        }
+                    }
+                    catch (ArgumentException e)
+                    {
+                        JUtil.LogMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
+                    }
+                }
+
+                // Fallback: If there are no VARIABLESET blocks, we treat the module configuration itself as a variableset block.
+                if (variableSets.Count < 1)
+                {
+                    try
+                    {
+                        if (useNewMode)
+                        {
+                            variableSets.Add(new VariableAnimationSet(moduleConfig.Node, internalProp, rpmComp, this));
+                        }
+                        else
+                        {
+                            variableSets.Add(new VariableAnimationSet(moduleConfig.Node, internalProp, rpmComp));
                         }
                     }
                     catch (ArgumentException e)

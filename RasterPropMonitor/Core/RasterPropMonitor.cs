@@ -29,6 +29,8 @@ namespace JSI
 {
     public class RasterPropMonitor : InternalModule
     {
+        [SerializeReference] ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string screenTransform = "screenTransform";
         [KSPField]
@@ -135,6 +137,12 @@ namespace JSI
             return font;
         }
 
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
+
         public void Start()
         {
 
@@ -208,48 +216,31 @@ namespace JSI
                     noSignalTexture = GameDatabase.Instance.GetTexture(noSignalTextureURL.EnforceSlashes(), false);
                 }
 
-                // The neat trick. IConfigNode doesn't work. No amount of kicking got it to work.
-                // Well, we don't need it. GameDatabase, gimme config nodes for all props!
-                foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                ConfigNode[] pageNodes = moduleConfig.Node.GetNodes("PAGE");
+
+                // parse page definitions
+                for (int i = 0; i < pageNodes.Length; i++)
                 {
-                    // Now, we know our own prop name.
-                    if (node.GetValue("name") == internalProp.propName)
+                    // Mwahahaha.
+                    try
                     {
-                        // So this is the configuration of our prop in memory. Nice place.
-                        // We know it contains at least one MODULE node, us.
-                        // And we know our moduleID, which is the number in order of being listed in the prop.
-                        // Therefore the module by that number is our module's own config node.
-
-                        ConfigNode moduleConfig = node.GetNodes("MODULE")[moduleID];
-                        ConfigNode[] pageNodes = moduleConfig.GetNodes("PAGE");
-
-                        // Which we can now parse for page definitions.
-                        for (int i = 0; i < pageNodes.Length; i++)
-                        {
-                            // Mwahahaha.
-                            try
-                            {
-                                var newPage = new MonitorPage(i, pageNodes[i], this);
-                                activePage = activePage ?? newPage;
-                                if (newPage.isDefault)
-                                    activePage = newPage;
-                                pages.Add(newPage);
-                            }
-                            catch (ArgumentException e)
-                            {
-                                JUtil.LogMessage(this, "Warning - {0}", e);
-                            }
-
-                        }
-
-                        // Now that all pages are loaded, we can use the moment in the loop to suck in all the extra fonts.
-                        foreach (string value in moduleConfig.GetValues("extraFont"))
-                        {
-                            fontTexture.Add(LoadFont(this, internalProp, value));
-                        }
-
-                        break;
+                        var newPage = new MonitorPage(i, pageNodes[i], this);
+                        activePage = activePage ?? newPage;
+                        if (newPage.isDefault)
+                            activePage = newPage;
+                        pages.Add(newPage);
                     }
+                    catch (ArgumentException e)
+                    {
+                        JUtil.LogMessage(this, "Warning - {0}", e);
+                    }
+
+                }
+
+                // Now that all pages are loaded, we can use the moment in the loop to suck in all the extra fonts.
+                foreach (string value in moduleConfig.Node.GetValues("extraFont"))
+                {
+                    fontTexture.Add(LoadFont(this, internalProp, value));
                 }
 
                 JUtil.LogMessage(this, "Done setting up pages, {0} pages ready.", pages.Count);

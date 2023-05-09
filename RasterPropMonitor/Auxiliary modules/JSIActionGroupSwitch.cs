@@ -29,6 +29,8 @@ namespace JSI
 {
     internal class JSIActionGroupSwitch : InternalModule
     {
+        [SerializeReference] private ConfigNodeHolder moduleConfig;
+
         [KSPField]
         public string animationName = string.Empty;
         [KSPField]
@@ -185,6 +187,12 @@ namespace JSI
 
         static readonly char[] INTERNAL_LIGHT_NAME_SEPARATORS = new char[] { '|' };
 
+        public override void OnLoad(ConfigNode node)
+        {
+            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
+            moduleConfig.Node = node;
+        }
+
         public void Start()
         {
             if (HighLogic.LoadedSceneIsEditor)
@@ -330,36 +338,30 @@ namespace JSI
                             persistentVarName = string.Empty;
                             rpmComp.UpdateDataRefreshRate(refreshRate);
 
-                            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                            foreach (ConfigNode pluginConfig in moduleConfig.Node.GetNodes("PLUGINACTION"))
                             {
-                                if (node.GetValue("name") == internalProp.propName)
+                                if (pluginConfig.HasValue("name") && pluginConfig.HasValue("actionMethod"))
                                 {
-                                    foreach (ConfigNode pluginConfig in node.GetNodes("MODULE")[moduleID].GetNodes("PLUGINACTION"))
-                                    {
-                                        if (pluginConfig.HasValue("name") && pluginConfig.HasValue("actionMethod"))
-                                        {
-                                            string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("actionMethod").Trim();
-                                            actionHandler = (Action<bool>)rpmComp.GetMethod(action, internalProp, typeof(Action<bool>));
+                                    string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("actionMethod").Trim();
+                                    actionHandler = (Action<bool>)rpmComp.GetMethod(action, internalProp, typeof(Action<bool>));
 
-                                            if (actionHandler == null)
-                                            {
-                                                JUtil.LogErrorMessage(this, "Failed to instantiate action handler {0}", action);
-                                            }
-                                            else
-                                            {
-                                                if (pluginConfig.HasValue("stateMethod"))
-                                                {
-                                                    string state = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("stateMethod").Trim();
-                                                    stateVariable = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + state);
-                                                }
-                                                else if (pluginConfig.HasValue("stateVariable"))
-                                                {
-                                                    stateVariable = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("stateVariable").Trim());
-                                                }
-                                                isPluginAction = true;
-                                                break;
-                                            }
+                                    if (actionHandler == null)
+                                    {
+                                        JUtil.LogErrorMessage(this, "Failed to instantiate action handler {0}", action);
+                                    }
+                                    else
+                                    {
+                                        if (pluginConfig.HasValue("stateMethod"))
+                                        {
+                                            string state = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("stateMethod").Trim();
+                                            stateVariable = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + state);
                                         }
+                                        else if (pluginConfig.HasValue("stateVariable"))
+                                        {
+                                            stateVariable = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("stateVariable").Trim());
+                                        }
+                                        isPluginAction = true;
+                                        break;
                                     }
                                 }
                             }
@@ -373,91 +375,85 @@ namespace JSI
                             persistentVarName = string.Empty;
                             rpmComp.UpdateDataRefreshRate(refreshRate);
 
-                            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("PROP"))
+                            foreach (ConfigNode pluginConfig in moduleConfig.Node.GetNodes("TRANSFERACTION"))
                             {
-                                if (node.GetValue("name") == internalProp.propName)
+                                if (pluginConfig.HasValue("name") || pluginConfig.HasValue("getVariable"))
                                 {
-                                    foreach (ConfigNode pluginConfig in node.GetNodes("MODULE")[moduleID].GetNodes("TRANSFERACTION"))
+                                    if (pluginConfig.HasValue("stateMethod"))
                                     {
-                                        if (pluginConfig.HasValue("name") || pluginConfig.HasValue("getVariable"))
+                                        string state = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("stateMethod").Trim();
+                                        stateVariable = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + state);
+                                    }
+                                    else if (pluginConfig.HasValue("stateVariable"))
+                                    {
+                                        stateVariable = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("stateVariable").Trim());
+                                    }
+                                    if (pluginConfig.HasValue("setMethod"))
+                                    {
+                                        string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("setMethod").Trim();
+                                        transferSetter = (Action<double>)rpmComp.GetMethod(action, internalProp, typeof(Action<double>));
+
+                                        if (transferSetter == null)
                                         {
-                                            if (pluginConfig.HasValue("stateMethod"))
-                                            {
-                                                string state = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("stateMethod").Trim();
-                                                stateVariable = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + state);
-                                            }
-                                            else if (pluginConfig.HasValue("stateVariable"))
-                                            {
-                                                stateVariable = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("stateVariable").Trim());
-                                            }
-                                            if (pluginConfig.HasValue("setMethod"))
-                                            {
-                                                string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("setMethod").Trim();
-                                                transferSetter = (Action<double>)rpmComp.GetMethod(action, internalProp, typeof(Action<double>));
+                                            JUtil.LogErrorMessage(this, "Failed to instantiate transfer handler {0}", pluginConfig.GetValue("name"));
+                                        }
+                                        else if (pluginConfig.HasValue("perPodPersistenceName"))
+                                        {
+                                            transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
+                                            actionName = "transferFromPersistent";
+                                            customAction = CustomActions.TransferFromPersistent;
+                                        }
+                                        else if (pluginConfig.HasValue("getVariable"))
+                                        {
+                                            transferGetter = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("getVariable").Trim());
+                                            actionName = "transferFromVariable";
+                                            customAction = CustomActions.TransferFromVariable;
+                                        }
+                                        else
+                                        {
+                                            JUtil.LogErrorMessage(this, "Unable to configure transfer setter method in {0} - no perPodPersistenceName or getVariable", internalProp.name);
+                                            transferSetter = null;
+                                            //JUtil.LogMessage(this, "Got setter {0}", action);
+                                        }
+                                    }
+                                    else if (pluginConfig.HasValue("getMethod"))
+                                    {
+                                        if (pluginConfig.HasValue("perPodPersistenceName"))
+                                        {
+                                            string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("getMethod").Trim();
+                                            var getter = (Func<double>)rpmComp.GetMethod(action, internalProp, typeof(Func<double>));
 
-                                                if (transferSetter == null)
-                                                {
-                                                    JUtil.LogErrorMessage(this, "Failed to instantiate transfer handler {0}", pluginConfig.GetValue("name"));
-                                                }
-                                                else if (pluginConfig.HasValue("perPodPersistenceName"))
-                                                {
-                                                    transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
-                                                    actionName = "transferFromPersistent";
-                                                    customAction = CustomActions.TransferFromPersistent;
-                                                }
-                                                else if (pluginConfig.HasValue("getVariable"))
-                                                {
-                                                    transferGetter = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("getVariable").Trim());
-                                                    actionName = "transferFromVariable";
-                                                    customAction = CustomActions.TransferFromVariable;
-                                                }
-                                                else
-                                                {
-                                                    JUtil.LogErrorMessage(this, "Unable to configure transfer setter method in {0} - no perPodPersistenceName or getVariable", internalProp.name);
-                                                    transferSetter = null;
-                                                    //JUtil.LogMessage(this, "Got setter {0}", action);
-                                                }
-                                            }
-                                            else if (pluginConfig.HasValue("getMethod"))
+                                            if (getter == null)
                                             {
-                                                if (pluginConfig.HasValue("perPodPersistenceName"))
-                                                {
-                                                    string action = pluginConfig.GetValue("name").Trim() + ":" + pluginConfig.GetValue("getMethod").Trim();
-                                                    var getter = (Func<double>)rpmComp.GetMethod(action, internalProp, typeof(Func<double>));
-
-                                                    if (getter == null)
-                                                    {
-                                                        JUtil.LogErrorMessage(this, "Failed to instantiate transfer handler {0} in {1}", pluginConfig.GetValue("name"), internalProp.name);
-                                                    }
-                                                    else
-                                                    {
-                                                        transferGetter = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + action);
-                                                        transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
-                                                        actionName = "transferToPersistent";
-                                                        customAction = CustomActions.TransferToPersistent;
-                                                        //JUtil.LogMessage(this, "Got getter {0}", action);
-                                                        break;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    JUtil.LogErrorMessage(this, "Transfer handler in {0} configured with 'getVariable', but no 'perPodPeristenceName'", internalProp.name);
-                                                }
+                                                JUtil.LogErrorMessage(this, "Failed to instantiate transfer handler {0} in {1}", pluginConfig.GetValue("name"), internalProp.name);
                                             }
-                                            else if (pluginConfig.HasValue("getVariable"))
+                                            else
                                             {
-                                                if (pluginConfig.HasValue("perPodPersistenceName"))
-                                                {
-                                                    transferGetter = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("getVariable").Trim());
-                                                    transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
-                                                    actionName = "transferToPersistent";
-                                                    customAction = CustomActions.TransferToPersistent;
-                                                }
-                                                else
-                                                {
-                                                    JUtil.LogErrorMessage(this, "Transfer handler in {0} configured with 'getVariable', but no 'perPodPeristenceName'", internalProp.name);
-                                                }
+                                                transferGetter = rpmComp.InstantiateVariableOrNumber("PLUGIN_" + action);
+                                                transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
+                                                actionName = "transferToPersistent";
+                                                customAction = CustomActions.TransferToPersistent;
+                                                //JUtil.LogMessage(this, "Got getter {0}", action);
+                                                break;
                                             }
+                                        }
+                                        else
+                                        {
+                                            JUtil.LogErrorMessage(this, "Transfer handler in {0} configured with 'getVariable', but no 'perPodPeristenceName'", internalProp.name);
+                                        }
+                                    }
+                                    else if (pluginConfig.HasValue("getVariable"))
+                                    {
+                                        if (pluginConfig.HasValue("perPodPersistenceName"))
+                                        {
+                                            transferGetter = rpmComp.InstantiateVariableOrNumber(pluginConfig.GetValue("getVariable").Trim());
+                                            transferPersistentName = pluginConfig.GetValue("perPodPersistenceName").Trim();
+                                            actionName = "transferToPersistent";
+                                            customAction = CustomActions.TransferToPersistent;
+                                        }
+                                        else
+                                        {
+                                            JUtil.LogErrorMessage(this, "Transfer handler in {0} configured with 'getVariable', but no 'perPodPeristenceName'", internalProp.name);
                                         }
                                     }
                                 }
