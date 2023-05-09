@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace JSI.Auxiliary_modules
+namespace JSI
 {
     public class PropBatcher : InternalModule
     {
@@ -175,6 +175,7 @@ namespace JSI.Auxiliary_modules
                         if (i > 0)
                         {
                             Component.Destroy(batchList[i].GetComponent<MeshRenderer>());
+                            Component.Destroy(batchList[i].GetComponent<MeshFilter>());
                         }
 
                         instances[i] = instance;
