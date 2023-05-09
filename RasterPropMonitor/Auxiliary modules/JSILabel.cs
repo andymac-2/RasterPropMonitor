@@ -149,17 +149,17 @@ namespace JSI
                 {
                     // Force oneshot if there's no variables:
                     oneshot |= !labelText.Contains("$&$");
-                        string sourceString = labelText.UnMangleConfigText();
+                    string sourceString = labelText.UnMangleConfigText();
 
-                        if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
+                    if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
+                    {
+                        // Alow a " character to escape leading whitespace
+                        if (sourceString[0] == '"')
                         {
-                            // Alow a " character to escape leading whitespace
-                            if (sourceString[0] == '"')
-                            {
-                                sourceString = sourceString.Substring(1);
-                            }
+                            sourceString = sourceString.Substring(1);
                         }
-                        labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
+                    }
+                    labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
 
                     if (!oneshot)
                     {
