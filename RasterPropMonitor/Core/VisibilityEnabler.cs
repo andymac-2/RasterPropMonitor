@@ -9,7 +9,7 @@ namespace JSI
 {
     class VisibilityEnabler : MonoBehaviour
     {
-        private Behaviour m_behaviour;
+        [SerializeField] private Behaviour m_behaviour;
 
         public void Initialize(Behaviour behaviour)
         {

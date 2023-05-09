@@ -56,9 +56,9 @@ namespace JSI
         [KSPField]
         public string fontName = "Arial";
         [KSPField]
-        public string anchor = string.Empty;
+        public TextAnchor anchor;
         [KSPField]
-        public string alignment = string.Empty;
+        public TextAlignment alignment;
         [KSPField]
         public int fontQuality = 32;
 
@@ -87,8 +87,7 @@ namespace JSI
         private bool variablePositive = false;
         private bool flashOn = true;
 
-        private JSITextMesh textObj;
-        private Font font;
+        [SerializeField] private JSITextMesh textObj;
         private readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
 
         private List<JSILabelSet> labels = new List<JSILabelSet>();
@@ -97,13 +96,7 @@ namespace JSI
 
         private int updateCountdown;
         private Action<float> del;
-        /// <summary>
-        /// The Guid of the vessel we belonged to at Start.  When undocking,
-        /// KSP will change the vessel member variable before calling OnDestroy,
-        /// which prevents us from getting the RPMVesselComputer we registered
-        /// with.  So we have to store the Guid separately.
-        /// </summary>
-        private Guid registeredVessel = Guid.Empty;
+        
         RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
 
@@ -111,6 +104,30 @@ namespace JSI
         {
             moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
             moduleConfig.Node = node;
+
+            Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
+            Vector3 localScale = internalProp.transform.localScale;
+
+            Transform offsetTransform = new GameObject().transform;
+            offsetTransform.gameObject.name = "JSILabel-" + this.internalProp.propID + "-" + this.GetHashCode().ToString();
+            offsetTransform.gameObject.layer = textObjTransform.gameObject.layer;
+            offsetTransform.SetParent(textObjTransform, false);
+            offsetTransform.Translate(transformOffset.x * localScale.x, transformOffset.y * localScale.y, 0.0f);
+
+            textObj = offsetTransform.gameObject.AddComponent<JSITextMesh>();
+
+            var font = JUtil.LoadFont(fontName, fontQuality);
+
+            textObj.font = font;
+            //textObj.fontSize = fontQuality; // This doesn't work with Unity-embedded fonts
+            textObj.fontSize = font.fontSize;
+
+            textObj.anchor = anchor;
+            textObj.alignment = alignment;
+
+            float sizeScalar = 32.0f / (float)font.fontSize;
+            textObj.characterSize = fontSize * 0.00005f * sizeScalar;
+            textObj.lineSpacing *= lineSpacing;
         }
 
         /// <summary>
@@ -127,67 +144,22 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
-                Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
-                Vector3 localScale = internalProp.transform.localScale;
-
-                Transform offsetTransform = new GameObject().transform;
-                offsetTransform.gameObject.name = "JSILabel-" + this.internalProp.propID + "-" + this.GetHashCode().ToString();
-                offsetTransform.gameObject.layer = textObjTransform.gameObject.layer;
-                offsetTransform.SetParent(textObjTransform, false);
-                offsetTransform.Translate(transformOffset.x * localScale.x, transformOffset.y * localScale.y, 0.0f);
-
-                textObj = offsetTransform.gameObject.AddComponent<JSITextMesh>();
-
-                font = JUtil.LoadFont(fontName, fontQuality);
-
-                textObj.font = font;
-                //textObj.fontSize = fontQuality; // This doesn't work with Unity-embedded fonts
-                textObj.fontSize = font.fontSize;
-
-                if (!string.IsNullOrEmpty(anchor))
-                {
-                    if (Enum.TryParse(anchor, out TextAnchor textAnchor))
-                    {
-                        textObj.anchor = textAnchor;
-                    }
-                    else
-                    {
-                        JUtil.LogErrorMessage(this, "Unrecognized anchor '{0}' in config for {1} ({2})", anchor, internalProp.propID, internalProp.propName);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(alignment))
-                {
-                    if (Enum.TryParse(alignment, out TextAlignment textAlignment))
-                    {
-                        textObj.alignment = textAlignment;
-                    }
-                    else
-                    {
-                        JUtil.LogErrorMessage(this, "Unrecognized alignment '{0}' in config for {1} ({2})", alignment, internalProp.propID, internalProp.propName);
-                    }
-                }
-
-                float sizeScalar = 32.0f / (float)font.fontSize;
-                textObj.characterSize = fontSize * 0.00005f * sizeScalar;
-                textObj.lineSpacing = textObj.lineSpacing * lineSpacing;
-
                 // "Normal" mode
                 if (string.IsNullOrEmpty(switchTransform))
                 {
                     // Force oneshot if there's no variables:
                     oneshot |= !labelText.Contains("$&$");
-                    string sourceString = labelText.UnMangleConfigText();
+                        string sourceString = labelText.UnMangleConfigText();
 
-                    if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
-                    {
-                        // Alow a " character to escape leading whitespace
-                        if (sourceString[0] == '"')
+                        if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
                         {
-                            sourceString = sourceString.Substring(1);
+                            // Alow a " character to escape leading whitespace
+                            if (sourceString[0] == '"')
+                            {
+                                sourceString = sourceString.Substring(1);
+                            }
                         }
-                    }
-                    labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
+                        labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
 
                     if (!oneshot)
                     {
@@ -205,14 +177,12 @@ namespace JSI
                     {
                         try
                         {
-                            bool lOneshot = false;
-                            if (variableNodes[i].HasValue("oneshot"))
+                            string lText = variableNodes[i].GetValue("labelText");
+                            if (lText != null)
                             {
-                                bool.TryParse(variableNodes[i].GetValue("oneshot"), out lOneshot);
-                            }
-                            if (variableNodes[i].HasValue("labelText"))
-                            {
-                                string lText = variableNodes[i].GetValue("labelText");
+                                bool lOneshot = false;
+                                variableNodes[i].TryGetValue("oneshot", ref lOneshot);
+
                                 string sourceString = lText.UnMangleConfigText();
                                 lOneshot |= !lText.Contains("$&$");
                                 labels.Add(new JSILabelSet(sourceString, rpmComp, lOneshot));
@@ -241,7 +211,6 @@ namespace JSI
                     negativeColorValue = JUtil.ParseColor32(negativeColor, rpmComp);
                     del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
                     rpmComp.RegisterVariableCallback(variableName, del);
-                    registeredVessel = vessel.id;
 
                     emissive = EmissiveMode.active;
 

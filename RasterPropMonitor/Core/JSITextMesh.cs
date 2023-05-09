@@ -34,7 +34,7 @@ namespace JSI
     /// </summary>
     public class JSITextMesh : MonoBehaviour
     {
-        private TextAlignment alignment_;
+        [SerializeField] private TextAlignment alignment_;
         public TextAlignment alignment
         {
             get
@@ -52,7 +52,7 @@ namespace JSI
             }
         }
 
-        private TextAnchor anchor_;
+        [SerializeField] private TextAnchor anchor_;
         public TextAnchor anchor
         {
             get
@@ -70,7 +70,7 @@ namespace JSI
             }
         }
 
-        private float characterSize_ = 1.0f;
+        [SerializeField] private float characterSize_ = 1.0f;
         public float characterSize
         {
             get
@@ -88,7 +88,7 @@ namespace JSI
             }
         }
 
-        private Color32 color_;
+        [SerializeField] private Color32 color_;
         public Color32 color
         {
             get
@@ -106,7 +106,7 @@ namespace JSI
             }
         }
 
-        private Font font_;
+        [SerializeReference] private Font font_;
         public Font font
         {
             get
@@ -129,7 +129,7 @@ namespace JSI
             }
         }
 
-        private int fontSize_ = 32;
+        [SerializeField] private int fontSize_ = 32;
         public int fontSize
         {
             get
@@ -147,7 +147,7 @@ namespace JSI
             }
         }
 
-        private FontStyle fontStyle_;
+        [SerializeField] private FontStyle fontStyle_;
         public FontStyle fontStyle
         {
             get
@@ -165,7 +165,7 @@ namespace JSI
             }
         }
 
-        private float lineSpacing_ = 1.0f;
+        [SerializeField] private float lineSpacing_ = 1.0f;
         public float lineSpacing
         {
             get
@@ -183,8 +183,8 @@ namespace JSI
             }
         }
 
-        private MeshRenderer meshRenderer_;
-        private MeshFilter meshFilter_;
+        [SerializeField] private MeshRenderer meshRenderer_;
+        [SerializeField] private MeshFilter meshFilter_;
         public Material material
         {
             get
@@ -203,7 +203,7 @@ namespace JSI
             }
         }
 
-        private string text_;
+        [SerializeField] private string text_;
         private bool richText = false;
         private bool hasColorTags = false;
         public string text
