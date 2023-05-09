@@ -55,78 +55,33 @@ namespace JSI
 
             int maxParameters = int.MaxValue;
 
-            string oper = node.GetValue("operator");
-            if (oper == Operator.NONE.ToString())
+            if (!node.TryGetEnum("operator", ref op, default))
             {
-                op = Operator.NONE;
-                indexOperator = false;
+                throw new ArgumentException("Found an invalid operator type in RPM_CUSTOM_VARIABLE", node.GetValue("operator"));
             }
-            else if (oper == Operator.ADD.ToString())
+
+            switch (op)
             {
-                op = Operator.ADD;
-                indexOperator = false;
-            }
-            else if (oper == Operator.SUBTRACT.ToString())
-            {
-                op = Operator.SUBTRACT;
-                indexOperator = false;
-            }
-            else if (oper == Operator.MULTIPLY.ToString())
-            {
-                op = Operator.MULTIPLY;
-                indexOperator = false;
-            }
-            else if (oper == Operator.DIVIDE.ToString())
-            {
-                op = Operator.DIVIDE;
-                indexOperator = false;
-            }
-            else if (oper == Operator.MAX.ToString())
-            {
-                op = Operator.MAX;
-                indexOperator = false;
-            }
-            else if (oper == Operator.MIN.ToString())
-            {
-                op = Operator.MIN;
-                indexOperator = false;
-            }
-            else if (oper == Operator.POWER.ToString())
-            {
-                op = Operator.POWER;
-                indexOperator = false;
-            }
-            else if (oper == Operator.ANGLEDELTA.ToString())
-            {
-                op = Operator.ANGLEDELTA;
-                indexOperator = false;
-                maxParameters = 2;
-            }
-            else if (oper == Operator.ATAN2.ToString())
-            {
-                op = Operator.ATAN2;
-                indexOperator = false;
-                maxParameters = 2;
-            }
-            else if (oper == Operator.MODULO.ToString())
-            {
-                op = Operator.MODULO;
-                indexOperator = false;
-                maxParameters = 2;
-            }
-            else if (oper == Operator.MAXINDEX.ToString())
-            {
-                op = Operator.MAXINDEX;
-                indexOperator = true;
-            }
-            else if (oper == Operator.MININDEX.ToString())
-            {
-                op = Operator.MININDEX;
-                indexOperator = true;
-            }
-            else
-            {
-                throw new ArgumentException("Found an invalid operator type in RPM_CUSTOM_VARIABLE", oper);
+                case Operator.NONE:
+                case Operator.ADD:
+                case Operator.SUBTRACT:
+                case Operator.MULTIPLY:
+                case Operator.DIVIDE:
+                case Operator.MAX:
+                case Operator.MIN:
+                    indexOperator = false;
+                    break;
+                case Operator.POWER:
+                case Operator.ANGLEDELTA:
+                case Operator.ATAN2:
+                case Operator.MODULO:
+                    indexOperator = false;
+                    maxParameters = 2;
+                    break;
+                case Operator.MAXINDEX:
+                case Operator.MININDEX:
+                    indexOperator = true;
+                    break;
             }
 
             string[] sources = node.GetValues("sourceVariable");

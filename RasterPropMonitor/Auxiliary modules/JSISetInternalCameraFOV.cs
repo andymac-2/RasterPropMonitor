@@ -66,20 +66,7 @@ namespace JSI
                             seatData.maxRot = moduleConfig.GetFloat("maxRot") ?? defaultMaxRot;
                             seatData.maxPitch = moduleConfig.GetFloat("maxPitch") ?? defaultMaxPitch;
                             seatData.minPitch = moduleConfig.GetFloat("minPitch") ?? defaultMinPitch;
-                            seatData.hideKerbal = HideKerbal.none;
-
-                            if (moduleConfig.HasValue("hideKerbal"))
-                            {
-                                string hideKerbalVal = moduleConfig.GetValue("hideKerbal");
-                                if (hideKerbalVal == HideKerbal.head.ToString())
-                                {
-                                    seatData.hideKerbal = HideKerbal.head;
-                                }
-                                else if (hideKerbalVal == HideKerbal.all.ToString())
-                                {
-                                    seatData.hideKerbal = HideKerbal.all;
-                                }
-                            }
+                            moduleConfig.TryGetEnum("hideKerbal", ref seatData.hideKerbal, default);
 
                             seats.Add(seatData);
                             JUtil.LogMessage(this, "Setting per-seat camera parameters for seat {0}: fov {1}, maxRot {2}, maxPitch {3}, minPitch {4}, hideKerbal {5}",

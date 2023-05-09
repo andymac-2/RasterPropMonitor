@@ -139,41 +139,9 @@ namespace JSI
 
                 if (!string.IsNullOrEmpty(anchor))
                 {
-                    if (anchor == TextAnchor.LowerCenter.ToString())
+                    if (Enum.TryParse(anchor, out TextAnchor textAnchor))
                     {
-                        textObj.anchor = TextAnchor.LowerCenter;
-                    }
-                    else if (anchor == TextAnchor.LowerLeft.ToString())
-                    {
-                        textObj.anchor = TextAnchor.LowerLeft;
-                    }
-                    else if (anchor == TextAnchor.LowerRight.ToString())
-                    {
-                        textObj.anchor = TextAnchor.LowerRight;
-                    }
-                    else if (anchor == TextAnchor.MiddleCenter.ToString())
-                    {
-                        textObj.anchor = TextAnchor.MiddleCenter;
-                    }
-                    else if (anchor == TextAnchor.MiddleLeft.ToString())
-                    {
-                        textObj.anchor = TextAnchor.MiddleLeft;
-                    }
-                    else if (anchor == TextAnchor.MiddleRight.ToString())
-                    {
-                        textObj.anchor = TextAnchor.MiddleRight;
-                    }
-                    else if (anchor == TextAnchor.UpperCenter.ToString())
-                    {
-                        textObj.anchor = TextAnchor.UpperCenter;
-                    }
-                    else if (anchor == TextAnchor.UpperLeft.ToString())
-                    {
-                        textObj.anchor = TextAnchor.UpperLeft;
-                    }
-                    else if (anchor == TextAnchor.UpperRight.ToString())
-                    {
-                        textObj.anchor = TextAnchor.UpperRight;
+                        textObj.anchor = textAnchor;
                     }
                     else
                     {
@@ -183,17 +151,9 @@ namespace JSI
 
                 if (!string.IsNullOrEmpty(alignment))
                 {
-                    if (alignment == TextAlignment.Center.ToString())
+                    if (Enum.TryParse(alignment, out TextAlignment textAlignment))
                     {
-                        textObj.alignment = TextAlignment.Center;
-                    }
-                    else if (alignment == TextAlignment.Left.ToString())
-                    {
-                        textObj.alignment = TextAlignment.Left;
-                    }
-                    else if (alignment == TextAlignment.Right.ToString())
-                    {
-                        textObj.alignment = TextAlignment.Right;
+                        textObj.alignment = textAlignment;
                     }
                     else
                     {

@@ -83,38 +83,9 @@ namespace JSI
                 throw new ArgumentException("Did not find any SOURCE_VARIABLE nodes in RPM_CUSTOM_VARIABLE", name);
             }
 
-            string oper = node.GetValue("operator");
-            if (oper == Operator.NONE.ToString())
+            if (!node.TryGetEnum("operator", ref op, default))
             {
-                op = Operator.NONE;
-            }
-            else if (oper == Operator.AND.ToString())
-            {
-                op = Operator.AND;
-            }
-            else if (oper == Operator.OR.ToString())
-            {
-                op = Operator.OR;
-            }
-            else if (oper == Operator.NAND.ToString())
-            {
-                op = Operator.NAND;
-            }
-            else if (oper == Operator.NOR.ToString())
-            {
-                op = Operator.NOR;
-            }
-            else if (oper == Operator.XOR.ToString())
-            {
-                op = Operator.XOR;
-            }
-            else if (oper == Operator.ISNANORINF.ToString())
-            {
-                op = Operator.ISNANORINF;
-            }
-            else
-            {
-                throw new ArgumentException("Found an invalid operator type in RPM_CUSTOM_VARIABLE", oper);
+                throw new ArgumentException("Found an invalid operator type in RPM_CUSTOM_VARIABLE", node.GetValue("operator"));
             }
         }
 

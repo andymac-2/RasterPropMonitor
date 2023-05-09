@@ -211,36 +211,7 @@ namespace JSI
                 lineWidth = int.Parse(node.GetValue("borderWidth"));
             }
 
-            string graphTypeStr = node.GetValue("graphType").Trim();
-            if (graphTypeStr == GraphType.VerticalUp.ToString())
-            {
-                graphType = GraphType.VerticalUp;
-            }
-            else if (graphTypeStr == GraphType.VerticalDown.ToString())
-            {
-                graphType = GraphType.VerticalDown;
-            }
-            else if (graphTypeStr == GraphType.VerticalSplit.ToString())
-            {
-                graphType = GraphType.VerticalSplit;
-            }
-            else if (graphTypeStr == GraphType.HorizontalRight.ToString())
-            {
-                graphType = GraphType.HorizontalRight;
-            }
-            else if (graphTypeStr == GraphType.HorizontalLeft.ToString())
-            {
-                graphType = GraphType.HorizontalLeft;
-            }
-            else if (graphTypeStr == GraphType.HorizontalSplit.ToString())
-            {
-                graphType = GraphType.HorizontalSplit;
-            }
-            else if (graphTypeStr == GraphType.Lamp.ToString())
-            {
-                graphType = GraphType.Lamp;
-            }
-            else
+            if (!node.TryGetEnum("graphType", ref graphType, default))
             {
                 throw new ArgumentException("Unknown 'graphType' in DATA_SET");
             }
