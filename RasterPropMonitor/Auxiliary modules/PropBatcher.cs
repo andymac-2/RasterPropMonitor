@@ -163,7 +163,6 @@ namespace JSI
                 foreach (var batchList in batchLists.Values)
                 {
                     CombineInstance[] instances = new CombineInstance[batchList.Count];
-                    Material material = batchList[0].GetComponent<MeshRenderer>().material;
                     var worldToLocal = batchList[0].transform.worldToLocalMatrix;
                     
                     for (int i = 0; i < batchList.Count; i++)
@@ -192,6 +191,65 @@ namespace JSI
 
                 JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}; total batched transforms {3}", internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransforms);
                 internalModel.props = newProps;
+            }
+        }
+
+        // Text label batching:
+        // A large number of JSILabel modules are completely static - things like labels on switches, buttons, etc.
+        // But these can still sometimes change color, especially when the backlight is turned on.
+        // For all the JSILabels with the same controlling variable and color settings, we can render them all at once in a single mesh.
+
+        class LabelBatch
+        {
+            public JSILabel firstLabel;
+            public List<JSITextMesh> textMeshes = new List<JSITextMesh>();
+            public bool needsUpdate = true;
+        }
+
+        Dictionary<JSILabel.TextBatchInfo, LabelBatch> labelBatches = new Dictionary<JSILabel.TextBatchInfo, LabelBatch>();
+
+        public void AddStaticLabel(JSILabel label)
+        {
+            LabelBatch labelBatch;
+            if (!labelBatches.TryGetValue(label.batchInfo, out labelBatch))
+            {
+                labelBatch = new LabelBatch();
+                labelBatch.firstLabel = label;
+                labelBatches.Add(label.batchInfo, labelBatch);
+
+                var oldParent = label.textObj.transform.parent;
+                label.textObj.transform.SetParent(null, true);
+                label.transform.localPosition = Vector3.zero;
+                label.transform.localRotation = Quaternion.identity;
+                label.transform.localScale = Vector3.one;
+                label.textObj.transform.SetParent(oldParent, true);
+            }
+            else
+            {
+                Component.Destroy(label.textObj.transform.GetComponent<MeshRenderer>());
+                // TODO: destroy meshfilter?
+            }
+
+            labelBatch.textMeshes.Add(label.textObj);
+            labelBatch.needsUpdate = true;
+        }
+
+        void LateUpdate()
+        {
+            foreach (var labelBatch in labelBatches.Values)
+            {
+                if (labelBatch.needsUpdate)
+                {
+                    CombineInstance[] instances = new CombineInstance[labelBatch.textMeshes.Count];
+                    for (int i = 0; i < instances.Length; ++i)
+                    {
+                        instances[i] = new CombineInstance();
+                        instances[i].mesh = labelBatch.textMeshes[i].mesh;
+                        instances[i].transform = labelBatch.textMeshes[i].transform.localToWorldMatrix;
+                    }
+
+                    labelBatch.needsUpdate = false;
+                }
             }
         }
     }

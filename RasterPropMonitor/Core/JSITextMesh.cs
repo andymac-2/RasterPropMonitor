@@ -497,11 +497,11 @@ namespace JSI
 
             if (maxVerts == 0)
             {
-                meshRenderer_.gameObject.SetActive(false);
+                gameObject.SetActive(false);
                 return;
             }
 
-            meshRenderer_.gameObject.SetActive(true);
+            gameObject.SetActive(true);
 
             PrepBuffers(maxVerts);
 
@@ -685,14 +685,14 @@ namespace JSI
 
         private void PrepBuffers(int maxVerts)
         {
+            vertices.Clear();
+            colors32.Clear();
+            uv.Clear();
+
             vertices.Capacity = Math.Max(vertices.Capacity, maxVerts);
             colors32.Capacity = Math.Max(colors32.Capacity, maxVerts);
             tangents.Capacity = Math.Max(tangents.Capacity, maxVerts);
             uv.Capacity = Math.Max(uv.Capacity, maxVerts);
-
-            vertices.Clear();
-            colors32.Clear();
-            uv.Clear();
 
             // these never change, so we populate it once and leave it
             for (int tangentCount = tangents.Count; tangentCount < maxVerts; ++tangentCount)
@@ -751,11 +751,11 @@ namespace JSI
 
             if (maxVerts == 0)
             {
-                meshRenderer_.gameObject.SetActive(false);
+                gameObject.SetActive(false);
                 return;
             }
 
-            meshRenderer_.gameObject.SetActive(true);
+            gameObject.SetActive(true);
 
             PrepBuffers(maxVerts);
 

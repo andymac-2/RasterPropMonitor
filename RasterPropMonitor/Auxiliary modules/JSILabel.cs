@@ -27,7 +27,62 @@ namespace JSI
     // Note 1: http://docs.unity3d.com/Manual/StyledText.html details the "richText" abilities
     public class JSILabel : InternalModule
     {
+        internal class TextBatchInfo : ScriptableObject
+        {
+            public void OnLoad(ConfigNode node)
+            {
+                variableName = node.GetValue(nameof(variableName));
+                node.TryGetValue(nameof(flashRate), ref flashRate);
+            }
+
+            public void OnStart(ConfigNode node, RasterPropMonitorComputer rpmComp)
+            {
+                ReadColor(node, nameof(zeroColor), rpmComp, ref zeroColor);
+                ReadColor(node, nameof(positiveColor), rpmComp, ref positiveColor);
+                ReadColor(node, nameof(negativeColor), rpmComp, ref negativeColor);
+            }
+
+            void ReadColor(ConfigNode node, string key, RasterPropMonitorComputer rpmComp, ref Color32 color)
+            {
+                var colorString = node.GetValue(key);
+                if (colorString != null)
+                {
+                    color = JUtil.ParseColor32(colorString, rpmComp);
+                }
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is TextBatchInfo info &&
+                       base.Equals(obj) &&
+                       variableName == info.variableName &&
+                       EqualityComparer<Color32>.Default.Equals(zeroColor, info.zeroColor) &&
+                       EqualityComparer<Color32>.Default.Equals(positiveColor, info.positiveColor) &&
+                       EqualityComparer<Color32>.Default.Equals(negativeColor, info.negativeColor) &&
+                       flashRate == info.flashRate;
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = -1112470117;
+                hashCode = hashCode * -1521134295 + base.GetHashCode();
+                hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(variableName);
+                hashCode = hashCode * -1521134295 + zeroColor.GetHashCode();
+                hashCode = hashCode * -1521134295 + positiveColor.GetHashCode();
+                hashCode = hashCode * -1521134295 + negativeColor.GetHashCode();
+                hashCode = hashCode * -1521134295 + flashRate.GetHashCode();
+                return hashCode;
+            }
+
+            public string variableName;
+            public Color32 zeroColor = XKCDColors.White;
+            public Color32 positiveColor = XKCDColors.White;
+            public Color32 negativeColor = XKCDColors.White;
+            public float flashRate = 0.0f;
+        }
+
         [SerializeReference] ConfigNodeHolder moduleConfig;
+        [SerializeField] internal TextBatchInfo batchInfo;
 
         [KSPField]
         public string labelText = "uninitialized";
@@ -46,8 +101,6 @@ namespace JSI
             passive,
             flash
         };
-        [KSPField]
-        public float flashRate = 0.0f;
 
         [KSPField]
         public float fontSize = 8.0f;
@@ -73,22 +126,12 @@ namespace JSI
         public int refreshRate = 10;
         [KSPField]
         public bool oneshot;
-        [KSPField]
-        public string variableName = string.Empty;
-        [KSPField]
-        public string positiveColor = string.Empty;
-        private Color positiveColorValue = XKCDColors.White;
-        [KSPField]
-        public string negativeColor = string.Empty;
-        private Color negativeColorValue = XKCDColors.White;
-        [KSPField]
-        public string zeroColor = string.Empty;
-        private Color zeroColorValue = XKCDColors.White;
+
         private bool variablePositive = false;
         private bool flashOn = true;
 
-        [SerializeField] private JSITextMesh textObj;
-        private readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
+        [SerializeField] internal JSITextMesh textObj;
+        static readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
 
         private List<JSILabelSet> labels = new List<JSILabelSet>();
         private int activeLabel = 0;
@@ -104,6 +147,9 @@ namespace JSI
         {
             moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
             moduleConfig.Node = node;
+
+            batchInfo = ScriptableObject.CreateInstance<TextBatchInfo>();
+            batchInfo.OnLoad(node);
 
             Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
             Vector3 localScale = internalProp.transform.localScale;
@@ -144,6 +190,8 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
+                batchInfo.OnStart(moduleConfig.Node, rpmComp);
+
                 // "Normal" mode
                 if (string.IsNullOrEmpty(switchTransform))
                 {
@@ -161,7 +209,15 @@ namespace JSI
                     }
                     labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
 
-                    if (!oneshot)
+                    if (oneshot)
+                    {
+                        var propBatcher = internalModel.FindModelComponent<PropBatcher>();
+                        if (propBatcher != null)
+                        {
+                            //propBatcher.AddStaticLabel(this);
+                        }
+                    }
+                    else
                     {
                         rpmComp.UpdateDataRefreshRate(refreshRate);
                     }
@@ -199,18 +255,12 @@ namespace JSI
                     }
                 }
 
-                if (!string.IsNullOrEmpty(zeroColor))
-                {
-                    zeroColorValue = JUtil.ParseColor32(zeroColor, rpmComp);
-                    textObj.color = zeroColorValue;
-                }
+                textObj.color = batchInfo.zeroColor;
 
-                if (!(string.IsNullOrEmpty(variableName) || string.IsNullOrEmpty(positiveColor) || string.IsNullOrEmpty(negativeColor) || string.IsNullOrEmpty(zeroColor)))
+                if (!string.IsNullOrEmpty(batchInfo.variableName))
                 {
-                    positiveColorValue = JUtil.ParseColor32(positiveColor, rpmComp);
-                    negativeColorValue = JUtil.ParseColor32(negativeColor, rpmComp);
                     del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
-                    rpmComp.RegisterVariableCallback(variableName, del);
+                    rpmComp.RegisterVariableCallback(batchInfo.variableName, del);
 
                     emissive = EmissiveMode.active;
 
@@ -219,10 +269,10 @@ namespace JSI
 
                 if (emissive == EmissiveMode.flash)
                 {
-                    if (flashRate > 0.0f)
+                    if (batchInfo.flashRate > 0.0f)
                     {
                         emissive = EmissiveMode.flash;
-                        fm = JUtil.InstallFlashModule(part, flashRate);
+                        fm = JUtil.InstallFlashModule(part, batchInfo.flashRate);
                         if (fm != null)
                         {
                             fm.flashSubscribers += FlashToggle;
@@ -254,7 +304,7 @@ namespace JSI
 
             if(variablePositive)
             {
-                textObj.color = (flashOn) ? positiveColorValue : negativeColorValue;
+                textObj.color = (flashOn) ? batchInfo.positiveColor : batchInfo.negativeColor;
             }
         }
 
@@ -337,15 +387,13 @@ namespace JSI
             {
                 try
                 {
-                    rpmComp.UnregisterVariableCallback(variableName, del);
+                    rpmComp.UnregisterVariableCallback(batchInfo.variableName, del);
                 }
                 catch
                 {
                     //JUtil.LogMessage(this, "Trapped exception unregistering JSIVariableLabel (you can ignore this)");
                 }
             }
-            Destroy(textObj);
-            textObj = null;
         }
 
         /// <summary>
@@ -358,7 +406,7 @@ namespace JSI
             if (vessel == null)
             {
                 // We're not attached to a ship?
-                rpmComp.UnregisterVariableCallback(variableName, del);
+                rpmComp.UnregisterVariableCallback(batchInfo.variableName, del);
                 JUtil.LogErrorMessage(this, "Received an unexpected OnCallback()");
                 return;
             }
@@ -369,9 +417,9 @@ namespace JSI
                 // getting called when textObj is null - did the callback
                 // fail to unregister on destruction?  It can't get called
                 // before textObj is created.
-                if (del != null && !string.IsNullOrEmpty(variableName))
+                if (del != null && !string.IsNullOrEmpty(batchInfo.variableName))
                 {
-                    rpmComp.UnregisterVariableCallback(variableName, del);
+                    rpmComp.UnregisterVariableCallback(batchInfo.variableName, del);
                 }
                 JUtil.LogErrorMessage(this, "Received an unexpected OnCallback() when textObj was null");
                 return;
@@ -379,17 +427,17 @@ namespace JSI
 
             if (value < 0.0f)
             {
-                textObj.color = negativeColorValue;
+                textObj.color = batchInfo.negativeColor;
                 variablePositive = false;
             }
             else if (value > 0.0f)
             {
-                textObj.color = (flashOn) ? positiveColorValue : negativeColorValue;
+                textObj.color = (flashOn) ? batchInfo.positiveColor : batchInfo.negativeColor;
                 variablePositive = true;
             }
             else
             {
-                textObj.color = zeroColorValue;
+                textObj.color = batchInfo.zeroColor;
                 variablePositive = false;
             }
 
