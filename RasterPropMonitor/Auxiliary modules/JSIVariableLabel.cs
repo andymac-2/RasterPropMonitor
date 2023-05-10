@@ -53,13 +53,6 @@ namespace JSI
         private Action<float> del;
         private StringProcessorFormatter spf;
         private RasterPropMonitorComputer rpmComp;
-        /// <summary>
-        /// The Guid of the vessel we belonged to at Start.  When undocking,
-        /// KSP will change the vessel member variable before calling OnDestroy,
-        /// which prevents us from getting the RPMVesselComputer we registered
-        /// with.  So we have to store the Guid separately.
-        /// </summary>
-        private Guid registeredVessel = Guid.Empty;
 
         public void Start()
         {
@@ -100,7 +93,6 @@ namespace JSI
                     zeroColorValue = JUtil.ParseColor32(zeroColor, rpmComp);
                     del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
                     rpmComp.RegisterVariableCallback(variableName, del);
-                    registeredVessel = vessel.id;
 
                     // Initialize the text color. Actually, callback registration took care of that
                 }
