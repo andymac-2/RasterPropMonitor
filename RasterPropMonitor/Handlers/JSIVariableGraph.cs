@@ -1,4 +1,4 @@
-/*****************************************************************************
+﻿/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -54,13 +54,12 @@ namespace JSI
         private Texture2D backgroundTexture;
         // Because KSPField can't handle double. :E
         private double xGraphSpan, interval;
-        private readonly List<Vector2> borderVertices = new List<Vector2>();
+        private Vector2[] borderVertices;
         private bool startupComplete;
         private RasterPropMonitorComputer rpmComp;
 
         public void Start()
         {
-
             if (HighLogic.LoadedSceneIsEditor)
             {
                 return;
@@ -106,16 +105,10 @@ namespace JSI
                 switch (borders)
                 {
                     case 2:
-                        borderVertices.Add(bottomRight);
-                        borderVertices.Add(bottomLeft);
-                        borderVertices.Add(topLeft);
+                        borderVertices = new Vector2[] {bottomRight, bottomLeft, topLeft};
                         break;
                     case 4:
-                        borderVertices.Add(bottomLeft);
-                        borderVertices.Add(topLeft);
-                        borderVertices.Add(topRight);
-                        borderVertices.Add(bottomRight);
-                        borderVertices.Add(bottomLeft);
+                        borderVertices = new Vector2[] {bottomLeft, topLeft, topRight, bottomRight, bottomLeft};
                         break;
                 }
 
@@ -161,7 +154,7 @@ namespace JSI
             foreach (GraphLine graph in graphs)
                 graph.Draw(graphSpace, time);
             if (borders > 0)
-                GraphLine.DrawVector(borderVertices, borderColorValue);
+                GraphLine.DrawVector(borderVertices, borderVertices.Length, borderColorValue);
 
             GL.PopMatrix();
             return true;
@@ -188,17 +181,22 @@ namespace JSI
         private class GraphLine
         {
             private readonly Color32 lineColor;
-            private readonly List<Vector2d> points = new List<Vector2d>();
+            private readonly Vector2d[] points;
+            private readonly Vector2[] actualXY;
             private readonly int maxPoints;
             private readonly VariableOrNumber variable;
             private readonly double horizontalSpan;
             // Analysis disable once FieldCanBeMadeReadOnly.Local
             private Vector2 verticalSpan;
             private bool floatingMax, floatingMin;
+            private int nextPoint = 0;
+            private int pointCount = 0;
 
             public GraphLine(ConfigNode node, RasterPropMonitorComputer rpmComp, double xSpan, Vector2 ySpan, double secondsBetweenSamples)
             {
                 maxPoints = (int)(xSpan / secondsBetweenSamples);
+                points = new Vector2d[maxPoints];
+                actualXY = new Vector2[maxPoints];
                 horizontalSpan = xSpan;
                 verticalSpan = ySpan;
                 if (!node.HasData)
@@ -227,32 +225,32 @@ namespace JSI
             public void Draw(Rect screenRect, double time)
             {
                 double mintime = time - horizontalSpan;
-                if (floatingMin && points.Count > 0)
+                if (floatingMin && pointCount > 0)
                 {
                     verticalSpan.x = (float)points[0].y;
-                    foreach (Vector2d dataPoint in points)
+                    for (int pointIndex = 0; pointIndex < pointCount; ++pointIndex)
                     {
-                        verticalSpan.x = (float)Math.Min(dataPoint.y, verticalSpan.x);
+                        verticalSpan.x = (float)Math.Min(points[pointIndex].y, verticalSpan.x);
                     }
                 }
-                if (floatingMax && points.Count > 0)
+                if (floatingMax && pointCount > 0)
                 {
                     verticalSpan.y = (float)points[0].y;
-                    foreach (Vector2d dataPoint in points)
+                    for (int pointIndex = 0; pointIndex < pointCount; ++pointIndex)
                     {
-                        verticalSpan.y = (float)Math.Max(dataPoint.y, verticalSpan.y);
+                        verticalSpan.y = (float)Math.Max(points[pointIndex].y, verticalSpan.y);
                     }
                 }
-                var actualXY = new List<Vector2>();
-                foreach (Vector2d dataPoint in points)
+
+                for (int pointIndex = 0; pointIndex < pointCount; ++pointIndex)
                 {
+                    var dataPoint = points[pointIndex];
                     if (dataPoint.x > mintime)
-                        actualXY.Add(new Vector2(
+                        actualXY[pointIndex] = new Vector2(
                             (float)JUtil.DualLerp(screenRect.xMin, screenRect.xMax, mintime, time, dataPoint.x),
-                            (float)JUtil.DualLerp(screenRect.yMin, screenRect.yMax, verticalSpan.x, verticalSpan.y, dataPoint.y)
-                        ));
+                            (float)JUtil.DualLerp(screenRect.yMin, screenRect.yMax, verticalSpan.x, verticalSpan.y, dataPoint.y));
                 }
-                DrawVector(actualXY, lineColor);
+                DrawVector(actualXY, pointCount, lineColor);
             }
 
             public void Update(double time)
@@ -262,16 +260,18 @@ namespace JSI
                 {
                     return;
                 }
-                points.Add(new Vector2d(time, value));
-                if (points.Count > maxPoints)
+                points[nextPoint++] = new Vector2d(time, value);
+                ++pointCount;
+                if (nextPoint == maxPoints)
                 {
-                    points.RemoveRange(0, points.Count - maxPoints);
+                    nextPoint = 0;
+                    pointCount = maxPoints;
                 }
             }
 
-            public static void DrawVector(List<Vector2> points, Color32 lineColor)
+            public static void DrawVector(Vector2[] points, int numPoints, Color32 lineColor)
             {
-                if (points.Count < 2)
+                if (numPoints  < 2)
                     return;
                 GL.Begin(GL.LINES);
                 lineMaterial.SetPass(0);
@@ -279,7 +279,7 @@ namespace JSI
 
                 Vector2 start, end;
                 start = points[0];
-                for (int i = 1; i < points.Count; i++)
+                for (int i = 1; i < numPoints; i++)
                 {
                     end = points[i];
                     GL.Vertex(start);
