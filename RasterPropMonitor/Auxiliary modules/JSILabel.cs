@@ -62,12 +62,15 @@ namespace JSI
 
             public override bool Equals(object obj)
             {
+                // TODO: technically we don't need to differentiate labels by color even if they are connected to a variable, but we do need to store the colors per-label...
                 return obj is TextBatchInfo info &&
                        variableName == info.variableName &&
                        font == info.font &&
-                       EqualityComparer<Color32>.Default.Equals(zeroColor, info.zeroColor) &&
-                       EqualityComparer<Color32>.Default.Equals(positiveColor, info.positiveColor) &&
-                       EqualityComparer<Color32>.Default.Equals(negativeColor, info.negativeColor) &&
+                       (variableName == null || 
+                           (EqualityComparer<Color32>.Default.Equals(zeroColor, info.zeroColor) &&
+                           EqualityComparer<Color32>.Default.Equals(positiveColor, info.positiveColor) &&
+                           EqualityComparer<Color32>.Default.Equals(negativeColor, info.negativeColor))
+                       ) &&
                        flashRate == info.flashRate;
             }
 
@@ -76,9 +79,14 @@ namespace JSI
                 var hashCode = -1112470117;
                 hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(variableName);
                 hashCode = hashCode * -1521134295 + font.GetHashCode();
-                hashCode = hashCode * -1521134295 + zeroColor.GetHashCode();
-                hashCode = hashCode * -1521134295 + positiveColor.GetHashCode();
-                hashCode = hashCode * -1521134295 + negativeColor.GetHashCode();
+
+                if (variableName != null)
+                {
+                    hashCode = hashCode * -1521134295 + zeroColor.GetHashCode();
+                    hashCode = hashCode * -1521134295 + positiveColor.GetHashCode();
+                    hashCode = hashCode * -1521134295 + negativeColor.GetHashCode();
+                }
+
                 hashCode = hashCode * -1521134295 + flashRate.GetHashCode();
                 return hashCode;
             }
@@ -132,6 +140,8 @@ namespace JSI
         public int refreshRate = 10;
         [KSPField]
         public bool oneshot;
+        [KSPField]
+        public bool canBatch;
 
         private bool variablePositive = false;
         private bool flashOn = true;
@@ -214,10 +224,11 @@ namespace JSI
 
                     if (oneshot)
                     {
+                        textObj.text = labels[0].Get();
+
                         var propBatcher = internalModel.GetComponentInChildren<PropBatcher>();
-                        if (propBatcher != null)
+                        if (propBatcher != null && canBatch)
                         {
-                            textObj.text = labels[0].Get();
                             propBatcher.AddStaticLabel(this);
                             return;
                         }
