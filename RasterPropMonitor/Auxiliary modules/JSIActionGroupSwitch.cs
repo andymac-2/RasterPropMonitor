@@ -482,8 +482,10 @@ namespace JSI
                     persistentVarValid = !string.IsNullOrEmpty(persistentVarName);
                     if (persistentVarValid)
                     {
-                        // fetch the variable once before registering a callback for it, because otherwise the default value will be -1 on creation
-                        rpmComp.GetPersistentVariable(persistentVarName, initialState, perPodPersistenceIsGlobal);
+                        if (!rpmComp.HasPersistentVariable(persistentVarName, perPodPersistenceIsGlobal))
+                        {
+                            rpmComp.SetPersistentVariable(persistentVarName, initialState, perPodPersistenceIsGlobal);
+                        }
                         rpmComp.RegisterVariableCallback("PERSISTENT_" + persistentVarName, PersistentVarChangedCallback);
                     }
                 }
