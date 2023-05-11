@@ -20,7 +20,9 @@
  ****************************************************************************/
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace JSI
 {
@@ -33,6 +35,13 @@ namespace JSI
             {
                 variableName = node.GetValue(nameof(variableName));
                 node.TryGetValue(nameof(flashRate), ref flashRate);
+
+                string fontName = "Arial";
+                node.TryGetValue(nameof(fontName), ref fontName);
+                int fontQuality = 32;
+                node.TryGetValue(nameof(fontQuality), ref fontQuality);
+
+                font = JUtil.LoadFont(fontName, fontQuality);
             }
 
             public void OnStart(ConfigNode node, RasterPropMonitorComputer rpmComp)
@@ -54,8 +63,8 @@ namespace JSI
             public override bool Equals(object obj)
             {
                 return obj is TextBatchInfo info &&
-                       base.Equals(obj) &&
                        variableName == info.variableName &&
+                       font == info.font &&
                        EqualityComparer<Color32>.Default.Equals(zeroColor, info.zeroColor) &&
                        EqualityComparer<Color32>.Default.Equals(positiveColor, info.positiveColor) &&
                        EqualityComparer<Color32>.Default.Equals(negativeColor, info.negativeColor) &&
@@ -65,8 +74,8 @@ namespace JSI
             public override int GetHashCode()
             {
                 var hashCode = -1112470117;
-                hashCode = hashCode * -1521134295 + base.GetHashCode();
                 hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(variableName);
+                hashCode = hashCode * -1521134295 + font.GetHashCode();
                 hashCode = hashCode * -1521134295 + zeroColor.GetHashCode();
                 hashCode = hashCode * -1521134295 + positiveColor.GetHashCode();
                 hashCode = hashCode * -1521134295 + negativeColor.GetHashCode();
@@ -75,6 +84,7 @@ namespace JSI
             }
 
             public string variableName;
+            public Font font;
             public Color32 zeroColor = XKCDColors.White;
             public Color32 positiveColor = XKCDColors.White;
             public Color32 negativeColor = XKCDColors.White;
@@ -107,13 +117,9 @@ namespace JSI
         [KSPField]
         public float lineSpacing = 1.0f;
         [KSPField]
-        public string fontName = "Arial";
-        [KSPField]
         public TextAnchor anchor;
         [KSPField]
         public TextAlignment alignment;
-        [KSPField]
-        public int fontQuality = 32;
 
         [KSPField]
         public string switchTransform = string.Empty;
@@ -133,7 +139,7 @@ namespace JSI
         [SerializeField] internal JSITextMesh textObj;
         static readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
 
-        private List<JSILabelSet> labels = new List<JSILabelSet>();
+        private List<StringProcessorFormatter> labels = new List<StringProcessorFormatter>();
         private int activeLabel = 0;
         private FXGroup audioOutput;
 
@@ -162,16 +168,14 @@ namespace JSI
 
             textObj = offsetTransform.gameObject.AddComponent<JSITextMesh>();
 
-            var font = JUtil.LoadFont(fontName, fontQuality);
-
-            textObj.font = font;
+            textObj.font = batchInfo.font;
             //textObj.fontSize = fontQuality; // This doesn't work with Unity-embedded fonts
-            textObj.fontSize = font.fontSize;
+            textObj.fontSize = batchInfo.font.fontSize;
 
             textObj.anchor = anchor;
             textObj.alignment = alignment;
 
-            float sizeScalar = 32.0f / (float)font.fontSize;
+            float sizeScalar = 32.0f / (float)batchInfo.font.fontSize;
             textObj.characterSize = fontSize * 0.00005f * sizeScalar;
             textObj.lineSpacing *= lineSpacing;
         }
@@ -195,8 +199,6 @@ namespace JSI
                 // "Normal" mode
                 if (string.IsNullOrEmpty(switchTransform))
                 {
-                    // Force oneshot if there's no variables:
-                    oneshot |= !labelText.Contains("$&$");
                     string sourceString = labelText.UnMangleConfigText();
 
                     if (!string.IsNullOrEmpty(sourceString) && sourceString.Length > 1)
@@ -207,14 +209,17 @@ namespace JSI
                             sourceString = sourceString.Substring(1);
                         }
                     }
-                    labels.Add(new JSILabelSet(sourceString, rpmComp, oneshot));
+                    labels.Add(new StringProcessorFormatter(sourceString, rpmComp));
+                    oneshot |= labels[0].IsConstant;
 
                     if (oneshot)
                     {
-                        var propBatcher = internalModel.FindModelComponent<PropBatcher>();
+                        var propBatcher = internalModel.GetComponentInChildren<PropBatcher>();
                         if (propBatcher != null)
                         {
-                            //propBatcher.AddStaticLabel(this);
+                            textObj.text = labels[0].Get();
+                            propBatcher.AddStaticLabel(this);
+                            return;
                         }
                     }
                     else
@@ -236,13 +241,9 @@ namespace JSI
                             string lText = variableNodes[i].GetValue("labelText");
                             if (lText != null)
                             {
-                                bool lOneshot = false;
-                                variableNodes[i].TryGetValue("oneshot", ref lOneshot);
-
                                 string sourceString = lText.UnMangleConfigText();
-                                lOneshot |= !lText.Contains("$&$");
-                                labels.Add(new JSILabelSet(sourceString, rpmComp, lOneshot));
-                                if (!lOneshot)
+                                labels.Add(new StringProcessorFormatter(sourceString, rpmComp));
+                                if (!labels.Last().IsConstant)
                                 {
                                     rpmComp.UpdateDataRefreshRate(refreshRate);
                                 }
@@ -289,7 +290,7 @@ namespace JSI
             catch (Exception e)
             {
                 JUtil.LogErrorMessage(this, "Start failed in prop {1} ({2}) with exception {0}", e, internalProp.propID, internalProp.propName);
-                labels.Add(new JSILabelSet("ERR", rpmComp, true));
+                labels.Add(new StringProcessorFormatter("ERR", rpmComp));
             }
         }
 
@@ -320,10 +321,10 @@ namespace JSI
                 activeLabel = 0;
             }
 
-            textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
+            textObj.text = labels[activeLabel].Get();
 
             // do we need to activate the update loop?
-            if (labels.Count > 1 && !labels[activeLabel].oneshot)
+            if (labels.Count > 1 && !labels[activeLabel].IsConstant)
             {
                 rpmComp.RestoreInternalModule(this);
             }
@@ -464,7 +465,7 @@ namespace JSI
         /// </summary>
         public override void OnUpdate()
         {
-            if (textObj == null)
+            if (textObj == null || labels[activeLabel].IsConstant)
             {
                 // Shouldn't happen ... but it does, thanks to the quirks of
                 // docking and undocking.
@@ -472,32 +473,10 @@ namespace JSI
                 return;
             }
 
-            if (labels[activeLabel].oneshotComplete && labels[activeLabel].oneshot)
-            {
-                rpmComp.RemoveInternalModule(this);
-                return;
-            }
-
             if (UpdateCheck() && JUtil.RasterPropMonitorShouldUpdate(part))
             {
-                textObj.text = StringProcessor.ProcessString(labels[activeLabel].spf, rpmComp);
-                labels[activeLabel].oneshotComplete = true;
+                textObj.text = labels[activeLabel].Get();
             }
         }
     }
-
-    internal class JSILabelSet
-    {
-        public readonly StringProcessorFormatter spf;
-        public bool oneshotComplete;
-        public readonly bool oneshot;
-
-        internal JSILabelSet(string labelText, RasterPropMonitorComputer rpmComp, bool isOneshot)
-        {
-            oneshotComplete = false;
-            spf = new StringProcessorFormatter(labelText, rpmComp);
-            oneshot = isOneshot || spf.IsConstant;
-        }
-    }
-
 }

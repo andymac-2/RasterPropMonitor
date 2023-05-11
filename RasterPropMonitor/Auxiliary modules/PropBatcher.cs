@@ -201,12 +201,48 @@ namespace JSI
 
         class LabelBatch
         {
-            public JSILabel firstLabel;
+            public GameObject batchRoot;
+            public MeshRenderer renderer;
+            public MeshFilter meshFilter;
+
             public List<JSITextMesh> textMeshes = new List<JSITextMesh>();
             public bool needsUpdate = true;
+
+            public LabelBatch()
+            {
+                batchRoot = new GameObject("Label Batch Root");
+                batchRoot.layer = 20;
+                batchRoot.transform.SetParent(InternalSpace.Instance.transform, true);
+
+                renderer = batchRoot.AddComponent<MeshRenderer>();
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = true;
+                renderer.material = new Material(JUtil.LoadInternalShader("RPM/JSILabel"));
+                meshFilter = batchRoot.AddComponent<MeshFilter>();
+            }
+
+            public void LateUpdate()
+            {
+                if (!needsUpdate) return;
+
+                CombineInstance[] instances = new CombineInstance[textMeshes.Count];
+                for (int i = 0; i < instances.Length; ++i)
+                {
+                    instances[i] = new CombineInstance();
+                    textMeshes[i].Update();
+                    instances[i].mesh = textMeshes[i].mesh;
+                    instances[i].transform = textMeshes[i].transform.localToWorldMatrix;
+                }
+
+                meshFilter.mesh.Clear();
+                meshFilter.mesh.CombineMeshes(instances);
+                meshFilter.mesh.UploadMeshData(false);
+
+                needsUpdate = false;
+            }
         }
 
-        Dictionary<JSILabel.TextBatchInfo, LabelBatch> labelBatches = new Dictionary<JSILabel.TextBatchInfo, LabelBatch>();
+        readonly Dictionary<JSILabel.TextBatchInfo, LabelBatch> labelBatches = new Dictionary<JSILabel.TextBatchInfo, LabelBatch>();
 
         public void AddStaticLabel(JSILabel label)
         {
@@ -214,42 +250,32 @@ namespace JSI
             if (!labelBatches.TryGetValue(label.batchInfo, out labelBatch))
             {
                 labelBatch = new LabelBatch();
-                labelBatch.firstLabel = label;
                 labelBatches.Add(label.batchInfo, labelBatch);
+                labelBatch.renderer.material = label.batchInfo.font.material;
+                // TODO: hook up variable callback
+                // TODO: hook up flashing behavior
+            }
 
-                var oldParent = label.textObj.transform.parent;
-                label.textObj.transform.SetParent(null, true);
-                label.transform.localPosition = Vector3.zero;
-                label.transform.localRotation = Quaternion.identity;
-                label.transform.localScale = Vector3.one;
-                label.textObj.transform.SetParent(oldParent, true);
-            }
-            else
-            {
-                Component.Destroy(label.textObj.transform.GetComponent<MeshRenderer>());
-                // TODO: destroy meshfilter?
-            }
+            // TODO: hook up font change callback
+
+            label.textObj.transform.SetParent(labelBatch.batchRoot.transform, true);
+            label.textObj.gameObject.SetActive(false);
+            label.textObj.color = label.batchInfo.zeroColor;
 
             labelBatch.textMeshes.Add(label.textObj);
             labelBatch.needsUpdate = true;
+
+            //Component.Destroy(label.textObj.transform.GetComponent<MeshRenderer>());
+            // todo: destroy meshfilter? but we need the meshes to stick around.
+            label.internalProp.internalModules.Remove(label);
+            Component.Destroy(label);
         }
 
         void LateUpdate()
         {
             foreach (var labelBatch in labelBatches.Values)
             {
-                if (labelBatch.needsUpdate)
-                {
-                    CombineInstance[] instances = new CombineInstance[labelBatch.textMeshes.Count];
-                    for (int i = 0; i < instances.Length; ++i)
-                    {
-                        instances[i] = new CombineInstance();
-                        instances[i].mesh = labelBatch.textMeshes[i].mesh;
-                        instances[i].transform = labelBatch.textMeshes[i].transform.localToWorldMatrix;
-                    }
-
-                    labelBatch.needsUpdate = false;
-                }
+                labelBatch.LateUpdate();
             }
         }
     }
