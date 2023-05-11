@@ -137,7 +137,7 @@ namespace JSI
         private bool flashOn = true;
 
         [SerializeField] internal JSITextMesh textObj;
-        static readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
+        public static readonly int emissiveFactorIndex = Shader.PropertyToID("_EmissiveFactor");
 
         private List<StringProcessorFormatter> labels = new List<StringProcessorFormatter>();
         private int activeLabel = 0;
@@ -146,7 +146,7 @@ namespace JSI
         private int updateCountdown;
         private Action<float> del;
         
-        RasterPropMonitorComputer rpmComp;
+        internal RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
 
         public override void OnLoad(ConfigNode node)

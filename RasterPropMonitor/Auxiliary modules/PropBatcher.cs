@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using TMPro;
 using UnityEngine;
 
 namespace JSI
@@ -204,11 +206,13 @@ namespace JSI
             public GameObject batchRoot;
             public MeshRenderer renderer;
             public MeshFilter meshFilter;
+            public JSILabel.TextBatchInfo batchInfo;
 
             public List<JSITextMesh> textMeshes = new List<JSITextMesh>();
             public bool needsUpdate = true;
+            
 
-            public LabelBatch()
+            public LabelBatch(JSILabel firstLabel)
             {
                 batchRoot = new GameObject("Label Batch Root");
                 batchRoot.layer = 20;
@@ -217,8 +221,52 @@ namespace JSI
                 renderer = batchRoot.AddComponent<MeshRenderer>();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = true;
-                renderer.material = new Material(JUtil.LoadInternalShader("RPM/JSILabel"));
+                renderer.material = firstLabel.textObj.material;
+                renderer.material.mainTexture = firstLabel.batchInfo.font.material.mainTexture;
                 meshFilter = batchRoot.AddComponent<MeshFilter>();
+
+                batchInfo = firstLabel.batchInfo;
+
+                if (batchInfo.variableName != null)
+                {
+                    firstLabel.rpmComp.RegisterVariableCallback(batchInfo.variableName, VariableChangedCallback);
+                }
+            }
+
+            public void VariableChangedCallback(float value)
+            {
+                Color32 newColor;
+                float newEmissive; // TODO: flash support...
+
+                if (value == 0.0f)
+                {
+                    newColor = batchInfo.zeroColor;
+                    newEmissive = 0.0f;
+                }
+                else if (value < 0.0f)
+                {
+                    newColor = batchInfo.negativeColor;
+                    newEmissive = 0.0f;
+                }
+                else
+                {
+                    newColor = batchInfo.positiveColor;
+                    newEmissive = 1.0f;
+                }
+
+                foreach (var textMesh in textMeshes)
+                {
+                    if (!newColor.Compare(textMesh.color))
+                    {
+                        textMesh.color = newColor;
+                        needsUpdate = true;
+                    }
+                }
+
+                if (newEmissive != renderer.material.GetFloat(JSILabel.emissiveFactorIndex))
+                {
+                    renderer.material.SetFloat(JSILabel.emissiveFactorIndex, newEmissive);
+                }
             }
 
             public void LateUpdate()
@@ -249,10 +297,8 @@ namespace JSI
             LabelBatch labelBatch;
             if (!labelBatches.TryGetValue(label.batchInfo, out labelBatch))
             {
-                labelBatch = new LabelBatch();
+                labelBatch = new LabelBatch(label);
                 labelBatches.Add(label.batchInfo, labelBatch);
-                labelBatch.renderer.material = label.batchInfo.font.material;
-                // TODO: hook up variable callback
                 // TODO: hook up flashing behavior
             }
 
@@ -276,6 +322,18 @@ namespace JSI
             foreach (var labelBatch in labelBatches.Values)
             {
                 labelBatch.LateUpdate();
+            }
+        }
+
+        void OnDestroy()
+        {
+            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
+            foreach (var labelBatch in labelBatches)
+            {
+                if (labelBatch.Key.variableName != null)
+                {
+                    rpmComp.UnregisterVariableCallback(labelBatch.Key.variableName, labelBatch.Value.VariableChangedCallback);
+                }
             }
         }
     }
