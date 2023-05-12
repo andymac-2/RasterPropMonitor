@@ -218,6 +218,11 @@ namespace JSI
                 if (state)
                 {
                     cameraObject.SetFlicker(flickerChance, flickerRange);
+
+                    if (currentCamera < cameras.Count)
+                    {
+                        cameraObject.PointCamera(cameras[currentCamera]);
+                    }
                 }
                 else
                 {
