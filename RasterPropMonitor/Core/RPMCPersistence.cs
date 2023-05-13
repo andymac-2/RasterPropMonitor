@@ -69,7 +69,10 @@ namespace JSI
                     if (rpmc != null)
                     {
                         var vc = rpmc.variableCollection.GetVariable(varName);
-                        vc.Update(vesselComp);
+                        if (vc != null)
+                        {
+                            vc.Update(vesselComp);
+                        }
                     }
                 }
             }
