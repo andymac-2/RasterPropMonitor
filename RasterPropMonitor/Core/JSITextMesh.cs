@@ -194,12 +194,13 @@ namespace JSI
             }
         }
 
+        [SerializeField] private Mesh mesh_;
+
         public Mesh mesh
         {
             get
             {
-                CreateComponents();
-                return meshFilter_.mesh;
+                return mesh_;
             }
         }
 
@@ -250,9 +251,12 @@ namespace JSI
         /// </summary>
         private void CreateComponents()
         {
-            if (meshRenderer_ == null)
+            if (mesh_ == null)
             {
+                mesh_ = new Mesh();
+
                 meshFilter_ = gameObject.AddComponent<MeshFilter>();
+                meshFilter_.mesh = mesh_;
                 meshRenderer_ = gameObject.AddComponent<MeshRenderer>();
                 meshRenderer_.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 meshRenderer_.receiveShadows = true; // not working?
@@ -263,7 +267,7 @@ namespace JSI
         /// <summary>
         /// Set up the JSITextMesh components if they haven't been set up yet.
         /// </summary>
-        public void Start()
+        void Start()
         {
             Font.textureRebuilt += FontRebuiltCallback;
             CreateComponents();
@@ -285,17 +289,11 @@ namespace JSI
         /// <summary>
         /// Make sure we don't leave our callback lingering.
         /// </summary>
-        public void OnDestroy()
+        void OnDestroy()
         {
             Font.textureRebuilt -= FontRebuiltCallback;
 
-            Destroy(meshFilter_);
-            meshFilter_ = null;
-
-            Destroy(meshRenderer_.material);
-
-            Destroy(meshRenderer_);
-            meshRenderer_ = null;
+            Destroy(mesh_);
         }
 
         /// <summary>
@@ -313,10 +311,7 @@ namespace JSI
             }
         }
 
-        /// <summary>
-        /// Update the text mesh if it's changed.
-        /// </summary>
-        public void Update()
+        public void Build()
         {
             if (!string.IsNullOrEmpty(text_))
             {
@@ -355,14 +350,14 @@ namespace JSI
                     }
                     else
                     {
-                        if (meshFilter_.mesh.colors32.Length > 0)
+                        if (mesh_.colors32.Length > 0)
                         {
                             for (int idx = 0; idx < colors32.Count; ++idx)
                             {
                                 colors32[idx] = color_;
                             }
-                            meshFilter_.mesh.SetColors(colors32);
-                            meshFilter_.mesh.UploadMeshData(false);
+                            mesh_.SetColors(colors32);
+                            mesh_.UploadMeshData(false);
                         }
                     }
 
@@ -371,6 +366,14 @@ namespace JSI
             }
 
             enabled = false;
+        }
+
+        /// <summary>
+        /// Update the text mesh if it's changed.
+        /// </summary>
+        void Update()
+        {
+            Build();
         }
 
         /// <summary>
@@ -672,15 +675,15 @@ namespace JSI
 
         void PopulateMesh()
         {
-            meshFilter_.mesh.Clear();
-            meshFilter_.mesh.SetVertices(vertices, 0, vertices.Count);
-            meshFilter_.mesh.SetColors(colors32, 0, colors32.Count);
-            meshFilter_.mesh.SetTangents(tangents, 0, vertices.Count); // note, tangents list might be longer than the vertex array
-            meshFilter_.mesh.SetUVs(0, uv, 0, uv.Count);
-            meshFilter_.mesh.SetTriangles(triangles, 0, vertices.Count / 4 * 6, 0);
-            meshFilter_.mesh.RecalculateNormals();
+            mesh_.Clear();
+            mesh_.SetVertices(vertices, 0, vertices.Count);
+            mesh_.SetColors(colors32, 0, colors32.Count);
+            mesh_.SetTangents(tangents, 0, vertices.Count); // note, tangents list might be longer than the vertex array
+            mesh_.SetUVs(0, uv, 0, uv.Count);
+            mesh_.SetTriangles(triangles, 0, vertices.Count / 4 * 6, 0);
+            mesh_.RecalculateNormals();
             // Can't hide mesh with (true), or we can't edit colors later.
-            meshFilter_.mesh.UploadMeshData(false);
+            mesh_.UploadMeshData(false);
         }
 
         private void PrepBuffers(int maxVerts)

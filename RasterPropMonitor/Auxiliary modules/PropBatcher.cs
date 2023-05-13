@@ -216,7 +216,6 @@ namespace JSI
             {
                 batchRoot = new GameObject("Label Batch Root");
                 batchRoot.layer = 20;
-                batchRoot.transform.SetParent(InternalSpace.Instance.transform, true);
 
                 renderer = batchRoot.AddComponent<MeshRenderer>();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -273,13 +272,14 @@ namespace JSI
             {
                 if (!needsUpdate) return;
 
+                var worldToLocal = batchRoot.transform.worldToLocalMatrix;
                 CombineInstance[] instances = new CombineInstance[textMeshes.Count];
                 for (int i = 0; i < instances.Length; ++i)
                 {
                     instances[i] = new CombineInstance();
-                    textMeshes[i].Update();
+                    textMeshes[i].Build();
                     instances[i].mesh = textMeshes[i].mesh;
-                    instances[i].transform = textMeshes[i].transform.localToWorldMatrix;
+                    instances[i].transform = worldToLocal * textMeshes[i].transform.localToWorldMatrix;
                 }
 
                 meshFilter.mesh.Clear();
@@ -300,6 +300,8 @@ namespace JSI
                 labelBatch = new LabelBatch(label);
                 labelBatches.Add(label.batchInfo, labelBatch);
                 // TODO: hook up flashing behavior
+
+                labelBatch.batchRoot.transform.SetParent(transform, false);
             }
 
             // TODO: hook up font change callback
@@ -311,7 +313,7 @@ namespace JSI
             labelBatch.textMeshes.Add(label.textObj);
             labelBatch.needsUpdate = true;
 
-            //Component.Destroy(label.textObj.transform.GetComponent<MeshRenderer>());
+            Component.Destroy(label.textObj.transform.GetComponent<MeshRenderer>());
             // todo: destroy meshfilter? but we need the meshes to stick around.
             label.internalProp.internalModules.Remove(label);
             Component.Destroy(label);
