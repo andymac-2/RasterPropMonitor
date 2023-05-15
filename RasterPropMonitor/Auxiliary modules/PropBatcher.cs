@@ -329,12 +329,15 @@ namespace JSI
 
         void OnDestroy()
         {
-            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
-            foreach (var labelBatch in labelBatches)
+            if (part != null)
             {
-                if (labelBatch.Key.variableName != null)
+                RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
+                foreach (var labelBatch in labelBatches)
                 {
-                    rpmComp.UnregisterVariableCallback(labelBatch.Key.variableName, labelBatch.Value.VariableChangedCallback);
+                    if (labelBatch.Key.variableName != null)
+                    {
+                        rpmComp.UnregisterVariableCallback(labelBatch.Key.variableName, labelBatch.Value.VariableChangedCallback);
+                    }
                 }
             }
         }
