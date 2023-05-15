@@ -329,7 +329,7 @@ namespace JSI
 
         void OnDestroy()
         {
-            if (part != null)
+            if (labelBatches.Count > 0)
             {
                 RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 foreach (var labelBatch in labelBatches)
