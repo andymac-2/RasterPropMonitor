@@ -120,11 +120,6 @@ namespace JSI
                     invalidated = true;
                     font_ = value;
                     enabled = true;
-                    if (font_ != null)
-                    {
-                        CreateComponents();
-                        meshRenderer_.material.mainTexture = font_.material.mainTexture;
-                    }
                 }
             }
         }
@@ -189,12 +184,11 @@ namespace JSI
         {
             get
             {
-                CreateComponents();
                 return meshRenderer_.material;
             }
         }
 
-        [SerializeField] private Mesh mesh_;
+        private Mesh mesh_;
 
         public Mesh mesh
         {
@@ -246,17 +240,13 @@ namespace JSI
         List<Vector2> uv = new List<Vector2>();
         List<int> triangles = new List<int>();
 
-        /// <summary>
-        /// Set up rendering components.
-        /// </summary>
-        private void CreateComponents()
+        
+        void Awake()
         {
-            if (mesh_ == null)
+            // this function will get called both when compiling the prop itself and when instantiating it in an internal model
+            if (HighLogic.LoadedScene == GameScenes.LOADING && meshFilter_ == null)
             {
-                mesh_ = new Mesh();
-
                 meshFilter_ = gameObject.AddComponent<MeshFilter>();
-                meshFilter_.mesh = mesh_;
                 meshRenderer_ = gameObject.AddComponent<MeshRenderer>();
                 meshRenderer_.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 meshRenderer_.receiveShadows = true; // not working?
@@ -264,13 +254,14 @@ namespace JSI
             }
         }
 
-        /// <summary>
-        /// Set up the JSITextMesh components if they haven't been set up yet.
-        /// </summary>
         void Start()
         {
             Font.textureRebuilt += FontRebuiltCallback;
-            CreateComponents();
+
+            mesh_ = new Mesh();
+            meshFilter_.sharedMesh = mesh_;
+
+            invalidated = true;
         }
 
         void OnBecameVisible()
@@ -373,6 +364,11 @@ namespace JSI
         /// </summary>
         void Update()
         {
+            if (invalidated && font != null && meshRenderer_ != null)
+            {
+                meshRenderer_.material.mainTexture = font_.material.mainTexture;
+            }
+
             Build();
         }
 
@@ -675,6 +671,11 @@ namespace JSI
 
         void PopulateMesh()
         {
+            if (mesh_ == null)
+            {
+                mesh_ = new Mesh();
+            }
+
             mesh_.Clear();
             mesh_.SetVertices(vertices, 0, vertices.Count);
             mesh_.SetColors(colors32, 0, colors32.Count);
