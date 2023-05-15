@@ -210,7 +210,6 @@ namespace JSI
 
             public List<JSITextMesh> textMeshes = new List<JSITextMesh>();
             public bool needsUpdate = true;
-            
 
             public LabelBatch(JSILabel firstLabel)
             {
@@ -291,12 +290,14 @@ namespace JSI
         }
 
         readonly Dictionary<JSILabel.TextBatchInfo, LabelBatch> labelBatches = new Dictionary<JSILabel.TextBatchInfo, LabelBatch>();
+        RasterPropMonitorComputer rpmComp = null;
 
         public void AddStaticLabel(JSILabel label)
         {
             LabelBatch labelBatch;
             if (!labelBatches.TryGetValue(label.batchInfo, out labelBatch))
             {
+                rpmComp = label.rpmComp;
                 labelBatch = new LabelBatch(label);
                 labelBatches.Add(label.batchInfo, labelBatch);
                 // TODO: hook up flashing behavior
@@ -329,9 +330,8 @@ namespace JSI
 
         void OnDestroy()
         {
-            if (labelBatches.Count > 0)
+            if (rpmComp != null)
             {
-                RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 foreach (var labelBatch in labelBatches)
                 {
                     if (labelBatch.Key.variableName != null)
