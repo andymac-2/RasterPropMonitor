@@ -69,9 +69,9 @@ namespace JSI
             moduleConfig.Node = node;
         }
 
-        public void Start()
+        public override void OnAwake()
         {
-            if (HighLogic.LoadedSceneIsEditor)
+            if (!HighLogic.LoadedSceneIsFlight)
             {
                 return;
             }
