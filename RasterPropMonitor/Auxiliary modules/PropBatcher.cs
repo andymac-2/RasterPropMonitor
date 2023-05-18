@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -261,9 +261,9 @@ namespace JSI
                     }
                 }
 
-                if (newEmissive != renderer.material.GetFloat(JSILabel.emissiveFactorIndex))
+                if (newEmissive != renderer.sharedMaterial.GetFloat(JSILabel.emissiveFactorIndex))
                 {
-                    renderer.material.SetFloat(JSILabel.emissiveFactorIndex, newEmissive);
+                    renderer.sharedMaterial.SetFloat(JSILabel.emissiveFactorIndex, newEmissive);
                 }
             }
 
