@@ -244,11 +244,12 @@ namespace JSI
 
                 for (int pointIndex = 0; pointIndex < pointCount; ++pointIndex)
                 {
-                    var dataPoint = points[pointIndex];
-                    if (dataPoint.x > mintime)
-                        actualXY[pointIndex] = new Vector2(
-                            (float)JUtil.DualLerp(screenRect.xMin, screenRect.xMax, mintime, time, dataPoint.x),
-                            (float)JUtil.DualLerp(screenRect.yMin, screenRect.yMax, verticalSpan.x, verticalSpan.y, dataPoint.y));
+                    int sourcePointIndex = (nextPoint + pointIndex - pointCount + maxPoints) % maxPoints;
+
+                    var dataPoint = points[sourcePointIndex];
+                    actualXY[pointIndex] = new Vector2(
+                        (float)JUtil.DualLerp(screenRect.xMin, screenRect.xMax, mintime, time, dataPoint.x),
+                        (float)JUtil.DualLerp(screenRect.yMin, screenRect.yMax, verticalSpan.x, verticalSpan.y, dataPoint.y));
                 }
                 DrawVector(actualXY, pointCount, lineColor);
             }
@@ -261,11 +262,15 @@ namespace JSI
                     return;
                 }
                 points[nextPoint++] = new Vector2d(time, value);
-                ++pointCount;
+                
+                if (pointCount < maxPoints)
+                {
+                    ++pointCount;
+                }
+
                 if (nextPoint == maxPoints)
                 {
                     nextPoint = 0;
-                    pointCount = maxPoints;
                 }
             }
 
