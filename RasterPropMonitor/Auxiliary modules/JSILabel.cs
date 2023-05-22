@@ -168,8 +168,14 @@ namespace JSI
             batchInfo.OnLoad(node);
 
             Transform textObjTransform = JUtil.FindPropTransform(internalProp, transformName);
+            
+            if (textObjTransform == null)
+            {
+                JUtil.LogErrorMessage(this, "Transform named {0} not found in prop {1}", transformName, internalProp.propName);
+                return;
+            }
+            
             Vector3 localScale = internalProp.transform.localScale;
-
             Transform offsetTransform = new GameObject().transform;
             offsetTransform.gameObject.name = "JSILabel-" + this.internalProp.propID + "-" + this.GetHashCode().ToString();
             offsetTransform.gameObject.layer = textObjTransform.gameObject.layer;
