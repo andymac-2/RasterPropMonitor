@@ -570,7 +570,7 @@ namespace JSI
         }
 
         /// <summary>
-        /// Undock the current reference part, or the inferred first dock on
+        /// Undock or detach the current reference part, or the inferred first dock on
         /// the current vessel.
         /// 
         /// The state of the dock appears to be queriable only by reading a
@@ -595,22 +595,7 @@ namespace JSI
             if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED)
             {
                 comp.mainDockingNode.Undock();
-            }
-        }
-
-        /// <summary>
-        /// Detach a docking node that was attached in the VAB.
-        /// </summary>
-        /// <param name="state">New state - must be 'false' to trigger</param>
-        public void DockDetach(bool state)
-        {
-            if (vessel == null || state == true)
-            {
-                return;
-            }
-
-            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-            if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
+            } else if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
             {
                 comp.mainDockingNode.Decouple();
             }
@@ -644,6 +629,21 @@ namespace JSI
 
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
             return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED);
+        }
+
+        /// <summary>
+        /// Is the current reference dock docked or attached to something?
+        /// </summary>
+        /// <returns></returns>
+        public bool DockDocked()
+        {
+            if (vessel == null)
+            {
+                return false;
+            }
+
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+            return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED || comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED);
         }
 
         /// <summary>
