@@ -570,7 +570,7 @@ namespace JSI
         }
 
         /// <summary>
-        /// Undock the current reference part, or the inferred first dock on
+        /// Undock or detach the current reference part, or the inferred first dock on
         /// the current vessel.
         /// 
         /// The state of the dock appears to be queriable only by reading a
@@ -595,6 +595,10 @@ namespace JSI
             if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED)
             {
                 comp.mainDockingNode.Undock();
+            }
+            else if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
+            {
+                comp.mainDockingNode.Decouple();
             }
         }
 
@@ -632,7 +636,7 @@ namespace JSI
         }
 
         /// <summary>
-        /// Is the current reference dock docked to something?
+        /// Is the current reference dock docked or attached to something?
         /// </summary>
         /// <returns></returns>
         public bool DockDocked()
@@ -643,7 +647,7 @@ namespace JSI
             }
 
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-            return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED);
+            return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED || comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED);
         }
 
         /// <summary>
