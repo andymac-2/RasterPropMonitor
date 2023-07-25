@@ -595,7 +595,26 @@ namespace JSI
             if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED)
             {
                 comp.mainDockingNode.Undock();
-            } else if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
+            }
+            else if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
+            {
+                comp.mainDockingNode.Decouple();
+            }
+        }
+
+        /// <summary>
+        /// Detach a docking node that was attached in the VAB.
+        /// </summary>
+        /// <param name="state">New state - must be 'false' to trigger</param>
+        public void DockDetach(bool state)
+        {
+            if (vessel == null || state == true)
+            {
+                return;
+            }
+
+            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
+            if (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED)
             {
                 comp.mainDockingNode.Decouple();
             }
@@ -614,21 +633,6 @@ namespace JSI
 
             RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
             return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.PREATTACHED);
-        }
-
-        /// <summary>
-        /// Is the current reference dock docked to something?
-        /// </summary>
-        /// <returns></returns>
-        public bool DockDocked()
-        {
-            if (vessel == null)
-            {
-                return false;
-            }
-
-            RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-            return (comp.mainDockingNodeState == RPMVesselComputer.DockingNodeState.DOCKED);
         }
 
         /// <summary>
