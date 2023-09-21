@@ -196,6 +196,19 @@ namespace JSI
             }
         }
 
+        private void Font_textureRebuilt(Font font)
+        {
+            JUtil.LogMessage(this, "Font {0} rebuilt", font);
+
+            foreach (var batch in labelBatches.Values)
+            {
+                if (batch.batchInfo.font == font)
+                {
+                    batch.Rebuild();
+                }
+            }
+        }
+
         // Text label batching:
         // A large number of JSILabel modules are completely static - things like labels on switches, buttons, etc.
         // But these can still sometimes change color, especially when the backlight is turned on.
@@ -267,6 +280,15 @@ namespace JSI
                 }
             }
 
+            public void Rebuild()
+            {
+                needsUpdate = true;
+                foreach (var textMesh in textMeshes)
+                {
+                    textMesh.Invalidate();
+                }
+            }
+
             public void LateUpdate()
             {
                 if (!needsUpdate) return;
@@ -305,8 +327,6 @@ namespace JSI
                 labelBatch.batchRoot.transform.SetParent(transform, false);
             }
 
-            // TODO: hook up font change callback
-
             label.textObj.transform.SetParent(labelBatch.batchRoot.transform, true);
             label.textObj.gameObject.SetActive(false);
             label.textObj.color = label.batchInfo.zeroColor;
@@ -320,6 +340,11 @@ namespace JSI
             Component.Destroy(label);
         }
 
+        void Start()
+        {
+            Font.textureRebuilt += Font_textureRebuilt;
+        }
+
         void LateUpdate()
         {
             foreach (var labelBatch in labelBatches.Values)
@@ -330,6 +355,8 @@ namespace JSI
 
         void OnDestroy()
         {
+            Font.textureRebuilt -= Font_textureRebuilt;
+
             if (rpmComp != null)
             {
                 foreach (var labelBatch in labelBatches)

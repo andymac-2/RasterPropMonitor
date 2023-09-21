@@ -302,6 +302,11 @@ namespace JSI
             }
         }
 
+        public void Invalidate()
+        {
+            invalidated = true;
+        }
+
         public void Build()
         {
             if (!string.IsNullOrEmpty(text_))
