@@ -337,7 +337,7 @@ namespace JSI.Handlers
 			int containerCount = containerModules == null ? 0 : containerModules.Count;
             for (int containerIndex = 0; containerIndex < containerCount; ++containerIndex)
             {
-				containersMenu.Add(new TextMenu.Item(containerModules[containerIndex].GetModuleDisplayName(), OpenContainerDetails, containerIndex));
+				containersMenu.Add(new TextMenu.Item(containerModules[containerIndex].part.partInfo.title, OpenContainerDetails, containerIndex));
             }
 		}
 
@@ -354,10 +354,14 @@ namespace JSI.Handlers
             var detailsMenu = new TextMenu();
             detailsMenu.menuTitle = containerModule.GUIName;
 
-            for (int actionIndex = 0; actionIndex < containerModule.Actions.Count; ++actionIndex)
+            containerModule.updateModuleUI();
+
+            foreach (var evt in containerModule.events)
             {
-                var action = containerModule.Actions[actionIndex];
-                detailsMenu.Add(new TextMenu.Item(action.guiName, (id, item) => action.Invoke(activateParam)));
+                if (evt.guiActive && evt.active)
+                {
+                    detailsMenu.Add(new TextMenu.Item(evt.GUIName, (id, item) => evt.Invoke()));
+                }
             }
 
             OpenSubMenu(detailsMenu);
