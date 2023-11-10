@@ -292,6 +292,7 @@ namespace JSI
             public void LateUpdate()
             {
                 if (!needsUpdate) return;
+                needsUpdate = false; // must do this early because regenerating the text can invalidate it again!
 
                 var worldToLocal = batchRoot.transform.worldToLocalMatrix;
                 CombineInstance[] instances = new CombineInstance[textMeshes.Count];
@@ -306,8 +307,6 @@ namespace JSI
                 meshFilter.mesh.Clear();
                 meshFilter.mesh.CombineMeshes(instances);
                 meshFilter.mesh.UploadMeshData(false);
-
-                needsUpdate = false;
             }
         }
 
