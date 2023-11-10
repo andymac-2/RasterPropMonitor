@@ -114,6 +114,7 @@ namespace JSI
         private bool firstRenderComplete;
 
         float cameraSpan;
+        float cameraSpanWidth;
 
         private void ConfigureElements(float screenWidth, float screenHeight)
         {
@@ -138,6 +139,7 @@ namespace JSI
             // Figure out how we have to manipulate the camera to get the
             // navball in the right place, and in the right size.
             cameraSpan = navballRadius * screenHeight / navBallDiameter;
+            cameraSpanWidth = navballRadius * screenWidth / navBallDiameter;
             float pixelSize = cameraSpan / (screenHeight * 0.5f);
 
             float newXPos = navBallCenter.x - screenWidth * 0.5f;
@@ -352,7 +354,7 @@ namespace JSI
             // I wonder if doing this as a command buffer might be more efficient?
 
             GL.PushMatrix();
-            GL.LoadProjectionMatrix(Matrix4x4.Ortho(-cameraSpan, cameraSpan, -cameraSpan, cameraSpan, 0, 1.5f + navballRadius * 3));
+            GL.LoadProjectionMatrix(Matrix4x4.Ortho(-cameraSpanWidth, cameraSpanWidth, -cameraSpan, cameraSpan, 0, 1.5f + navballRadius * 3));
 
             var navballMeshFilter = navBall.GetComponent<MeshFilter>();
             var navballRenderer = navBall.GetComponent<MeshRenderer>();
