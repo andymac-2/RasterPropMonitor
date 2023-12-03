@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Expansions.Missions;
 using KSP.UI.Screens.Flight;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -1449,6 +1450,19 @@ namespace JSI
             return double.NaN;
         }
 
+        internal static InternalModule FindInternalModuleByName(InternalProp prop, string className)
+        {
+            foreach (InternalModule potentialModule in prop.internalModules)
+            {
+                if (potentialModule.ClassName == className)
+                {
+                    return potentialModule;
+                }
+            }
+
+            return null;
+        }
+
         internal static Delegate GetMethod(string packedMethod, InternalProp internalProp, Type delegateType)
         {
             string moduleName, stateMethod;
@@ -1461,26 +1475,26 @@ namespace JSI
             moduleName = tokens[0];
             stateMethod = tokens[1];
 
-            InternalModule thatModule = null;
-            foreach (InternalModule potentialModule in internalProp.internalModules)
+            // First look on the prop
+            InternalModule thatModule = FindInternalModuleByName(internalProp, moduleName);
+            
+            // then on the internal as a whole
+            if (thatModule == null)
             {
-                if (potentialModule.ClassName == moduleName)
+                foreach (var prop in internalProp.internalModel.props)
                 {
-                    thatModule = potentialModule;
-                    break;
+                    // this really means "was this a MODULE placed directly in the INTERNAL"
+                    if (!prop.hasModel)
+                    {
+                        thatModule = FindInternalModuleByName(prop, moduleName);
+                        if (thatModule != null)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
-            if (thatModule == null)
-            {
-                // The module hasn't been instantiated on this part, so let's do so now.
-                // MOARdV TODO: This actually causes an exception, because
-                // it's added during InternalProp.OnUpdate.  One thing I could
-                // do is add the internal modules when I instantiate RPMC.
-                var handlerConfiguration = new ConfigNode("MODULE");
-                handlerConfiguration.SetValue("name", moduleName, true);
-                thatModule = internalProp.AddModule(handlerConfiguration);
-            }
             if (thatModule == null)
             {
                 JUtil.LogErrorMessage(internalProp, "Failed finding module {0} for method {1}", moduleName, stateMethod);
