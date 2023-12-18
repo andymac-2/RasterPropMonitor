@@ -258,10 +258,10 @@ namespace JSI
                     throw new Exception("USERINPUTSET missing increment or incrementCurve, or it has both");
                 }
 
-                if (node.HasValue("increment") && !float.TryParse(node.GetValue("increment"), out increment))
-                {
-                    throw new Exception("USERINPUTSET bad increment");
-                }
+                RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
+                VariableOrNumber increment_ = rpmComp.InstantiateVariableOrNumber(node.GetValue("increment"));
+                increment = increment_.AsFloat();
+                
                 else if (node.HasNode("incrementCurve"))
                 {
                     ConfigNode incNode = node.GetNode("incrementCurve");
