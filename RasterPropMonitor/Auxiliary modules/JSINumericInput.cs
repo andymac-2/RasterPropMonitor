@@ -234,7 +234,7 @@ namespace JSI
             private float delta = 0.0f;
             private double pressStart = 0.0;
             private double lastUpdate = 0.0;
-            private readonly float increment = 0.0f;
+            private readonly VariableOrNumber increment = 0.0f;
             private readonly FloatCurve incrementCurve = null;
             private bool pressed = false;
             private readonly bool pressAndHold = false;
@@ -259,8 +259,7 @@ namespace JSI
                 }
 
                 RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
-                VariableOrNumber increment_ = rpmComp.InstantiateVariableOrNumber(node.GetValue("increment"));
-                increment = increment_.AsFloat();
+                increment = rpmComp.InstantiateVariableOrNumber(node.GetValue("increment"));
                 
                 else if (node.HasNode("incrementCurve"))
                 {
@@ -401,7 +400,7 @@ namespace JSI
 
             private void Click()
             {
-                delta += increment;
+                delta += increment.AsFloat();
                 pressed = true;
             }
 
