@@ -1,4 +1,4 @@
-﻿/*****************************************************************************
+/*****************************************************************************
  * RasterPropMonitor
  * =================
  * Plugin for Kerbal Space Program
@@ -234,7 +234,7 @@ namespace JSI
             private float delta = 0.0f;
             private double pressStart = 0.0;
             private double lastUpdate = 0.0;
-            private readonly VariableOrNumber increment = 0.0f;
+            private readonly VariableOrNumber increment = null;
             private readonly FloatCurve incrementCurve = null;
             private bool pressed = false;
             private readonly bool pressAndHold = false;
@@ -261,7 +261,7 @@ namespace JSI
                 RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
                 increment = rpmComp.InstantiateVariableOrNumber(node.GetValue("increment"));
                 
-                else if (node.HasNode("incrementCurve"))
+                if (node.HasNode("incrementCurve"))
                 {
                     ConfigNode incNode = node.GetNode("incrementCurve");
                     string[] keys = incNode.GetValues("key");
