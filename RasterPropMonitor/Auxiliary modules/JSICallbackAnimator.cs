@@ -330,7 +330,6 @@ namespace JSI
                     if (looping)
                     {
                         onAnim[animationName].wrapMode = WrapMode.Loop;
-                        onAnim.wrapMode = WrapMode.Loop;
                         onAnim[animationName].speed = animationSpeed;
                         mode = Mode.LoopingAnimation;
                     }
@@ -360,7 +359,6 @@ namespace JSI
                         if (looping)
                         {
                             offAnim[stopAnimationName].wrapMode = WrapMode.Loop;
-                            offAnim.wrapMode = WrapMode.Loop;
                             offAnim[stopAnimationName].speed = animationSpeed;
                             mode = Mode.LoopingAnimation;
                         }
