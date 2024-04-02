@@ -16,4 +16,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build Mod
-        uses: KSPModStewards/KSPCommon/build@master
+        uses: KSPModStewards/KSPCommon/build@main
