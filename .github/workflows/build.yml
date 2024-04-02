@@ -14,4 +14,4 @@ on:
 jobs:
   build:
     uses:
-      KSPModStewards/KSPCommon/.github/workflows/build@main
+      KSPModStewards/KSPCommon/.github/workflows/build.yml@main
