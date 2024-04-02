@@ -13,7 +13,5 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build Mod
-        uses: KSPModStewards/KSPCommon/.github/workflows/build@main
+    uses:
+      KSPModStewards/KSPCommon/.github/workflows/build@main
