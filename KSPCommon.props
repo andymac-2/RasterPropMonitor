@@ -19,13 +19,15 @@
   <Import Condition=" Exists('KSPCommon.props.user') " Project="KSPCommon.props.user"/>
   
   <!--Parse KSP platform-specific paths -->
+  <PropertyGroup Condition = " '$(ManagedRelativePath)' == '' ">
+    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64_Data\Managed</ManagedRelativePath>
+    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('OSX'))">KSP.app\Contents\Resources\Data\Managed</ManagedRelativePath>
+    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('Linux'))">KSP_Data\Managed</ManagedRelativePath>
+  </PropertyGroup>
   <PropertyGroup>
     <KSPExecutable Condition = "$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64.exe</KSPExecutable>
     <KSPExecutable Condition = "$([MSBuild]::IsOsPlatform('OSX'))">KSP.app</KSPExecutable>
     <KSPExecutable Condition = "$([MSBuild]::IsOsPlatform('Linux'))">KSP.x86_64</KSPExecutable>
-    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('Windows'))">KSP_x64_Data\Managed</ManagedRelativePath>
-    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('OSX'))">KSP.app\Contents\Resources\Data\Managed</ManagedRelativePath>
-    <ManagedRelativePath Condition = "$([MSBuild]::IsOsPlatform('Linux'))">KSP_Data\Managed</ManagedRelativePath>
     <ManagedPath>$(KSPRoot)\$(ManagedRelativePath)</ManagedPath>
   </PropertyGroup>
   
