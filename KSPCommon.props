@@ -7,10 +7,10 @@
   <!-- The following properties can be customized per-mod in SolutionName.props-->
   <PropertyGroup>
     <!-- The root directory of the mod repository -->
-    <RepoRootPath Condition = " '$(RepoRootPath)' == '' ">$(SolutionDir.TrimEnd('\'))</RepoRootPath>
+    <RepoRootPath Condition = " '$(RepoRootPath)' == '' ">$([System.IO.Path]::TrimEndingDirectorySeparator(SolutionDir))</RepoRootPath>
     <BinariesOutputRelativePath Condition = " '$(BinariesOutputRelativePath)' == '' ">GameData\$(SolutionName)</BinariesOutputRelativePath>
 
-    <KSPRoot Condition = " '$(KSPRoot)' == '' ">$(ReferencePath.TrimEnd('\'))</KSPRoot>
+    <KSPRoot Condition = " '$(KSPRoot)' == '' ">$([System.IO.Path]::TrimEndingDirectorySeparator(ReferencePath))</KSPRoot>
     <!--If the reference path isn't set, use the default steam location, but this will be incorrect in lots of cases-->
     <KSPRoot Condition = "'$(KSPRoot)' == '' ">C:\Program Files (x86)\Steam\steamapps\common\Kerbal Space Program</KSPRoot>
   </PropertyGroup>
