@@ -15,7 +15,7 @@ jobs:
   build:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
     with:
-      artifacts: |
+      artifacts:
         GameData
         LICENSE.md
     secrets:
