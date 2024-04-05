@@ -1,0 +1,30 @@
+{
+  "NAME": "RasterPropMonitor",
+  "URL": "https://raw.githubusercontent.com/JonnyOThan/RasterPropMonitor/master/GameData/JSI/RasterPropMonitor/RasterPropMonitor.version",
+  "DOWNLOAD": "https://github.com/JonnyOThan/RasterPropMonitor/releases",
+  "VERSION":
+  {
+    "MAJOR": @VERSION_MAJOR@,
+    "MINOR": @VERSION_MINOR@,
+    "PATCH": @VERSION_PATCH@,
+    "BUILD": @VERSION_BUILD@
+  },
+  "KSP_VERSION":
+  {
+    "MAJOR": 1,
+    "MINOR": 12,
+    "PATCH": 3
+  },
+  "KSP_VERSION_MIN":
+  {
+  	"MAJOR": 1,
+  	"MINOR": 12,
+	"PATCH": 0
+  },
+  "KSP_VERSION_MAX":
+  {
+    "MAJOR": 1,
+    "MINOR": 12,
+    "PATCH": 99
+  }
+}
