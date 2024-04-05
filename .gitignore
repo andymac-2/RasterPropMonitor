@@ -221,7 +221,6 @@ pip-log.txt
 GameData/JSI/RasterPropMonitor/Plugins/RasterPropMonitor.dll
 GameData/JSI/RasterPropMonitor/Plugins/MechJebRPM.dll
 dev_README.txt
-*.zip
 GameData/ModuleManager.*.dll
 GameData/JSI/JSIAdvTransparentPods/Plugins/JSIAdvTransparentPods.dll
 /.vs
@@ -236,3 +235,4 @@ GameData/JSI/JSIAdvTransparentPods/Plugins/JSIAdvTransparentPods.dll
 /GameData/JSI/RasterPropMonitor/Library/Parts/@thumbs
 /GameData/JSI/RasterPropMonitor/Plugins/RasterPropMonitor.pdb
 /packages/
+/Releases
