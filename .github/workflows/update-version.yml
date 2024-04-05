@@ -10,4 +10,4 @@ jobs:
   update-version:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/update-version.yml@main
     with:
-      version-string: ${{version-string}}
+      version-string: ${{inputs.version-string}}
