@@ -2,22 +2,18 @@ name: build
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ master ]
     paths:
-      - '**.cs'
+      - '**/*.cs'
   pull_request:
     paths:
-      - '**.cs'
+      - '**/*.cs'
   workflow_dispatch:
   workflow_call:
 
 jobs:
   build:
     uses: KSPModdingLibs/KSPBuildTools/.github/workflows/build.yml@main
-    with:
-      artifacts:
-        GameData
-        LICENSE.md
     secrets:
       ksp-zip-password: ${{ secrets.KSP_ZIP_PASSWORD }}
       
