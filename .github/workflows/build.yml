@@ -2,12 +2,12 @@ name: build
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ master ]
     paths:
-      - '**.cs'
+      - '**/*.cs'
   pull_request:
     paths:
-      - '**.cs'
+      - '**/*.cs'
   workflow_dispatch:
   workflow_call:
 
