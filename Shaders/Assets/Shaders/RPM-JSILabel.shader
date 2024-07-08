@@ -90,5 +90,5 @@ Shader "RPM/JSILabel"
 
 		ENDCG
 	}
-	Fallback "Standard"
+	Fallback Off
 }
