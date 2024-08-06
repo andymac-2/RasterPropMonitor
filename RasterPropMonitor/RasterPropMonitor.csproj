@@ -54,7 +54,7 @@
     <BinariesOutputRelativePath>GameData\JSI\RasterPropMonitor\Plugins</BinariesOutputRelativePath>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" />
-  <Import Project="$(SolutionDir)KSPCommon.props" />
+  <Import Project="$(SolutionDir)KSPBuildTools\KSPCommon.targets" />
   <ItemGroup>
     <Compile Include="Auxiliary modules\JSICallbackAnimator.cs" />
     <Compile Include="Auxiliary modules\JSIFlashModule.cs" />
