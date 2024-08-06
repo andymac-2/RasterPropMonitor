@@ -72,18 +72,7 @@ namespace JSI
             BaseAction.GetGroupIndex(KSPActionGroup.Custom08),
             BaseAction.GetGroupIndex(KSPActionGroup.Custom09)
         };
-        internal readonly string[] actionGroupMemo = {
-            "AG0",
-            "AG1",
-            "AG2",
-            "AG3",
-            "AG4",
-            "AG5",
-            "AG6",
-            "AG7",
-            "AG8",
-            "AG9"
-        };
+
         private const float gee = 9.81f;
         private readonly double upperAtmosphereLimit = Math.Log(100000.0);
         #endregion
@@ -648,27 +637,6 @@ namespace JSI
         #endregion
 
         #region Interface Methods
-        /// <summary>
-        /// Initialize vessel description-based values.
-        /// </summary>
-        /// <param name="vesselDescription"></param>
-        internal void SetVesselDescription(string vesselDescription)
-        {
-            string[] descriptionStrings = vesselDescription.UnMangleConfigText().Split(JUtil.LineSeparator, StringSplitOptions.None);
-            for (int i = 0; i < descriptionStrings.Length; i++)
-            {
-                if (descriptionStrings[i].StartsWith("AG", StringComparison.Ordinal) && descriptionStrings[i][3] == '=')
-                {
-                    uint groupID;
-                    if (uint.TryParse(descriptionStrings[i][2].ToString(), out groupID))
-                    {
-                        actionGroupMemo[groupID] = descriptionStrings[i].Substring(4).Trim();
-                        descriptionStrings[i] = string.Empty;
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// Set the refresh rate (number of Update() calls per triggered update).
         /// The lower of the current data rate and the new data rate is used.

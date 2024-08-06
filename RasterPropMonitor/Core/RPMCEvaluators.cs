@@ -170,10 +170,9 @@ namespace JSI
                 updateType = VariableUpdateType.Constant;
                 if (uint.TryParse(input.Substring("AGMEMO".Length), out uint groupID))
                 {
-                    RPMVesselComputer vesselComputer = RPMVesselComputer.Instance(vessel);
                     // if the memo contains a pipe character, the string changes depending on the state of the action group
                     string[] tokens;
-                    if (vesselComputer.actionGroupMemo[groupID].IndexOf('|') > 1 && (tokens = vesselComputer.actionGroupMemo[groupID].Split('|')).Length == 2)
+                    if (actionGroupMemo[groupID].IndexOf('|') > 1 && (tokens = actionGroupMemo[groupID].Split('|')).Length == 2)
                     {
                         return (RPMVesselComputer comp) =>
                         {
@@ -184,7 +183,7 @@ namespace JSI
                     }
                     else
                     {
-                        return (RPMVesselComputer comp) => comp.actionGroupMemo[groupID];
+                        return (RPMVesselComputer comp) => actionGroupMemo[groupID];
                     }
                 }
                 else

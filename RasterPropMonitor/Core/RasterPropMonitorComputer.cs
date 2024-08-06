@@ -20,6 +20,7 @@
  ****************************************************************************/
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 using UnityEngine.Profiling;
@@ -41,16 +42,25 @@ namespace JSI
         [KSPField]
         public string triggeredEvents = string.Empty;
 
-        // Yes, it's a really braindead way of doing it, but I ran out of elegant ones,
-        // because nothing appears to work as documented -- IF it's documented.
-        // This one is sure to work and isn't THAT much of a performance drain, really.
-        // Pull requests welcome
         // Vessel description storage and related code.
         [KSPField(isPersistant = true)]
         public string vesselDescription = string.Empty;
         private string vesselDescriptionForDisplay = string.Empty;
-        private readonly string editorNewline = ((char)0x0a).ToString();
+        private static readonly string editorNewline = ((char)0x0a).ToString();
         private string lastVesselDescription = string.Empty;
+
+        internal readonly string[] actionGroupMemo = {
+            "AG0",
+            "AG1",
+            "AG2",
+            "AG3",
+            "AG4",
+            "AG5",
+            "AG6",
+            "AG7",
+            "AG8",
+            "AG9"
+        };
 
         internal List<string> storedStringsArray = new List<string>();
 
@@ -101,6 +111,8 @@ namespace JSI
 
         private ExternalVariableHandlers plugins = null;
         internal Dictionary<string, Color32> overrideColors = new Dictionary<string, Color32>();
+
+        static readonly Regex x_agmemoRegex = new Regex("^AG([0-9])\\s*=\\s*(.*)\\s*");
 
         public static RasterPropMonitorComputer FindFromProp(InternalProp prop)
         {
@@ -365,25 +377,18 @@ namespace JSI
 
                 plugins = new ExternalVariableHandlers(part);
 
-                RPMVesselComputer comp = RPMVesselComputer.Instance(vessel);
-                if (!string.IsNullOrEmpty(vesselDescription))
-                {
-                    comp.SetVesselDescription(vesselDescription);
-                }
-
                 // Make sure we have the description strings parsed.
                 string[] descriptionStrings = vesselDescription.UnMangleConfigText().Split(JUtil.LineSeparator, StringSplitOptions.None);
                 for (int i = 0; i < descriptionStrings.Length; i++)
                 {
-                    if (descriptionStrings[i].StartsWith("AG", StringComparison.Ordinal) && descriptionStrings[i][3] == '=')
+                    var matches = x_agmemoRegex.Matches(descriptionStrings[i]);
+                    if (matches.Count == 2 && uint.TryParse(matches[0].Value, out uint groupID) && groupID < actionGroupMemo.Length)
                     {
-                        uint groupID;
-                        if (uint.TryParse(descriptionStrings[i][2].ToString(), out groupID))
-                        {
-                            descriptionStrings[i] = string.Empty;
-                        }
+                        descriptionStrings[i] = string.Empty;
+                        actionGroupMemo[groupID] = matches[1].Value;
                     }
                 }
+
                 vesselDescriptionForDisplay = string.Join(Environment.NewLine, descriptionStrings).MangleConfigText();
                 if (string.IsNullOrEmpty(vesselDescriptionForDisplay))
                 {
@@ -537,7 +542,7 @@ namespace JSI
                 {
                     lastVesselDescription = s;
                     // For some unclear reason, the newline in this case is always 0A, rather than Environment.NewLine.
-                    vesselDescription = s.Replace(editorNewline, "$$$");
+                    vesselDescription = s.MangleConfigText();
                 }
             }
             else
