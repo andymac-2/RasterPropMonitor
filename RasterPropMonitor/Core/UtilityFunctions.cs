@@ -1614,4 +1614,12 @@ namespace JSI
             return !wrongpath;
         }
     }
+
+    public static class TEnum
+    {
+        public static EnumType[] GetValues<EnumType>() where EnumType : Enum
+        {
+            return (EnumType[])Enum.GetValues(typeof(EnumType));
+        }
+    }
 }

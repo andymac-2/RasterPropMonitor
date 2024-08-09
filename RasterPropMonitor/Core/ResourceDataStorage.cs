@@ -210,20 +210,7 @@ namespace JSI
             return mass;
         }
 
-        private static readonly string[] keywords =
-        {
-            "VAL",
-            "DENSITY",
-            "DELTA",
-            "DELTAINV",
-            "MAXMASS",
-            "MASS",
-            "MAX",
-            "PERCENT",
-            "DEPLETED"
-        };
-
-        internal enum ResourceProperty
+        public enum ResourceProperty
         {
             VAL,
             DENSITY,
@@ -231,6 +218,7 @@ namespace JSI
             DELTAINV,
             MAXMASS,
             MASS,
+            MAX,
             PERCENT,
             DEPLETED
         }
@@ -241,17 +229,18 @@ namespace JSI
         /// <param name="resourceQuery"></param>
         /// <param name="valueType"></param>
         /// <param name="stage"></param>
-        public static string ParseResourceQuery(string resourceQuery, out string valueType, out bool stage)
+        public static string ParseResourceQuery(string resourceQuery, out ResourceProperty valueType, out bool stage)
         {
-            valueType = "VAL";
+            valueType = ResourceProperty.VAL;
             stage = false;
 
-            foreach (var keyword in keywords)
+            foreach (var propertyType in TEnum.GetValues<ResourceProperty>())
             {
-                if (resourceQuery.EndsWith(keyword))
+                var propertyName = propertyType.ToString();
+                if (resourceQuery.EndsWith(propertyName))
                 {
-                    valueType = keyword;
-                    resourceQuery = resourceQuery.Substring(0, resourceQuery.Length - keyword.Length);
+                    valueType = propertyType;
+                    resourceQuery = resourceQuery.Substring(0, resourceQuery.Length - propertyName.Length);
                     break;
                 }
             }
@@ -265,7 +254,7 @@ namespace JSI
             return resourceQuery;
         }
 
-        public double ListSYSElement(string resourceName, string valueType, bool stage)
+        public double ListSYSElement(string resourceName, ResourceProperty valueType, bool stage)
         {
             double v = 0.0;
             try
@@ -273,29 +262,28 @@ namespace JSI
                 ResourceData resource = sysrResources[resourceName];
                 switch (valueType)
                 {
-                    case "":
-                    case "VAL":
+                    case ResourceProperty.VAL:
                         v = stage ? resource.stage : resource.current;
                         break;
-                    case "DENSITY":
+                    case ResourceProperty.DENSITY:
                         v = resource.density;
                         break;
-                    case "DELTA":
+                    case ResourceProperty.DELTA:
                         v = resource.delta;
                         break;
-                    case "DELTAINV":
+                    case ResourceProperty.DELTAINV:
                         v = -resource.delta;
                         break;
-                    case "MASS":
+                    case ResourceProperty.MASS:
                         v = resource.density * (stage ? resource.stage : resource.current);
                         break;
-                    case "MAXMASS":
+                    case ResourceProperty.MAXMASS:
                         v = resource.density * (stage ? resource.stagemax : resource.max);
                         break;
-                    case "MAX":
+                    case ResourceProperty.MAX:
                         v = stage ? resource.stagemax : resource.max;
                         break;
-                    case "PERCENT":
+                    case ResourceProperty.PERCENT:
                         if (stage)
                         {
                             v = resource.stagemax > 0 ? resource.stage / resource.stagemax : 0d;
@@ -305,7 +293,7 @@ namespace JSI
                             v = resource.max > 0 ? resource.current / resource.max : 0d;
                         }
                         break;
-                    case "DEPLETED":
+                    case ResourceProperty.DEPLETED:
                         if (stage)
                         {
                             bool available = (resource.stagemax > 0.0f && resource.stage < 0.01f);

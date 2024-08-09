@@ -352,7 +352,7 @@ namespace JSI
                         }
                     case "SYSR":
                         {
-                            string resourceName = ResourceDataStorage.ParseResourceQuery(tokens[1], out string valueType, out bool stage);
+                            string resourceName = ResourceDataStorage.ParseResourceQuery(tokens[1], out var valueType, out bool stage);
 
                             if (RPMGlobals.systemNamedResources.ContainsKey(resourceName))
                             {
