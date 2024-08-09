@@ -65,6 +65,7 @@
     <Compile Include="Auxiliary modules\JSIThrustReverser.cs" />
     <Compile Include="Auxiliary modules\PropBatcher.cs" />
     <Compile Include="Core\ConfigNodeHolder.cs" />
+    <Compile Include="Core\DefaultableDictionary.cs" />
     <Compile Include="Core\JSIVesselRecovery.cs" />
     <Compile Include="Core\AeroExtensions.cs" />
     <Compile Include="Core\CustomVariable.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Core\RPMCEvaluators.cs" />
     <Compile Include="Core\RPMCPersistence.cs" />
     <Compile Include="Core\RPMGlobals.cs" />
+    <Compile Include="Core\RPMShaderLoader.cs" />
     <Compile Include="Core\RPMVCEvaluators.cs" />
     <Compile Include="Core\RPMCTriggeredEvent.cs" />
     <Compile Include="Core\RPMVCPerModule.cs" />

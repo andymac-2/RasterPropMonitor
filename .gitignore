@@ -223,7 +223,7 @@ GameData/JSI/RasterPropMonitor/Plugins/MechJebRPM.dll
 dev_README.txt
 GameData/ModuleManager.*.dll
 GameData/JSI/JSIAdvTransparentPods/Plugins/JSIAdvTransparentPods.dll
-/.vs
+.vs
 /ksp
 /GameData/JSI/PartUtilities/Plugins
 /GameData/JSI/RPMBundles
