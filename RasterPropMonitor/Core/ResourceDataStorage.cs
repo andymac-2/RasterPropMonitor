@@ -28,10 +28,9 @@ namespace JSI
         private readonly ResourceData[] rs;
         private readonly Dictionary<string, ResourceData> nameResources = new Dictionary<string, ResourceData>();
         private readonly Dictionary<string, ResourceData> sysrResources = new Dictionary<string, ResourceData>();
-        private readonly string[] sortedResourceNames;
+        private readonly List<string> sortedResourceNames;
         private HashSet<Part> activeStageParts = new HashSet<Part>();
         private PartSet partSet = null;
-        private int numValidResourceNames = 0;
 
         private class ResourceComparer : IComparer<ResourceData>
         {
@@ -51,7 +50,7 @@ namespace JSI
             int resourceCount = PartResourceLibrary.Instance.resourceDefinitions.Count;
 
             rs = new ResourceData[resourceCount];
-            sortedResourceNames = new string[resourceCount];
+            sortedResourceNames = new List<string>(resourceCount);
             int index = 0;
             foreach (PartResourceDefinition thatResource in PartResourceLibrary.Instance.resourceDefinitions)
             {
@@ -122,13 +121,12 @@ namespace JSI
                 stagePartsChanged = false;
             }
 
-            numValidResourceNames = 0;
+            sortedResourceNames.Clear();
             for (int i = 0; i < rs.Length; ++i)
             {
                 if (rs[i].max > 0.0)
                 {
-                    sortedResourceNames[numValidResourceNames] = rs[i].name;
-                    ++numValidResourceNames;
+                    sortedResourceNames.Add(rs[i].name);
 
                     // If the resource can flow anywhere, we already have the stage
                     // values listed here.
@@ -145,7 +143,7 @@ namespace JSI
 
         public string GetActiveResourceByIndex(int index)
         {
-            return (index < numValidResourceNames) ? sortedResourceNames[index] : string.Empty;
+            return (index < sortedResourceNames.Count) ? sortedResourceNames[index] : string.Empty;
         }
         //public void DumpData()
         //{
@@ -284,7 +282,7 @@ namespace JSI
         {
             uint currentPropellantIndex = 0;
 
-            for (int resourceIndex = 0; resourceIndex < sortedResourceNames.Length; ++resourceIndex)
+            for (int resourceIndex = 0; resourceIndex < sortedResourceNames.Count; ++resourceIndex)
             {
                 if (nameResources.TryGetValue(sortedResourceNames[resourceIndex], out var resource))
                 {
