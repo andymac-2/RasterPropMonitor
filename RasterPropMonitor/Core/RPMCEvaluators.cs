@@ -363,6 +363,19 @@ namespace JSI
                                 return null;
                             }
                         }
+                    case "PROPLNTR":
+                        {
+                            if (tokens.Length == 3 && uint.TryParse(tokens[1], out uint propellantIndex))
+                            {
+                                ResourceDataStorage.ParseResourceQuery(tokens[2], out var valueType, out bool stage);
+                                return (RPMVesselComputer comp) => comp.resources.GetPropellantResourceValue(propellantIndex, valueType, stage);
+                            }
+                            else
+                            {
+                                JUtil.LogErrorMessage(this, "incorrect format for variable: {0}", input);
+                                return null;
+                            }
+                        }
                     case "LISTR":
                         {
                             if (tokens[2] == "NAME") return null;

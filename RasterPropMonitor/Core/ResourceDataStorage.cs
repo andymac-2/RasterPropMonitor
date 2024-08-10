@@ -280,6 +280,31 @@ namespace JSI
             }
         }
 
+        public double GetPropellantResourceValue(uint propellantIndex, ResourceProperty valueType, bool stage)
+        {
+            uint currentPropellantIndex = 0;
+
+            for (int resourceIndex = 0; resourceIndex < sortedResourceNames.Length; ++resourceIndex)
+            {
+                if (nameResources.TryGetValue(sortedResourceNames[resourceIndex], out var resource))
+                {
+                    if (resource.ispropellant)
+                    {
+                        if (currentPropellantIndex == propellantIndex)
+                        {
+                            return (double)resource.GetProperty(valueType, stage);
+                        }
+                        else
+                        {
+                            ++currentPropellantIndex;
+                        }
+                    }
+                }
+            }
+
+            return 0;
+        }
+
         //public void Add(PartResource resource)
         //{
         //    try
