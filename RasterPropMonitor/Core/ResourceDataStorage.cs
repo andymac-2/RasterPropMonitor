@@ -262,7 +262,7 @@ namespace JSI
             }
             else
             {
-                JUtil.LogErrorMessage(this, "ListElement({1}) threw trapped exception {0}", e, resourceName);
+                JUtil.LogErrorMessage(this, "ListElement({0}) resource not found", resourceName);
                 return double.NaN;
             }
         }
@@ -275,7 +275,7 @@ namespace JSI
             }
             else
             {
-                JUtil.LogErrorMessage(this, "Error finding {0}-{2}: {1}", resourceName, e, valueType);
+                JUtil.LogErrorMessage(this, "Error finding {0}-{2}", resourceName, valueType);
                 return 0;
             }
         }
