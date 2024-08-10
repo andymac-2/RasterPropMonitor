@@ -369,8 +369,7 @@ namespace JSI
 
                             ushort resourceID = Convert.ToUInt16(tokens[1]);
 
-                            bool stage = tokens[2].StartsWith("STAGE", StringComparison.Ordinal);
-                            string valueType = stage ? tokens[2].Substring("STAGE".Length) : tokens[2];
+                            ResourceDataStorage.ParseResourceQuery(tokens[2], out var valueType, out bool stage);
 
                             return (RPMVesselComputer comp) =>
                             {

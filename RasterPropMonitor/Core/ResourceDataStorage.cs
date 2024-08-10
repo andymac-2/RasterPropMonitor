@@ -256,116 +256,28 @@ namespace JSI
 
         public double ListSYSElement(string resourceName, ResourceProperty valueType, bool stage)
         {
-            double v = 0.0;
-            try
+            if (sysrResources.TryGetValue(resourceName, out var resource))
             {
-                ResourceData resource = sysrResources[resourceName];
-                switch (valueType)
-                {
-                    case ResourceProperty.VAL:
-                        v = stage ? resource.stage : resource.current;
-                        break;
-                    case ResourceProperty.DENSITY:
-                        v = resource.density;
-                        break;
-                    case ResourceProperty.DELTA:
-                        v = resource.delta;
-                        break;
-                    case ResourceProperty.DELTAINV:
-                        v = -resource.delta;
-                        break;
-                    case ResourceProperty.MASS:
-                        v = resource.density * (stage ? resource.stage : resource.current);
-                        break;
-                    case ResourceProperty.MAXMASS:
-                        v = resource.density * (stage ? resource.stagemax : resource.max);
-                        break;
-                    case ResourceProperty.MAX:
-                        v = stage ? resource.stagemax : resource.max;
-                        break;
-                    case ResourceProperty.PERCENT:
-                        if (stage)
-                        {
-                            v = resource.stagemax > 0 ? resource.stage / resource.stagemax : 0d;
-                        }
-                        else
-                        {
-                            v = resource.max > 0 ? resource.current / resource.max : 0d;
-                        }
-                        break;
-                    case ResourceProperty.DEPLETED:
-                        if (stage)
-                        {
-                            bool available = (resource.stagemax > 0.0f && resource.stage < 0.01f);
-                            v = available.GetHashCode();
-                        }
-                        else
-                        {
-                            bool available = (resource.max > 0.0f && resource.current < 0.01f);
-                            v = available.GetHashCode();
-                        }
-                        break;
-                }
-
+                return resource.GetProperty(valueType, stage);
             }
-            catch (Exception e)
+            else
             {
                 JUtil.LogErrorMessage(this, "ListElement({1}) threw trapped exception {0}", e, resourceName);
                 return double.NaN;
             }
-            return v;
         }
 
-        public double ListElement(string resourceName, string valueType, bool stage)
+        public double ListElement(string resourceName, ResourceProperty valueType, bool stage)
         {
-            double v = 0.0;
-
-            try
+            if (nameResources.TryGetValue(resourceName, out var resource))
             {
-                ResourceData resource = nameResources[resourceName];
-
-                switch (valueType)
-                {
-                    case "":
-                    case "VAL":
-                        v = stage ? resource.stage : resource.current;
-                        break;
-                    case "DENSITY":
-                        v = resource.density;
-                        break;
-                    case "DELTA":
-                        v = resource.delta;
-                        break;
-                    case "DELTAINV":
-                        v = -resource.delta;
-                        break;
-                    case "MASS":
-                        v = resource.density * (stage ? resource.stage : resource.current);
-                        break;
-                    case "MAXMASS":
-                        v = resource.density * (stage ? resource.stagemax : resource.max);
-                        break;
-                    case "MAX":
-                        v = stage ? resource.stagemax : resource.max;
-                        break;
-                    case "PERCENT":
-                        if (stage)
-                        {
-                            v = resource.stagemax > 0 ? resource.stage / resource.stagemax : 0d;
-                        }
-                        else
-                        {
-                            v = resource.max > 0 ? resource.current / resource.max : 0d;
-                        }
-                        break;
-                }
+                return resource.GetProperty(valueType, stage);
             }
-            catch (Exception e)
+            else
             {
                 JUtil.LogErrorMessage(this, "Error finding {0}-{2}: {1}", resourceName, e, valueType);
+                return 0;
             }
-
-            return v;
         }
 
         //public void Add(PartResource resource)
@@ -407,6 +319,38 @@ namespace JSI
             public ResourceFlowMode flowMode;
 
             public bool ispropellant;
+
+            internal float GetProperty(ResourceProperty valueType, bool currentStage)
+            {
+                switch (valueType)
+                {
+                    case ResourceProperty.VAL:
+                        return currentStage ? stage : current;
+                    case ResourceProperty.DENSITY:
+                        return density;
+                    case ResourceProperty.DELTA:
+                        return delta;
+                    case ResourceProperty.DELTAINV:
+                        return -delta;
+                    case ResourceProperty.MASS:
+                        return density * (currentStage ? stage : current);
+                    case ResourceProperty.MAXMASS:
+                        return density * (currentStage ? stagemax : max);
+                    case ResourceProperty.MAX:
+                        return currentStage ? stagemax : max;
+                    case ResourceProperty.PERCENT:
+                        if (currentStage)
+                        {
+                            return stagemax > 0 ? stage / stagemax : 0;
+                        }
+                        else
+                        {
+                            return max > 0 ? current / max : 0;
+                        }
+                }
+
+                return 0;
+            }
         }
     }
 }
