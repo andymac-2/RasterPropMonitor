@@ -243,7 +243,7 @@ namespace JSI
             }
         }
 
-        public double GetPropellantResourceValue(uint propellantIndex, ResourceProperty valueType, bool stage)
+        private ResourceData GetPropellantResource(uint propellantIndex)
         {
             uint currentPropellantIndex = 0;
 
@@ -255,7 +255,7 @@ namespace JSI
                     {
                         if (currentPropellantIndex == propellantIndex)
                         {
-                            return (double)resource.GetProperty(valueType, stage);
+                            return resource;
                         }
                         else
                         {
@@ -265,7 +265,20 @@ namespace JSI
                 }
             }
 
-            return 0;
+            return null;
+        }
+
+        public double GetPropellantResourceValue(uint propellantIndex, ResourceProperty valueType, bool stage)
+        {
+            ResourceData rd = GetPropellantResource(propellantIndex);
+
+            return rd == null ? 0 : rd.GetProperty(valueType, stage);
+        }
+
+        public string GetPropellantResourceName(uint propellantIndex)
+        {
+            ResourceData rd = GetPropellantResource(propellantIndex);
+            return rd == null ? "" : rd.resourceDefinition.name;
         }
 
         private class ResourceData

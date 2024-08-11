@@ -113,6 +113,14 @@ namespace JSI
                             return null;
                         }
 
+                    case "PROPELLANTR":
+                        if (tokens[2] == "NAME")
+                        {
+                            ushort propellantIndex = Convert.ToUInt16(tokens[1]);
+                            return (RPMVesselComputer comp) => comp.resources.GetPropellantResourceName(propellantIndex);
+                        }
+                        return null;
+
                     case "CREWLOCAL":
                         int crewSeatID = Convert.ToInt32(tokens[1]);
                         return (RPMVesselComputer comp) =>
@@ -363,7 +371,7 @@ namespace JSI
                                 return null;
                             }
                         }
-                    case "PROPLNTR":
+                    case "PROPELLANTR":
                         {
                             if (tokens.Length == 3 && uint.TryParse(tokens[1], out uint propellantIndex))
                             {
