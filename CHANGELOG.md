@@ -10,10 +10,15 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 
 - Props can now reference methods on internalmodules that are placed directly in the Internal if one isn't found in the prop [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/240ee4d1e8ca1114c8948221be3245f79fb11e8e)
 - JSINumericInput can now take a variable as its increment term (thanks MirageDev) [PR](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/11a01f13b910394fcb05463403dae97a6e0d57de)
+- Added `PROPELLANTR_` variables to access the resources that are in use by engines on the vessel [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/f1261464100e22819835382624b3afc9b7b1384b)
+- `AGMEMO` system is less sensitive to whitespace [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/e343c57adb4dadcefbc753c8623419c29b08ca88)
 
 ### Bug Fixes
 
-- Add RPM computer to CRY-5000Freezer from DeepFreeze (fixes crashes) [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/a369c889c6fd9e6c3ccfda35507532f573bb5693)
+- Add RPM computer to several mods that were missing them (fixes crashes) [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/a369c889c6fd9e6c3ccfda35507532f573bb5693)
+  - CRY-5000Freezer from DeepFreeze [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/a369c889c6fd9e6c3ccfda35507532f573bb5693)
+  - DSEV [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/ab4423ac769c899c0db1e6494d5cddee54eb3608)
+  - Aviation Cockpits [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/9cbde4cf7436a1fed10ed6c0c27cbd3e72c758e6)
 - Add overlay depth masks to remade stock internals [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/7771d9481dcf348cfafe3d63de8783177cdbbf02)
 - Fix looping shutter animation in ALCOR pod caused by multiple animation clips on the same object [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/958720c1d9ad2145cacf5f5098d8984682f5e00e)
 - Fix black outline around text when using deferred rendering (thanks LGhassen) [PR](https://github.com/FirstPersonKSP/RasterPropMonitor/pull/136)
