@@ -375,6 +375,7 @@ namespace JSI
                         {
                             if (tokens.Length == 3 && uint.TryParse(tokens[1], out uint propellantIndex))
                             {
+                                if (tokens[2] == "NAME") return null;
                                 ResourceDataStorage.ParseResourceQuery(tokens[2], out var valueType, out bool stage);
                                 return (RPMVesselComputer comp) => comp.resources.GetPropellantResourceValue(propellantIndex, valueType, stage);
                             }
