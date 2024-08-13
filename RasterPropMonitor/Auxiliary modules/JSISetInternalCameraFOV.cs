@@ -18,7 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
+using System;
 using System.Collections.Generic;
+using UniLinq;
 using UnityEngine;
 
 namespace JSI
@@ -32,7 +34,6 @@ namespace JSI
             all
         };
 
-        private readonly List<SeatCamera> seats = new List<SeatCamera>();
         private int oldSeat = -1;
 
         private struct SeatCamera
@@ -42,51 +43,126 @@ namespace JSI
             public float maxPitch;
             public float minPitch;
             public HideKerbal hideKerbal;
+
+            public SeatCamera(ConfigNode node)
+            {
+                fov = node.GetFloat(nameof(fov)) ?? defaultFov;
+                maxRot = node.GetFloat(nameof(maxRot)) ?? defaultMaxRot;
+                maxPitch = node.GetFloat(nameof(maxPitch)) ?? defaultMaxPitch;
+                minPitch = node.GetFloat(nameof(minPitch)) ?? defaultMinPitch;
+                hideKerbal = defaultHideKerbal;
+                node.TryGetEnum(nameof(hideKerbal), ref hideKerbal, defaultHideKerbal);
+            }
         }
+
+        // per-internalmodel data that is shared between all instances of the model
+        private class InternalModelSeatMetadata : ScriptableObject
+        {
+            public SeatCamera[] seats;
+        }
+        
+        [SerializeReference]
+        private InternalModelSeatMetadata seatMetadata;
 
         private const float defaultFov = 60f;
         private const float defaultMaxRot = 60f;
         private const float defaultMaxPitch = 60f;
-        private const float defaultMinPitch = -30f;
+        private const float defaultMinPitch = -50f;
         private const HideKerbal defaultHideKerbal = HideKerbal.none;
 
-        public void Start()
-        {
-            foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes("INTERNAL"))
-            {
-                if (node.GetValue("name") == internalModel.internalName)
-                {
-                    foreach (ConfigNode moduleConfig in node.GetNodes("MODULE"))
-                    {
-                        // The order we get should in theory match the order of seats, shouldn't it.
-                        if (moduleConfig.HasValue("name") && moduleConfig.GetValue("name") == "InternalSeat")
-                        {
-                            var seatData = new SeatCamera();
-                            seatData.fov = moduleConfig.GetFloat("fov") ?? defaultFov;
-                            seatData.maxRot = moduleConfig.GetFloat("maxRot") ?? defaultMaxRot;
-                            seatData.maxPitch = moduleConfig.GetFloat("maxPitch") ?? defaultMaxPitch;
-                            seatData.minPitch = moduleConfig.GetFloat("minPitch") ?? defaultMinPitch;
-                            moduleConfig.TryGetEnum("hideKerbal", ref seatData.hideKerbal, default);
+        #region Loading Code
 
-                            seats.Add(seatData);
-                            JUtil.LogMessage(this, "Setting per-seat camera parameters for seat {0}: fov {1}, maxRot {2}, maxPitch {3}, minPitch {4}, hideKerbal {5}",
-                                seats.Count - 1, seatData.fov, seatData.maxRot, seatData.maxPitch, seatData.minPitch, seatData.hideKerbal.ToString());
-                        }
+        static Dictionary<string, ConfigNode> propDefinitionSeatModuleConfigs;
+
+        private static ConfigNode GetInternalSeatConfigNode(ConfigNode propNode)
+        {
+            foreach (var childNode in propNode.nodes.nodes)
+            {
+                if (childNode.name == "MODULE" && childNode.GetValue("name") == nameof(InternalSeat))
+                {
+                    return childNode;
+                }
+            }
+            return null;
+        }
+
+        private static ConfigNode GetInternalSeatConfigNodeFromProp(ConfigNode propNode)
+        {
+            var seatNode = GetInternalSeatConfigNode(propNode);
+            if (seatNode != null) return seatNode;
+
+            // on the first call, we need to go find all of the InternalSeat module config nodes in prop definitions
+            if (propDefinitionSeatModuleConfigs == null)
+            {
+                propDefinitionSeatModuleConfigs = new Dictionary<string, ConfigNode>();
+
+                foreach (var propDefinitionNode in GameDatabase.Instance.GetConfigNodes("PROP"))
+                {
+                    seatNode = GetInternalSeatConfigNode(propDefinitionNode);
+                    if (seatNode != null)
+                    {
+                        propDefinitionSeatModuleConfigs.Add(propDefinitionNode.GetValue("name"), seatNode);
                     }
                 }
             }
-            GameEvents.OnCameraChange.Add(OnCameraChange);
-            GameEvents.OnIVACameraKerbalChange.Add(OnIVACameraChange);
-            // Pseudo-seat with default values.
-            seats.Add(new SeatCamera
-            {
-                fov = defaultFov,
-                maxRot = defaultMaxRot,
-                maxPitch = defaultMaxPitch,
-                minPitch = defaultMinPitch,
-                hideKerbal = HideKerbal.none
-            });
 
+            propDefinitionSeatModuleConfigs.TryGetValue(propNode.GetValue("name"), out seatNode);
+            return seatNode;
+        }
+
+        private void OnDisable()
+        {
+            // Dirty hack: this is called during loading after the prefab is completely set up.
+            // This is how we can hook into final processing for all the seats.
+            if (HighLogic.LoadedScene == GameScenes.LOADING)
+            {
+                seatMetadata = ScriptableObject.CreateInstance<InternalModelSeatMetadata>();
+                var seats = seatMetadata.seats = new SeatCamera[internalModel.seats.Count];
+
+                int currentSeatIndex = 0;
+
+                // unfortunately props don't store a reference to their confignode, so we need to iterate over prop and module nodes that might have seats
+                for (int nodeIndex = 0; nodeIndex < internalModel.internalConfig.nodes.nodes.Count; ++nodeIndex)
+                {
+                    var childNode = internalModel.internalConfig.nodes.nodes[nodeIndex];
+
+                    // if this is a prop, it could contain an internalseat module directly, or in its prop definition
+                    if (childNode.name == "PROP")
+                    {
+                        childNode = GetInternalSeatConfigNodeFromProp(childNode);
+                        if (childNode == null) continue;
+                    }
+
+                    // does this thing represent a seat, one way or another?
+                    if (childNode.name == "MODULE" && childNode.GetValue("name") == "InternalSeat")
+                    {
+                        if (currentSeatIndex < seats.Length)
+                        {
+                            var seatData = new SeatCamera(childNode);
+                            seats[currentSeatIndex] = seatData;
+                            
+                            JUtil.LogMessage(this, "Setting per-seat camera parameters for seat {0}: fov {1}, maxRot {2}, maxPitch {3}, minPitch {4}, hideKerbal {5}",
+                                currentSeatIndex, seatData.fov, seatData.maxRot, seatData.maxPitch, seatData.minPitch, seatData.hideKerbal.ToString());
+                        }
+
+                        ++currentSeatIndex;
+                    }
+                }
+
+                if (currentSeatIndex != seats.Length)
+                {
+                    JUtil.LogErrorMessage(this, "Internal {0} has {1} seats but found configs for {2} seat modules", internalModel.internalName, seats.Length, currentSeatIndex);
+                }
+            }
+        }
+
+        #endregion
+
+        public void Start()
+        {
+`           GameEvents.OnCameraChange.Add(OnCameraChange);
+            GameEvents.OnIVACameraKerbalChange.Add(OnIVACameraChange);
+ 
             // If (somehow) we start in IVA, make sure we initialize here.
             if (CameraManager.Instance.activeInternalPart == part)
             {
@@ -145,15 +221,17 @@ namespace JSI
         /// <param name="activeKerbal"></param>
         private void UpdateCameras(int seatID, Kerbal activeKerbal)
         {
-            InternalCamera.Instance.SetFOV(seats[seatID].fov);
-            InternalCamera.Instance.maxRot = seats[seatID].maxRot;
-            InternalCamera.Instance.maxPitch = seats[seatID].maxPitch;
-            InternalCamera.Instance.minPitch = seats[seatID].minPitch;
+            var seatData = seatMetadata.seats[seatID];
+
+            InternalCamera.Instance.SetFOV(seatData.fov);
+            InternalCamera.Instance.maxRot = seatData.maxRot;
+            InternalCamera.Instance.maxPitch = seatData.maxPitch;
+            InternalCamera.Instance.minPitch = seatData.minPitch;
 
             RPMVesselComputer comp = null;
             if (RPMVesselComputer.TryGetInstance(vessel, ref comp))
             {
-                comp.SetKerbalVisible(activeKerbal, seats[seatID].hideKerbal);
+                comp.SetKerbalVisible(activeKerbal, seatData.hideKerbal);
             }
 
             oldSeat = seatID;
