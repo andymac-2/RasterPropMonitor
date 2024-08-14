@@ -160,7 +160,7 @@ namespace JSI
 
         public void Start()
         {
-`           GameEvents.OnCameraChange.Add(OnCameraChange);
+            GameEvents.OnCameraChange.Add(OnCameraChange);
             GameEvents.OnIVACameraKerbalChange.Add(OnIVACameraChange);
  
             // If (somehow) we start in IVA, make sure we initialize here.
