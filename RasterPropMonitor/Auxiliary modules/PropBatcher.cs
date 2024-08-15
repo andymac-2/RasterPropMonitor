@@ -10,11 +10,22 @@ using UnityEngine;
 
 namespace JSI
 {
+    public interface IPropBatchModuleHandler
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <returns>true if the module should be deleted from the prop</returns>
+        bool NotifyTransformBatched(Transform transform);
+    }
+
     public class PropBatcher : InternalModule
     {
         static Dictionary<string, BatchFilter> x_propNameToFilter = new Dictionary<string, BatchFilter>();
         static Dictionary<string, BatchFilter> x_modelNameToFilter = new Dictionary<string, BatchFilter>();
 
+        // A batch filter selects transforms from a prop to associate with a given batch ID
         class BatchFilter
         {
             public BatchFilter(ConfigNode node, int batchID)
@@ -103,8 +114,11 @@ namespace JSI
 
             var newProps = new List<InternalProp>(internalModel.props.Count);
             var batchLists = new Dictionary<int, List<GameObject>>();
+            int removedModuleCount = 0;
+            int batchedTransformCount = 0;
 
-            foreach(var oldProp in internalModel.props)
+            // collect batched transforms into the batchLists, and remove redundant props
+            foreach (var oldProp in internalModel.props)
             {
                 bool keepProp = true;
                 foreach (var batchFilter in GetBatchFilterForProp(oldProp))
@@ -112,12 +126,30 @@ namespace JSI
                     var childTransform = JUtil.FindPropTransform(oldProp, batchFilter.transformName);
                     if (childTransform != null)
                     {
+                        // get or create the batch list
                         if (batchLists.TryGetValue(batchFilter.batchID, out var batchList))
                         {
                             keepProp = batchFilter.keepProp;
 
-                            if (!keepProp)
+                            if (keepProp)
                             {
+                                // notify any modules that might need to know about this and remove them if necessary
+                                for (int i = oldProp.internalModules.Count - 1; i >= 0; --i)
+                                {
+                                    if (oldProp.internalModules[i] is IPropBatchModuleHandler batchHandler)
+                                    {
+                                        if (batchHandler.NotifyTransformBatched(childTransform))
+                                        {
+                                            Component.Destroy(oldProp.internalModules[i]);
+                                            oldProp.internalModules.RemoveAt(i);
+                                            ++removedModuleCount;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // if we're not going to keep this prop, attach the transform to the batch root
                                 childTransform.SetParent(batchList[0].transform.parent, true);
                             }
                         }
@@ -126,7 +158,7 @@ namespace JSI
                             batchList = new List<GameObject>();
                             batchLists[batchFilter.batchID] = batchList;
 
-                            // if we're not keeping the other props, we need to attach all of their models to the first one
+                            // set up a batch root so we can attach all the other prop transforms to this one
                             if (!batchFilter.keepProp)
                             {
                                 childTransform.SetParent(null, true); // detach early so the transform change below doesn't move it
@@ -161,7 +193,7 @@ namespace JSI
 
             if (batchLists.Count > 0)
             {
-                int batchedTransforms = 0;
+                // merge batched meshes
                 foreach (var batchList in batchLists.Values)
                 {
                     CombineInstance[] instances = new CombineInstance[batchList.Count];
@@ -182,7 +214,7 @@ namespace JSI
                         instances[i] = instance;
                     }
 
-                    batchedTransforms += batchList.Count;
+                    batchedTransformCount += batchList.Count;
                     
                     Mesh mesh = new Mesh();
                     mesh.CombineMeshes(instances);
@@ -190,6 +222,12 @@ namespace JSI
 
                     JUtil.LogMessage(null, "PROP_BATCH: batching {0} transforms under {1}", batchList.Count, batchList[0].transform.parent.name);
                 }
+            }
+
+            JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}; total batched transforms {3}; removed {4} modules",
+                    internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransformCount, removedModuleCount);
+            internalModel.props = newProps;
+        }
 
                 JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}; total batched transforms {3}", internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransforms);
                 internalModel.props = newProps;

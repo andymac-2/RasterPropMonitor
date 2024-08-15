@@ -30,24 +30,35 @@ namespace JSI
     /// thresholded behavior (switching on/off, not interpolating between two
     /// states).
     /// </summary>
-    public class JSICallbackAnimator : InternalModule
+    public class JSICallbackAnimator : InternalModule, IPropBatchModuleHandler
     {
-        [SerializeReference] ConfigNodeHolder moduleConfig;
-
         [KSPField]
         public string variableName = string.Empty;
         [KSPField]
         public float flashRate = 0.0f;
 
+        [SerializeField]
         private readonly List<CallbackAnimationSet> variableSets = new List<CallbackAnimationSet>();
-        private Action<float> del;
         private RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
 
         public override void OnLoad(ConfigNode node)
         {
-            moduleConfig = ScriptableObject.CreateInstance<ConfigNodeHolder>();
-            moduleConfig.Node = node;
+            ConfigNode[] variableNodes = node.GetNodes("VARIABLESET");
+
+            for (int i = 0; i < variableNodes.Length; i++)
+            {
+                try
+                {
+                    var variableSet = ScriptableObject.CreateInstance<CallbackAnimationSet>();
+                    variableSet.Load(variableNodes[i], internalProp);
+                    variableSets.Add(variableSet);
+                }
+                catch (ArgumentException e)
+                {
+                    JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
+                }
+            }
         }
 
         /// <summary>
@@ -64,24 +75,15 @@ namespace JSI
             {
                 rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
 
+                foreach (var variableSet in variableSets)
+                {
+                    variableSet.OnStart(internalProp, variableName);
+                }
+
                 if (string.IsNullOrEmpty(variableName))
                 {
                     JUtil.LogErrorMessage(this, "Configuration failed in prop {0} ({1}), no variableName.", internalProp.propID, internalProp.propName);
                     throw new ArgumentNullException();
-                }
-
-                ConfigNode[] variableNodes = moduleConfig.Node.GetNodes("VARIABLESET");
-
-                for (int i = 0; i < variableNodes.Length; i++)
-                {
-                    try
-                    {
-                        variableSets.Add(new CallbackAnimationSet(variableNodes[i], variableName, internalProp));
-                    }
-                    catch (ArgumentException e)
-                    {
-                        JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
-                    }
                 }
 
                 if (flashRate > 0.0f)
@@ -94,8 +96,7 @@ namespace JSI
                     }
                 }
 
-                del = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "OnCallback");
-                rpmComp.RegisterVariableCallback(variableName, del);
+                rpmComp.RegisterVariableCallback(variableName, OnCallback);
                 rpmComp.RemoveInternalModule(this);
                 JUtil.LogMessage(this, "Configuration complete in prop {1} ({2}), supporting {0} callback animators.", variableSets.Count, internalProp.propID, internalProp.propName);
             }
@@ -133,7 +134,7 @@ namespace JSI
 
             try
             {
-                rpmComp.UnregisterVariableCallback(variableName, del);
+                rpmComp.UnregisterVariableCallback(variableName, OnCallback);
                 if (fm != null)
                 {
                     fm.flashSubscribers -= FlashToggle;
@@ -158,16 +159,29 @@ namespace JSI
                 // Stop getting callbacks if for some reason a different
                 // computer is talking to us.
                 //JUtil.LogMessage(this, "OnCallback - unregistering del {0}, vessel null is {1}, comp.id = {2}", del.GetHashCode(), (vessel == null), comp.id);
-                rpmComp.UnregisterVariableCallback(variableName, del);
+                rpmComp.UnregisterVariableCallback(variableName, OnCallback);
                 JUtil.LogErrorMessage(this, "Received an unexpected OnCallback()");
             }
             else
             {
                 for (int i = 0; i < variableSets.Count; ++i)
                 {
-                    variableSets[i].Update(value);
+                    variableSets[i].UpdateValue(value);
                 }
             }
+        }
+
+        public bool NotifyTransformBatched(Transform transform)
+        {
+            for (int i = variableSets.Count-1 ; i >= 0; --i)
+            {
+                if (object.ReferenceEquals(transform, variableSets[i].Transform))
+                {
+                    variableSets.RemoveAt(i);
+                }
+            }
+
+            return variableSets.Count == 0 && fm == null;
         }
     }
 
@@ -177,35 +191,40 @@ namespace JSI
     /// independent range of enabling values, but it depends on the parent
     /// JSICallback class to control what variable is tracked.
     /// </summary>
-    public class CallbackAnimationSet
+    public class CallbackAnimationSet : ScriptableObject
     {
-        private readonly VariableOrNumberRange variable;
-        private readonly Animation onAnim;
-        private readonly Animation offAnim;
-        private readonly bool reverse;
-        private readonly string animationName;
-        private readonly string stopAnimationName;
-        private readonly float animationSpeed;
-        private readonly Color passiveColor, activeColor;
-        private Transform controlledTransform;
-        private readonly Vector3 initialPosition, initialScale, vectorStart, vectorEnd;
-        private readonly Quaternion initialRotation, rotationStart, rotationEnd;
-        private readonly bool longPath;
-        private readonly int colorName = -1;
-        private readonly Vector2 textureShiftStart, textureShiftEnd, textureScaleStart, textureScaleEnd;
-        private Material affectedMaterial;
-        private List<string> textureLayer = new List<string>();
-        private readonly Mode mode;
-        private readonly bool looping;
-        private readonly bool flash;
-        private FXGroup audioOutput;
-        private readonly float alarmSoundVolume;
-        private readonly bool alarmMustPlayOnce;
-        private readonly bool alarmSoundLooping;
+        [SerializeField] private string scaleRangeMin, scaleRangeMax;
+        [SerializeField] private bool reverse;
+        [SerializeField] private bool animateExterior;
+        [SerializeField] private string animationName;
+        [SerializeField] private string stopAnimationName;
+        [SerializeField] private float animationSpeed;
+        [SerializeField] private string passiveColorName, activeColorName;
+        [SerializeField] private Transform controlledTransform;
+        [SerializeField] private Vector3 initialPosition, initialScale, vectorStart, vectorEnd;
+        [SerializeField] private Quaternion initialRotation, rotationStart, rotationEnd;
+        [SerializeField] private bool longPath;
+        [SerializeField] private int colorName = -1;
+        [SerializeField] private Vector2 textureShiftStart, textureShiftEnd, textureScaleStart, textureScaleEnd;
+        [SerializeField] private Material affectedMaterial;
+        [SerializeField] private List<string> textureLayer = new List<string>();
+        [SerializeField] private Mode mode;
+        [SerializeField] private bool looping;
+        [SerializeField] private bool flash;
+        [SerializeField] private string alarmSoundName;
+        [SerializeField] private float alarmSoundVolume;
+        [SerializeField] private bool alarmMustPlayOnce;
+        [SerializeField] private bool alarmSoundLooping;
+
         // runtime values:
         private bool alarmActive; 
         private bool currentState;
         private bool inIVA = false;
+        private VariableOrNumberRange variable;
+        private FXGroup audioOutput;
+        private Color passiveColor, activeColor;
+        private Animation onAnim;
+        private Animation offAnim;
 
         private enum Mode
         {
@@ -225,7 +244,7 @@ namespace JSI
         /// <param name="node"></param>
         /// <param name="variableName"></param>
         /// <param name="thisProp"></param>
-        public CallbackAnimationSet(ConfigNode node, string variableName, InternalProp thisProp)
+        public void Load(ConfigNode node, InternalProp thisProp)
         {
             currentState = false;
 
@@ -246,8 +265,8 @@ namespace JSI
                 throw new ArgumentException("Could not parse 'scale' parameter.");
             }
 
-            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(thisProp);
-            variable = new VariableOrNumberRange(rpmComp, variableName, tokens[0], tokens[1]);
+            scaleRangeMin = tokens[0];
+            scaleRangeMax = tokens[1];
 
             // That takes care of the scale, now what to do about that scale:
             if (node.HasValue("reverse"))
@@ -272,12 +291,12 @@ namespace JSI
 
             if (node.HasValue("alarmSound"))
             {
+                alarmSoundName = node.GetValue("alarmSound");
                 alarmSoundVolume = 0.5f;
                 if (node.HasValue("alarmSoundVolume"))
                 {
                     alarmSoundVolume = float.Parse(node.GetValue("alarmSoundVolume"));
                 }
-                audioOutput = JUtil.SetupIVASound(thisProp, node.GetValue("alarmSound"), alarmSoundVolume, false);
                 if (node.HasValue("alarmMustPlayOnce"))
                 {
                     if (!bool.TryParse(node.GetValue("alarmMustPlayOnce"), out alarmMustPlayOnce))
@@ -295,12 +314,7 @@ namespace JSI
                     {
                         throw new ArgumentException("So is 'alarmSoundLooping' true or false?");
                     }
-                    audioOutput.audio.loop = alarmSoundLooping;
                 }
-
-                inIVA = (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA);
-
-                GameEvents.OnCameraChange.Add(CameraChangeCallback);
             }
 
             if (node.HasValue("animationName"))
@@ -319,55 +333,12 @@ namespace JSI
                 {
                     animationSpeed = 0.0f;
                 }
-                Animation[] anims = node.HasValue("animateExterior") ? thisProp.part.FindModelAnimators(animationName) : thisProp.FindModelAnimators(animationName);
-                if (anims.Length > 0)
-                {
-                    onAnim = anims[0];
-                    onAnim.enabled = true;
-                    onAnim[animationName].speed = 0;
-                    onAnim[animationName].normalizedTime = reverse ? 1f : 0f;
-                    looping = node.HasValue("loopingAnimation");
-                    if (looping)
-                    {
-                        onAnim[animationName].wrapMode = WrapMode.Loop;
-                        onAnim[animationName].speed = animationSpeed;
-                        mode = Mode.LoopingAnimation;
-                    }
-                    else
-                    {
-                        onAnim[animationName].wrapMode = WrapMode.Once;
-                        mode = Mode.Animation;
-                    }
-                    onAnim.Play();
-                    //alwaysActive = node.HasValue("animateExterior");
-                }
-                else
-                {
-                    throw new ArgumentException("Animation "+ animationName +" could not be found.");
-                }
+                node.TryGetValue(nameof(animateExterior), ref animateExterior);
+                node.TryGetValue("loopingAnimation", ref looping);
 
                 if (node.HasValue("stopAnimationName"))
                 {
                     stopAnimationName = node.GetValue("stopAnimationName");
-                    anims = node.HasValue("animateExterior") ? thisProp.part.FindModelAnimators(stopAnimationName) : thisProp.FindModelAnimators(stopAnimationName);
-                    if (anims.Length > 0)
-                    {
-                        offAnim = anims[0];
-                        offAnim.enabled = true;
-                        offAnim[stopAnimationName].speed = 0;
-                        offAnim[stopAnimationName].normalizedTime = reverse ? 1f : 0f;
-                        if (looping)
-                        {
-                            offAnim[stopAnimationName].wrapMode = WrapMode.Loop;
-                            offAnim[stopAnimationName].speed = animationSpeed;
-                            mode = Mode.LoopingAnimation;
-                        }
-                        else
-                        {
-                            offAnim[stopAnimationName].wrapMode = WrapMode.Once;
-                            mode = Mode.Animation;
-                        }
-                    }
                 }
             }
             else if (node.HasValue("activeColor") && node.HasValue("passiveColor") && node.HasValue("coloredObject"))
@@ -381,13 +352,13 @@ namespace JSI
 
                 if (reverse)
                 {
-                    activeColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
-                    passiveColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
+                    activeColorName = node.GetValue("passiveColor");
+                    passiveColorName = node.GetValue("activeColor");
                 }
                 else
                 {
-                    passiveColor = JUtil.ParseColor32(node.GetValue("passiveColor"), rpmComp);
-                    activeColor = JUtil.ParseColor32(node.GetValue("activeColor"), rpmComp);
+                    passiveColorName = node.GetValue("passiveColor");
+                    activeColorName = node.GetValue("activeColor");
                 }
                 string coloredObjectName = node.GetValue("coloredObject");
                 Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(coloredObjectName);
@@ -513,9 +484,89 @@ namespace JSI
             {
                 throw new ArgumentException("Cannot initiate any of the possible action modes.");
             }
-
-            TurnOff();
         }
+
+        public void OnStart(InternalProp thisProp, string variableName)
+        {
+            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(thisProp);
+            variable = new VariableOrNumberRange(rpmComp, variableName, scaleRangeMin, scaleRangeMax);
+
+            passiveColor = JUtil.ParseColor32(passiveColorName, rpmComp);
+            activeColor = JUtil.ParseColor32(activeColorName, rpmComp);
+
+            audioOutput = JUtil.SetupIVASound(thisProp, alarmSoundName, alarmSoundVolume, false);
+
+            if (audioOutput != null)
+            {
+                audioOutput.audio.loop = alarmSoundLooping;
+                inIVA = (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA);
+
+                GameEvents.OnCameraChange.Add(CameraChangeCallback);
+            }
+
+            LoadAnims(thisProp);
+
+            if (onAnim != null)
+            {
+                onAnim.Play();
+            }
+        }
+
+        private void LoadAnims(InternalProp thisProp)
+        {
+            if (!string.IsNullOrEmpty(animationName))
+            {
+                Animation[] anims = animateExterior ? thisProp.part.FindModelAnimators(animationName) : thisProp.FindModelAnimators(animationName);
+                if (anims.Length > 0)
+                {
+                    onAnim = anims[0];
+                    onAnim.enabled = true;
+                    onAnim[animationName].speed = 0;
+                    onAnim[animationName].normalizedTime = reverse ? 1f : 0f;
+                    if (looping)
+                    {
+                        onAnim[animationName].wrapMode = WrapMode.Loop;
+                        onAnim[animationName].speed = animationSpeed;
+                        mode = Mode.LoopingAnimation;
+                    }
+                    else
+                    {
+                        onAnim[animationName].wrapMode = WrapMode.Once;
+                        mode = Mode.Animation;
+                    }
+                    //alwaysActive = node.HasValue("animateExterior");
+                }
+                else
+                {
+                    throw new ArgumentException("Animation " + animationName + " could not be found.");
+                }
+
+                if (!string.IsNullOrEmpty(stopAnimationName))
+                {
+                    anims = animateExterior ? thisProp.part.FindModelAnimators(stopAnimationName) : thisProp.FindModelAnimators(stopAnimationName);
+                    if (anims.Length > 0)
+                    {
+                        offAnim = anims[0];
+                        offAnim.enabled = true;
+                        offAnim[stopAnimationName].speed = 0;
+                        offAnim[stopAnimationName].normalizedTime = reverse ? 1f : 0f;
+                        if (looping)
+                        {
+                            offAnim[stopAnimationName].wrapMode = WrapMode.Loop;
+                            offAnim[stopAnimationName].speed = animationSpeed;
+                            mode = Mode.LoopingAnimation;
+                        }
+                        else
+                        {
+                            offAnim[stopAnimationName].wrapMode = WrapMode.Once;
+                            mode = Mode.Animation;
+                        }
+                    }
+                }
+            }
+        }
+
+        public Transform Transform => controlledTransform;
 
         /// <summary>
         /// Callback method to notify animators that flash that it's time to flash.
@@ -657,7 +708,7 @@ namespace JSI
         /// about, do what's appropriate if it is.
         /// </summary>
         /// <param name="value"></param>
-        public void Update(float value)
+        public void UpdateValue(float value)
         {
             bool newState = variable.IsInRange(value);
 
