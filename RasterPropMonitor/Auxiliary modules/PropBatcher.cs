@@ -1,10 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 
@@ -178,6 +173,20 @@ namespace JSI
                     {
                         JUtil.LogErrorMessage(null, "PROP_BATCH: Could not find transform named {0} in prop {1}", batchFilter.transformName, oldProp.propName);
                     }
+                }
+
+                // if the prop doesn't have any modules left (or never had any to start),
+                // just attach it to the internal model and remove the prop so we can avoid calling update etc.
+                if (keepProp && oldProp.internalModules.Count == 0)
+                {
+                    var modelTransform = oldProp.transform.Find("model");
+                    if (modelTransform != null)
+                    {
+                        modelTransform.SetParent(internalModel.transform.Find("model"), true);
+                    }
+
+                    JUtil.LogMessage(null, "PROP_BATCH: removing prop {0} because it has no modules left", oldProp.propName);
+                    keepProp = false;
                 }
 
                 if (keepProp)
