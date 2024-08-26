@@ -38,7 +38,7 @@ namespace JSI
         public float flashRate = 0.0f;
 
         [SerializeField]
-        private readonly List<CallbackAnimationSet> variableSets = new List<CallbackAnimationSet>();
+        private List<CallbackAnimationSet> variableSets = new List<CallbackAnimationSet>();
         private RasterPropMonitorComputer rpmComp;
         private JSIFlashModule fm;
 
@@ -100,9 +100,9 @@ namespace JSI
                 rpmComp.RemoveInternalModule(this);
                 JUtil.LogMessage(this, "Configuration complete in prop {1} ({2}), supporting {0} callback animators.", variableSets.Count, internalProp.propID, internalProp.propName);
             }
-            catch
+            catch(Exception ex)
             {
-                JUtil.LogErrorMessage(this, $"{internalProp.propName} - {internalProp.propID} - {variableName} - {internalModel?.internalName}");
+                JUtil.LogErrorMessage(this, $"{internalProp.propName} - {internalProp.propID} - {variableName} - {internalModel?.internalName} - {ex}");
                 JUtil.AnnoyUser(this);
                 enabled = false;
                 throw;
