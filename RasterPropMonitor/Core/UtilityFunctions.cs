@@ -913,8 +913,9 @@ namespace JSI
         public static FXGroup SetupIVASound(InternalProp thatProp, string buttonClickSound, float buttonClickVolume, bool loopState)
         {
             FXGroup audioOutput = null;
-            if (!string.IsNullOrEmpty(buttonClickSound.EnforceSlashes()))
+            if (!string.IsNullOrEmpty(buttonClickSound))
             {
+                buttonClickSound = buttonClickSound.EnforceSlashes();
                 audioOutput = new FXGroup("RPM" + thatProp.propID);
                 audioOutput.audio = thatProp.gameObject.AddComponent<AudioSource>();
                 audioOutput.audio.clip = GameDatabase.Instance.GetAudioClip(buttonClickSound);
