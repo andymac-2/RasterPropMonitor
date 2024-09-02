@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -237,12 +237,6 @@ namespace JSI
                     internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransformCount, removedModuleCount);
             internalModel.props = newProps;
         }
-
-                JUtil.LogMessage(null, "PROP_BATCH: old prop count: {0}; new prop count: {1}; delta {2}; total batched transforms {3}", internalModel.props.Count, newProps.Count, internalModel.props.Count - newProps.Count, batchedTransforms);
-                internalModel.props = newProps;
-            }
-        }
-
         private void Font_textureRebuilt(Font font)
         {
             JUtil.LogMessage(this, "Font {0} rebuilt", font);
