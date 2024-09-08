@@ -506,10 +506,7 @@ namespace JSI
 
             LoadAnims(thisProp);
 
-            if (onAnim != null)
-            {
-                onAnim.Play();
-            }
+            TurnOff();
         }
 
         private void LoadAnims(InternalProp thisProp)
@@ -596,13 +593,6 @@ namespace JSI
             {
                 GameEvents.OnCameraChange.Remove(CameraChangeCallback);
             }
-            if (affectedMaterial != null)
-            {
-                UnityEngine.Object.Destroy(affectedMaterial);
-                affectedMaterial = null;
-            }
-            textureLayer = null;
-            controlledTransform = null;
         }
 
         /// <summary>
