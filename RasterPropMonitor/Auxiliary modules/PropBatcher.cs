@@ -179,10 +179,10 @@ namespace JSI
                 // just attach it to the internal model and remove the prop so we can avoid calling update etc.
                 if (keepProp && oldProp.internalModules.Count == 0)
                 {
-                    var modelTransform = oldProp.transform.Find("model");
-                    if (modelTransform != null)
+                    var internalModelTransform = internalModel.transform.Find("model");
+                    for (int i = oldProp.transform.childCount-1; i >= 0; i--)
                     {
-                        modelTransform.SetParent(internalModel.transform.Find("model"), true);
+                        oldProp.transform.GetChild(i).SetParent(internalModelTransform, true);
                     }
 
                     JUtil.LogMessage(null, "PROP_BATCH: removing prop {0} because it has no modules left", oldProp.propName);
