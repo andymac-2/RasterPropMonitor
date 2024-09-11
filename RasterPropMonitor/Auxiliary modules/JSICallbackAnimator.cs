@@ -50,7 +50,7 @@ namespace JSI
             {
                 try
                 {
-                    var variableSet = ScriptableObject.CreateInstance<CallbackAnimationSet>();
+                    var variableSet = gameObject.AddComponent<CallbackAnimationSet>();
                     variableSet.Load(variableNodes[i], internalProp);
                     variableSets.Add(variableSet);
                 }
@@ -191,7 +191,7 @@ namespace JSI
     /// independent range of enabling values, but it depends on the parent
     /// JSICallback class to control what variable is tracked.
     /// </summary>
-    public class CallbackAnimationSet : ScriptableObject
+    public class CallbackAnimationSet : MonoBehaviour
     {
         [SerializeField] private string scaleRangeMin, scaleRangeMax;
         [SerializeField] private bool reverse;
