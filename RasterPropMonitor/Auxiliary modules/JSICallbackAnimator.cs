@@ -361,11 +361,9 @@ namespace JSI
                     activeColorName = node.GetValue("activeColor");
                 }
                 string coloredObjectName = node.GetValue("coloredObject");
-                Renderer colorShiftRenderer = thisProp.FindModelComponent<Renderer>(coloredObjectName);
-                if (colorShiftRenderer != null)
+                controlledTransform = thisProp.FindModelComponent<Renderer>(coloredObjectName)?.transform;
+                if (controlledTransform != null)
                 {
-                    affectedMaterial = colorShiftRenderer.isPartOfStaticBatch ? colorShiftRenderer.sharedMaterial : colorShiftRenderer.material;
-                    affectedMaterial.SetColor(colorName, passiveColor);
                     mode = Mode.Color;
                 }
                 else
@@ -440,7 +438,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureShiftStart") && node.HasValue("textureShiftEnd"))
             {
-                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -461,7 +459,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureScaleStart") && node.HasValue("textureScaleEnd"))
             {
-                affectedMaterial = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim()).GetComponent<Renderer>().material;
+                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -502,6 +500,14 @@ namespace JSI
                 inIVA = (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA);
 
                 GameEvents.OnCameraChange.Add(CameraChangeCallback);
+            }
+
+            if (mode == Mode.Color || mode == Mode.TextureShift || mode == Mode.TextureScale)
+            {
+                // since materials get instanced by calling renderer.material; we can't cache this at load time because it will be referring to the material on the prefab
+                var renderer = controlledTransform.GetComponent<Renderer>();
+                affectedMaterial = renderer.isPartOfStaticBatch ? renderer.sharedMaterial : renderer.material;
+                affectedMaterial.SetColor(colorName, passiveColor);
             }
 
             LoadAnims(thisProp);
