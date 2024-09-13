@@ -306,6 +306,13 @@ namespace JSI
             }
         }
 
+        internal static void Swap<T>(ref T a, ref T b)
+        {
+            T temp = a;
+            a = b;
+            b = temp;
+        }
+
         // https://forum.unity.com/threads/camera-render-seems-to-trigger-canvas-sendwillrendercanvases.462099/
         static FieldInfo canvasHackField = typeof(Canvas).GetField("willRenderCanvases", BindingFlags.NonPublic | BindingFlags.Static);
         internal static void RenderTextureCamera(Camera camera)

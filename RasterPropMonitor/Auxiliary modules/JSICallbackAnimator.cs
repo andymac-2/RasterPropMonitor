@@ -270,107 +270,49 @@ namespace JSI
             scaleRangeMax = tokens[1];
 
             // That takes care of the scale, now what to do about that scale:
-            if (node.HasValue("reverse"))
-            {
-                if (!bool.TryParse(node.GetValue("reverse"), out reverse))
-                {
-                    throw new ArgumentException("So is 'reverse' true or false?");
-                }
-            }
+            node.TryGetValue(nameof(reverse), ref reverse);
+            node.TryGetValue(nameof(flash), ref flash);
 
-            if (node.HasValue("flash"))
-            {
-                if(!bool.TryParse(node.GetValue("flash"), out flash))
-                {
-                    throw new ArgumentException("So is 'reverse' true or false?");
-                }
-            }
-            else
-            {
-                flash = false;
-            }
+            alarmSoundName = node.GetValue("alarmSound");
 
-            if (node.HasValue("alarmSound"))
+            if (alarmSoundName != null)
             {
-                alarmSoundName = node.GetValue("alarmSound");
                 alarmSoundVolume = 0.5f;
-                if (node.HasValue("alarmSoundVolume"))
+                node.TryGetValue(nameof(alarmSoundVolume), ref alarmSoundVolume);
+                node.TryGetValue(nameof(alarmMustPlayOnce), ref alarmMustPlayOnce);
+                string alarmShutdownButton = node.GetValue(nameof(alarmShutdownButton));
+                if (alarmShutdownButton != null)
                 {
-                    alarmSoundVolume = float.Parse(node.GetValue("alarmSoundVolume"));
+                    SmarterButton.CreateButton(thisProp, alarmShutdownButton, AlarmShutdown);
                 }
-                if (node.HasValue("alarmMustPlayOnce"))
-                {
-                    if (!bool.TryParse(node.GetValue("alarmMustPlayOnce"), out alarmMustPlayOnce))
-                    {
-                        throw new ArgumentException("So is 'alarmMustPlayOnce' true or false?");
-                    }
-                }
-                if (node.HasValue("alarmShutdownButton"))
-                {
-                    SmarterButton.CreateButton(thisProp, node.GetValue("alarmShutdownButton"), AlarmShutdown);
-                }
-                if (node.HasValue("alarmSoundLooping"))
-                {
-                    if (!bool.TryParse(node.GetValue("alarmSoundLooping"), out alarmSoundLooping))
-                    {
-                        throw new ArgumentException("So is 'alarmSoundLooping' true or false?");
-                    }
-                }
+                node.TryGetValue(nameof(alarmSoundLooping), ref alarmSoundLooping);
             }
 
-            if (node.HasValue("animationName"))
-            {
-                animationName = node.GetValue("animationName");
-                if (node.HasValue("animationSpeed"))
-                {
-                    animationSpeed = float.Parse(node.GetValue("animationSpeed"));
+            animationName = node.GetValue(nameof(animationName));
+            string controlledTransformName = node.GetValue("KcontrolledTransform");
 
-                    if (reverse)
-                    {
-                        animationSpeed = -animationSpeed;
-                    }
-                }
-                else
-                {
-                    animationSpeed = 0.0f;
-                }
+            if (animationName != null)
+            {
+                node.TryGetValue(nameof(animationSpeed), ref animationSpeed);
                 node.TryGetValue(nameof(animateExterior), ref animateExterior);
                 node.TryGetValue("loopingAnimation", ref looping);
-
-                if (node.HasValue("stopAnimationName"))
-                {
-                    stopAnimationName = node.GetValue("stopAnimationName");
-                }
+                stopAnimationName = node.GetValue(nameof(stopAnimationName));
             }
             else if (node.HasValue("activeColor") && node.HasValue("passiveColor") && node.HasValue("coloredObject"))
             {
-                string colorNameString = "_EmissiveColor";
-                if (node.HasValue("colorName"))
-                {
-                    colorNameString = node.GetValue("colorName");
-                }
+                string colorNameString = node.GetValue("colorName") ?? "_EmissiveColor";
                 colorName = Shader.PropertyToID(colorNameString);
 
-                if (reverse)
-                {
-                    activeColorName = node.GetValue("passiveColor");
-                    passiveColorName = node.GetValue("activeColor");
-                }
-                else
-                {
-                    passiveColorName = node.GetValue("passiveColor");
-                    activeColorName = node.GetValue("activeColor");
-                }
+                passiveColorName = node.GetValue("passiveColor");
+                activeColorName = node.GetValue("activeColor");
+
                 string coloredObjectName = node.GetValue("coloredObject");
                 controlledTransform = thisProp.FindModelComponent<Renderer>(coloredObjectName)?.transform;
-                if (controlledTransform != null)
-                {
-                    mode = Mode.Color;
-                }
-                else
+                if (controlledTransform == null)
                 {
                     throw new ArgumentException($"Could not find transform {coloredObjectName} in prop {thisProp.propName}");
                 }
+                mode = Mode.Color;
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localRotationStart") && node.HasValue("localRotationEnd"))
             {
@@ -379,29 +321,13 @@ namespace JSI
                 if (node.HasValue("longPath"))
                 {
                     longPath = true;
-                    if (reverse)
-                    {
-                        vectorEnd = ConfigNode.ParseVector3(node.GetValue("localRotationStart"));
-                        vectorStart = ConfigNode.ParseVector3(node.GetValue("localRotationEnd"));
-                    }
-                    else
-                    {
-                        vectorStart = ConfigNode.ParseVector3(node.GetValue("localRotationStart"));
-                        vectorEnd = ConfigNode.ParseVector3(node.GetValue("localRotationEnd"));
-                    }
+                    vectorStart = ConfigNode.ParseVector3(node.GetValue("localRotationStart"));
+                    vectorEnd = ConfigNode.ParseVector3(node.GetValue("localRotationEnd"));
                 }
                 else
                 {
-                    if (reverse)
-                    {
-                        rotationEnd = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationStart")));
-                        rotationStart = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationEnd")));
-                    }
-                    else
-                    {
-                        rotationStart = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationStart")));
-                        rotationEnd = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationEnd")));
-                    }
+                    rotationStart = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationStart")));
+                    rotationEnd = Quaternion.Euler(ConfigNode.ParseVector3(node.GetValue("localRotationEnd")));
                 }
                 mode = Mode.Rotation;
             }
@@ -409,32 +335,16 @@ namespace JSI
             {
                 controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialPosition = controlledTransform.localPosition;
-                if (reverse)
-                {
-                    vectorEnd = ConfigNode.ParseVector3(node.GetValue("localTranslationStart"));
-                    vectorStart = ConfigNode.ParseVector3(node.GetValue("localTranslationEnd"));
-                }
-                else
-                {
-                    vectorStart = ConfigNode.ParseVector3(node.GetValue("localTranslationStart"));
-                    vectorEnd = ConfigNode.ParseVector3(node.GetValue("localTranslationEnd"));
-                }
+                vectorStart = ConfigNode.ParseVector3(node.GetValue("localTranslationStart"));
+                vectorEnd = ConfigNode.ParseVector3(node.GetValue("localTranslationEnd"));
                 mode = Mode.Translation;
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localScaleStart") && node.HasValue("localScaleEnd"))
             {
                 controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
                 initialScale = controlledTransform.localScale;
-                if (reverse)
-                {
-                    vectorEnd = ConfigNode.ParseVector3(node.GetValue("localScaleStart"));
-                    vectorStart = ConfigNode.ParseVector3(node.GetValue("localScaleEnd"));
-                }
-                else
-                {
-                    vectorStart = ConfigNode.ParseVector3(node.GetValue("localScaleStart"));
-                    vectorEnd = ConfigNode.ParseVector3(node.GetValue("localScaleEnd"));
-                }
+                vectorStart = ConfigNode.ParseVector3(node.GetValue("localScaleStart"));
+                vectorEnd = ConfigNode.ParseVector3(node.GetValue("localScaleEnd"));
                 mode = Mode.Scale;
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureShiftStart") && node.HasValue("textureShiftEnd"))
@@ -446,16 +356,9 @@ namespace JSI
                     textureLayer.Add(textureLayers[i].Trim());
                 }
 
-                if (reverse)
-                {
-                    textureShiftEnd = ConfigNode.ParseVector2(node.GetValue("textureShiftStart"));
-                    textureShiftStart = ConfigNode.ParseVector2(node.GetValue("textureShiftEnd"));
-                }
-                else
-                {
-                    textureShiftStart = ConfigNode.ParseVector2(node.GetValue("textureShiftStart"));
-                    textureShiftEnd = ConfigNode.ParseVector2(node.GetValue("textureShiftEnd"));
-                }
+                textureShiftStart = ConfigNode.ParseVector2(node.GetValue("textureShiftStart"));
+                textureShiftEnd = ConfigNode.ParseVector2(node.GetValue("textureShiftEnd"));
+
                 mode = Mode.TextureShift;
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureScaleStart") && node.HasValue("textureScaleEnd"))
@@ -467,21 +370,24 @@ namespace JSI
                     textureLayer.Add(textureLayers[i].Trim());
                 }
 
-                if (reverse)
-                {
-                    textureScaleEnd = ConfigNode.ParseVector2(node.GetValue("textureScaleStart"));
-                    textureScaleStart = ConfigNode.ParseVector2(node.GetValue("textureScaleEnd"));
-                }
-                else
-                {
-                    textureScaleStart = ConfigNode.ParseVector2(node.GetValue("textureScaleStart"));
-                    textureScaleEnd = ConfigNode.ParseVector2(node.GetValue("textureScaleEnd"));
-                }
+                textureScaleStart = ConfigNode.ParseVector2(node.GetValue("textureScaleStart"));
+                textureScaleEnd = ConfigNode.ParseVector2(node.GetValue("textureScaleEnd"));
+
                 mode = Mode.TextureScale;
             }
             else
             {
                 throw new ArgumentException("Cannot initiate any of the possible action modes.");
+            }
+
+            if (reverse)
+            {
+                JUtil.Swap(ref activeColor, ref passiveColor);
+                JUtil.Swap(ref vectorStart, ref vectorEnd);
+                JUtil.Swap(ref rotationStart, ref rotationEnd);
+                JUtil.Swap(ref textureShiftStart, ref textureShiftEnd);
+                JUtil.Swap(ref textureScaleStart, ref textureScaleEnd);
+                animationSpeed = -animationSpeed;
             }
         }
 
