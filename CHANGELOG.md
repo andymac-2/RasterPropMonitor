@@ -4,7 +4,7 @@ Discord support server: https://discord.gg/vBDzZAq3AF.
 
 Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c2074b56f78e56d115621effee30f9) when reporting issues.
 
-## Unreleased
+## 1.0.0.0 - 2024-09-13
 
 ### New Features
 
@@ -29,6 +29,7 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Fixed benign yet annoying error spew caused by prop batching system [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/91071da584632b60e7128702396e2ff20a375eff)
 - Fixed RPM_COLOROVERRIDE not working [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/3cd8e5caac36398ce5a5d1e43e5f428f9a36af3b)
 
+
 ## 0.31.13.4 - "Yet even more bug fixes" - 2023-11-10
 
 ### Changes
@@ -37,6 +38,7 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Fix navball rendering for non-square screens
 - Fix another case of garbled text
 - Improve science container menu page
+
 
 ## 0.31.13.3 - "Even more bug fixes" - 2023-09-21
 
@@ -50,6 +52,7 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 
 - MirageDev
 
+
 ## 0.31.13.2 - "Bug fixes" - 2023-05-22
 
 ### Changes
@@ -59,6 +62,7 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Add compatibility patches for Endurance mod, which is missing RPM computer modules
 - Fix a fatal bug when certain incorrectly configured props are installed (e.g. Warbirds cockpits)
 
+
 ## 0.31.13.1 - "Bug fixes" - 2023-05-15
 
 ### Changes
@@ -67,11 +71,13 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Fixed persistence issues introduced in 0.31.12.0
 - Added patches to add Rashttps://github.com/FirstPersonKSP/RasterPropMonitor/releases/tag/v0.31.13.4terPropMonitorComputer modules to SSPX parts that are missing them
 
+
 ## 0.31.13.0 - "Performance improvements" - 2023-05-12
 
 ### Changes
 
 - Prop models can be batched into larger meshes that can be drawn at once for improved performance
+
 
 ## 0.31.12.0 - "More bug fixes" - 2023-05-05
 
@@ -86,9 +92,10 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Remove genericSpace3 patch as it interferes with MAS and ModularLaunchPads
 - Rebuilt variable persistence system so it makes more sense (note Reviva still interferes with this)
 
+
 ## 0.31.11.1 - 2023-02-26
 
-### WARNING
+### Warning
 
 Some props that were previously part of RPM have been moved to ASET Consolidated Props Pack. If you are using IVAs that use those props, you'll need to make sure to switch to that version. If you're using CKAN, simply update RPM and ASET Props and you're good to go.
 
@@ -99,9 +106,10 @@ Some props that were previously part of RPM have been moved to ASET Consolidated
 - Fix navball markers being visible when they shouldn't
 - Add support for switchable labels to preserve the selected index
 
+
 ## 0.31.11.0 - "Bugfixes, performance, ASET Consolidated" - 2023-02-15
 
-### WARNING
+### Warning
 
 Some props that were previously part of RPM have been moved to ASET Consolidated Props Pack. If you are using IVAs that use those props, you'll need to make sure to switch to that version. If you're using CKAN, simply update RPM and ASET Props and you're good to go.
 
@@ -118,6 +126,7 @@ Some props that were previously part of RPM have been moved to ASET Consolidated
 - Fixed terminal velocity readout flickering to NaN on the launchpad
 - Optimized navball page rendering
 
+
 ## 0.31.10.3 - 2023-02-06
 
 ### Changes
@@ -132,12 +141,14 @@ Some props that were previously part of RPM have been moved to ASET Consolidated
 - Remove obsolete patches for stock parts that would cause harmless errors in the log
 - Prep for moving some of the custom ASET-derived parts into ASET itself
 
+
 ## 0.31.10.2 - 2023-02-01
 
 ### Changes
 
 - Fixed a crash when using external cameras in VR
 - Code support to allow interacting with props when moving to other parts with FreeIva
+
 
 ## 0.31.10.1 - 2023-01-19
 
@@ -146,12 +157,14 @@ Some props that were previously part of RPM have been moved to ASET Consolidated
 - Fixed missing camera part when using Restock
 - Massive performance improvements
 
-## 0.31.10 - 2023-01-18 [Pre-release]
+
+## 0.31.10 - 2023-01-18 [PRE-RELEASE]
 
 ### Changes
 
 - Fixed missing camera part when using Restock
 - Massive performance improvements
+
 
 ## 0.31.9 - 2022-10-17
 
@@ -161,6 +174,7 @@ This update has no new features, but should improve performance.
 
 - Moved MFD rendering to LateUpdate
 - Reducing some temporary allocations that contribute to GC pressure
+
 
 ## 0.31.8 - 2022-10-08
 
@@ -192,12 +206,14 @@ This update has no new features, but should improve performance.
 - linuxgurugamer
 - k-dueb
 
+
 ## 0.31.7 - 2022-06-14
 
 ### Changes
 
 - Fix a race condition during loading that could result in purple textures and a non-functioning IVA
 - JSIActionGroupSwitch can now control multiple internal lights, separated by a | character
+
 
 ## 0.31.6 - 2022-01-15
 
@@ -211,6 +227,7 @@ This update has no new features, but should improve performance.
   "Warp to Next" button will warp to the next maneuver node, SOI change, PE, or AP depending on context
 - Added an example patch for DE_IVAExtensions to put timewarp buttons in the IVA
 
+
 ## 0.31.5 - 2021-09-06
 
 ### Changes
@@ -222,6 +239,7 @@ This update has no new features, but should improve performance.
 - Fix radial in/out swapping on SAS mode buttons
 - Fix Mechjeb integration with latest MJ version
 
+
 ## 0.31.4 - 2020-07-12
 
 Remove dependencies on flight UI elements, because they no longer update when not visible in KSP 1.10. Specifically this fixes navball orientation and atmosphere depth gauge when in IVA, and any variables derived from those inputs.
@@ -230,11 +248,13 @@ This same release is likely compatible with KSP 1.8.x and 1.9.x, but I have not 
 
 Many thanks to Manul and Zorkinian on the KSP forums for pinpointing the root cause!
 
+
 ## 0.31.3 - 2020-02-23
 
 ### Changes
 
 - Updated external camera code for the new camera system in 1.9. This is on a runtime switch so this release is compatible with 1.8 and opengl in 1.9.
+
 
 ## 0.31.2 - 2020-01-22
 
@@ -252,6 +272,7 @@ Many thanks to Manul and Zorkinian on the KSP forums for pinpointing the root ca
 - External camera pages default to skip missing cameras, so the ALCOR MFD landing page will start on ExtCam1 if it exists
 - Move variable handler for plugins before builtins like it says in the docs
 - Fix line drawing on NAV pages due to broken shader reference in scansat
+
 
 ## 0.31.0 - 2019-12-29
 
