@@ -253,19 +253,30 @@ namespace JSI
         {
             m_persistentVariables.Load(node);
 
-            foreach (var overrideColorSetup in node.GetNodes("RPM_COLOROVERRIDE"))
+            if (HighLogic.LoadedScene == GameScenes.LOADING)
             {
-                foreach (var colorConfig in overrideColorSetup.GetNodes("COLORDEFINITION"))
+                foreach (var overrideColorSetup in node.GetNodes("RPM_COLOROVERRIDE"))
                 {
-                    string name = colorConfig.GetValue("name");
-                    Color32 color = default(Color);
-                    
-                    if (name != null && colorConfig.TryGetValue("color", ref color))
+                    foreach (var colorConfig in overrideColorSetup.GetNodes("COLORDEFINITION"))
                     {
-                        name = "COLOR_" + name.Trim();
+                        string name = colorConfig.GetValue("name");
+                        Color32 color = default(Color);
 
-                        overrideColors[name] = color;
+                        if (name != null && colorConfig.TryGetValue("color", ref color))
+                        {
+                            name = "COLOR_" + name.Trim();
+
+                            overrideColors[name] = color;
+                        }
                     }
+                }
+            }
+            else if (HighLogic.LoadedSceneIsFlight)
+            {
+                var modulePrefab = part.partInfo.partPrefab.FindModuleImplementing<RasterPropMonitorComputer>();
+                if (modulePrefab != null)
+                {
+                    overrideColors = modulePrefab.overrideColors;
                 }
             }
         }
