@@ -12,6 +12,10 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - JSINumericInput can now take a variable as its increment term (thanks MirageDev) [PR](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/11a01f13b910394fcb05463403dae97a6e0d57de)
 - Added `PROPELLANTR_` variables to access the resources that are in use by engines on the vessel [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/f1261464100e22819835382624b3afc9b7b1384b)
 - `AGMEMO` system is less sensitive to whitespace [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/e343c57adb4dadcefbc753c8623419c29b08ca88)
+- Increased pitch bounds for all stock cockpits and pods [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/f0d592d0df828d7278d07038b8bfe8e3535d7de1)
+- Improved performance by removing modules that become useless due to prop batching [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/91071da584632b60e7128702396e2ff20a375eff)
+- Improved performance by doing more cfg parsing in OnLoad instead of Start [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/91071da584632b60e7128702396e2ff20a375eff)
+- Improved performance by removing props entirely if they have no InternalModules [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/7c714fa59750e600c183e6e03ef61b8aae8a56a0)
 
 ### Bug Fixes
 
@@ -22,6 +26,8 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 - Add overlay depth masks to remade stock internals [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/7771d9481dcf348cfafe3d63de8783177cdbbf02)
 - Fix looping shutter animation in ALCOR pod caused by multiple animation clips on the same object [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/958720c1d9ad2145cacf5f5098d8984682f5e00e)
 - Fix black outline around text when using deferred rendering (thanks LGhassen) [PR](https://github.com/FirstPersonKSP/RasterPropMonitor/pull/136)
+- Fixed benign yet annoying error spew caused by prop batching system [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/91071da584632b60e7128702396e2ff20a375eff)
+- Fixed RPM_COLOROVERRIDE not working [commit](https://github.com/FirstPersonKSP/RasterPropMonitor/commit/3cd8e5caac36398ce5a5d1e43e5f428f9a36af3b)
 
 ## 0.31.13.4 - "Yet even more bug fixes" - 2023-11-10
 
