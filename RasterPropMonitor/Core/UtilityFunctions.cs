@@ -1582,6 +1582,16 @@ namespace JSI
             }
         }
 
+        internal static Transform FindPropTransformOrThrow(InternalProp prop, string nameOrPath)
+        {
+            Transform result = FindPropTransform(prop, nameOrPath);
+            if (result == null)
+            {
+                throw new ArgumentException($"could not find transform '{nameOrPath}' in prop {prop.propName}");
+            }
+            return result;
+        }
+
         internal static Transform FindInternalTransform(InternalModel model, string nameOrPath)
         {
             if (nameOrPath.IndexOf('/') == -1)

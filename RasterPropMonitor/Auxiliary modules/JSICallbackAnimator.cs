@@ -289,7 +289,6 @@ namespace JSI
             }
 
             animationName = node.GetValue(nameof(animationName));
-            string controlledTransformName = node.GetValue("KcontrolledTransform");
 
             if (animationName != null)
             {
@@ -316,7 +315,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localRotationStart") && node.HasValue("localRotationEnd"))
             {
-                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransformOrThrow(thisProp, node.GetValue("controlledTransform").Trim());
                 initialRotation = controlledTransform.localRotation;
                 if (node.HasValue("longPath"))
                 {
@@ -333,7 +332,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localTranslationStart") && node.HasValue("localTranslationEnd"))
             {
-                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransformOrThrow(thisProp, node.GetValue("controlledTransform").Trim());
                 initialPosition = controlledTransform.localPosition;
                 vectorStart = ConfigNode.ParseVector3(node.GetValue("localTranslationStart"));
                 vectorEnd = ConfigNode.ParseVector3(node.GetValue("localTranslationEnd"));
@@ -341,7 +340,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("localScaleStart") && node.HasValue("localScaleEnd"))
             {
-                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransformOrThrow(thisProp, node.GetValue("controlledTransform").Trim());
                 initialScale = controlledTransform.localScale;
                 vectorStart = ConfigNode.ParseVector3(node.GetValue("localScaleStart"));
                 vectorEnd = ConfigNode.ParseVector3(node.GetValue("localScaleEnd"));
@@ -349,7 +348,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureShiftStart") && node.HasValue("textureShiftEnd"))
             {
-                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransformOrThrow(thisProp, node.GetValue("controlledTransform").Trim());
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
@@ -363,7 +362,7 @@ namespace JSI
             }
             else if (node.HasValue("controlledTransform") && node.HasValue("textureLayers") && node.HasValue("textureScaleStart") && node.HasValue("textureScaleEnd"))
             {
-                controlledTransform = JUtil.FindPropTransform(thisProp, node.GetValue("controlledTransform").Trim());
+                controlledTransform = JUtil.FindPropTransformOrThrow(thisProp, node.GetValue("controlledTransform").Trim());
                 var textureLayers = node.GetValue("textureLayers").Split(',');
                 for (int i = 0; i < textureLayers.Length; ++i)
                 {
