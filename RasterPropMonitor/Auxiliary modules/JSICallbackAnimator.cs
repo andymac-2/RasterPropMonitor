@@ -48,15 +48,16 @@ namespace JSI
 
             for (int i = 0; i < variableNodes.Length; i++)
             {
+                var variableSet = gameObject.AddComponent<CallbackAnimationSet>();
                 try
                 {
-                    var variableSet = gameObject.AddComponent<CallbackAnimationSet>();
                     variableSet.Load(variableNodes[i], internalProp);
                     variableSets.Add(variableSet);
                 }
-                catch (ArgumentException e)
+                catch (Exception e)
                 {
-                    JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propID);
+                    JUtil.LogErrorMessage(this, "Error in building prop number {1} - {0}", e.Message, internalProp.propName);
+                    Component.Destroy(variableSet);
                 }
             }
         }
@@ -100,7 +101,7 @@ namespace JSI
                 rpmComp.RemoveInternalModule(this);
                 JUtil.LogMessage(this, "Configuration complete in prop {1} ({2}), supporting {0} callback animators.", variableSets.Count, internalProp.propID, internalProp.propName);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 JUtil.LogErrorMessage(this, $"{internalProp.propName} - {internalProp.propID} - {variableName} - {internalModel?.internalName} - {ex}");
                 JUtil.AnnoyUser(this);
