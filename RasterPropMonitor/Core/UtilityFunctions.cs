@@ -1357,12 +1357,19 @@ namespace JSI
 
         public static string UnMangleConfigText(this string input)
         {
-            return input.Replace("<=", "{").Replace("=>", "}").Replace("$$$", Environment.NewLine);
+            return input
+                .Replace("<=", "{")
+                .Replace("=>", "}")
+                .Replace("$$$", Environment.NewLine);
         }
 
         public static string MangleConfigText(this string input)
         {
-            return input.Replace("{", "<=").Replace("}", "=>").Replace(Environment.NewLine, "$$$");
+            return input
+                .Replace("{", "<=")
+                .Replace("}", "=>")
+                .Replace("\n", "$$$")
+                .Replace("\r", string.Empty);
         }
 
         public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>

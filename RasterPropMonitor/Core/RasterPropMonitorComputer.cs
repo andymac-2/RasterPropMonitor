@@ -392,11 +392,11 @@ namespace JSI
                 string[] descriptionStrings = vesselDescription.UnMangleConfigText().Split(JUtil.LineSeparator, StringSplitOptions.None);
                 for (int i = 0; i < descriptionStrings.Length; i++)
                 {
-                    var matches = x_agmemoRegex.Matches(descriptionStrings[i]);
-                    if (matches.Count == 2 && uint.TryParse(matches[0].Value, out uint groupID) && groupID < actionGroupMemo.Length)
+                    var match = x_agmemoRegex.Match(descriptionStrings[i]);
+                    if (match.Success && match.Groups.Count == 3 && uint.TryParse(match.Groups[1].Value, out uint groupID) && groupID < actionGroupMemo.Length)
                     {
                         descriptionStrings[i] = string.Empty;
-                        actionGroupMemo[groupID] = matches[1].Value;
+                        actionGroupMemo[groupID] = match.Groups[2].Value;
                     }
                 }
 
