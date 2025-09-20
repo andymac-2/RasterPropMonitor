@@ -6,6 +6,8 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 
 ## Unreleased
 
+- Fix fallback evaluators for lift, drag, and terminal velocity when FAR is not installed (thanks @KlyithSA)
+- Add RPMComputer modules to a few B9 Aerospace parts that were missing them
 - Disabled some propbatching when MAS is installed because it interferes with their patches
 
 ## 1.0.2 - 2024-09-24
