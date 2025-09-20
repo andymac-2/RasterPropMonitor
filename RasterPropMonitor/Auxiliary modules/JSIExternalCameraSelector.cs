@@ -117,6 +117,13 @@ namespace JSI
 
             // Create the camera transform
             Transform containingTransform = part.FindModelTransform(cameraContainer);
+
+            if (containingTransform == null)
+            {
+                JUtil.LogErrorMessage(this, "No transform named {0} on part {1}", cameraContainer, part.partInfo.name);
+                return;
+            }
+
             if (containingTransform.childCount > 0)
             {
                 actualCamera = containingTransform.GetChild(0);
