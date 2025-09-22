@@ -172,6 +172,7 @@ namespace JSI
                 }
 
                 farFound = true;
+                IJSIModule.RegisterModule(typeof(JSIFAR));
             }
             catch (Exception e)
             {
@@ -181,9 +182,8 @@ namespace JSI
 
         }
 
-        public JSIFAR(Vessel myVessel)
+        public JSIFAR(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
             JUtil.LogMessage(this, "A supported version of FAR is {0}", (farFound) ? "present" : "not available");
         }
 

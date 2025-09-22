@@ -223,11 +223,11 @@ namespace JSI
             }
 
             paFound = true;
+            IJSIModule.RegisterModule(typeof(JSIPilotAssistant));
         }
 
-        public JSIPilotAssistant(Vessel myVessel)
+        public JSIPilotAssistant(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
             JUtil.LogMessage(this, "A supported version of Pilot Assistant is {0}", (paFound) ? "present" : "not available");
         }
 

@@ -55,6 +55,8 @@ namespace JSI
 
         static JSIParachute()
         {
+            IJSIModule.RegisterModule(typeof(JSIParachute));
+
             try
             {
                 Type rcMRC = null;
@@ -156,9 +158,8 @@ namespace JSI
             }
         }
 
-        public JSIParachute(Vessel myVessel)
+        public JSIParachute(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
             JUtil.LogMessage(this, "A supported version of RealChute is {0}", (rcFound) ? "present" : "not available");
         }
 

@@ -36,9 +36,8 @@ namespace JSI
     /// </summary>
     public class JSIInternalRPMButtons : IJSIModule
     {
-        public JSIInternalRPMButtons(Vessel myVessel)
+        public JSIInternalRPMButtons(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
         }
 
         /// <summary>
