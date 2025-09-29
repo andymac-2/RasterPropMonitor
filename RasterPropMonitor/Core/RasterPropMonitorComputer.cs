@@ -22,8 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.Diagnostics;
-using UnityEngine.Profiling;
 
 namespace JSI
 {
@@ -32,6 +30,11 @@ namespace JSI
     // onCrewBoardVessel
     // onCrewOnEva
     // onCrewTransferred
+
+    /// <summary>
+    /// The computer for the pod. This class can be used for shared data across
+    /// different screens in the same pod.
+    /// </summary>
     public partial class RasterPropMonitorComputer : PartModule
     {
         // The only public configuration variable.
@@ -94,7 +97,6 @@ namespace JSI
         // Data refresh
         private int dataUpdateCountdown;
         private int refreshDataRate = 60;
-        private bool timeToUpdate = false;
 
         // Diagnostics
         private int debug_fixedUpdates = 0;
@@ -310,10 +312,6 @@ namespace JSI
         {
             sideSlipEvaluator = null;
             angleOfAttackEvaluator = null;
-
-            //forceCallbackRefresh = true;
-            //variableCache.Clear();
-            timeToUpdate = true;
         }
 
         // provide a way for internal modules to remove themselves temporarily from InternalProps
@@ -528,8 +526,6 @@ namespace JSI
 
             ++debug_fixedUpdates;
 
-            timeToUpdate = false;
-
             Vessel v = vessel;
             for (int i = 0; i < activeTriggeredEvents.Count; ++i)
             {
@@ -563,7 +559,6 @@ namespace JSI
                     if (--dataUpdateCountdown < 0)
                     {
                         dataUpdateCountdown = refreshDataRate;
-                        timeToUpdate = true;
                         UpdateVariables();
                     }
                 }

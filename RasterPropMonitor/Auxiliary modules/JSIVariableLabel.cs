@@ -190,7 +190,7 @@ namespace JSI
 
             if (UpdateCheck())
             {
-                textObj.text.text = StringProcessor.ProcessString(spf, rpmComp);
+                textObj.text.text = spf.GetFormattedString();
                 oneshotComplete = true;
             }
         }

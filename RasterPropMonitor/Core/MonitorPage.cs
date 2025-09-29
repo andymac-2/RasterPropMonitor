@@ -22,7 +22,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
 
 namespace JSI
@@ -80,7 +79,7 @@ namespace JSI
         private readonly MonoBehaviour backgroundHandlerModule, pageHandlerModule;
         private readonly List<string> techsRequired = new List<string>();
         private readonly string fallbackPageName = string.Empty;
-
+        private readonly PatchSelector patchSelector;
 
         private struct HandlerSupportMethods
         {
@@ -136,7 +135,7 @@ namespace JSI
                         allTextConstant = true;
                         for (int i = 0; i < linesArray.Length; ++i)
                         {
-                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
+                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp, ourMonitor);
 
                             outputLines[i] = spf[i].cachedResult;
 
@@ -156,7 +155,7 @@ namespace JSI
                         {
                             if (spf[i] != null)
                             {
-                                outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
+                                outputLines[i] = spf[i].GetFormattedString();
                             }
                         }
                     }
@@ -433,6 +432,13 @@ namespace JSI
                 }
             }
 
+            if (node.HasNode("PATCHSELECTOR"))
+            {
+                foreach (ConfigNode patchSelectorNode in node.GetNodes("PATCHSELECTOR"))
+                {
+                    patchSelector = new PatchSelector(ourMonitor, patchSelectorNode);
+                }
+            }
         }
 
         private static MethodInfo InstantiateHandler(ConfigNode node, RasterPropMonitor ourMonitor, out MonoBehaviour moduleInstance, out HandlerSupportMethods support)
@@ -593,6 +599,11 @@ namespace JSI
                     }
                 }
 
+                if (thatModule is IPageElement pageElement)
+                {
+                    pageElement.HandlePageCreate(ourMonitor);
+                }
+
                 moduleInstance = thatModule;
                 foreach (MethodInfo m in thatModule.GetType().GetMethods())
                 {
@@ -626,17 +637,27 @@ namespace JSI
             {
                 return false;
             }
+
             bool actionTaken = false;
+
             if (pageHandlerS.buttonClick != null)
             {
                 pageHandlerS.buttonClick(buttonID);
                 actionTaken = true;
             }
+
             if (backgroundHandlerS.buttonClick != null && pageHandlerS.buttonClick != backgroundHandlerS.buttonClick)
             {
                 backgroundHandlerS.buttonClick(buttonID);
                 actionTaken = true;
             }
+
+            if (patchSelector != null)
+            {
+                patchSelector.HandleButtonPress(buttonID);
+                actionTaken = true;
+            }
+
             return actionTaken;
         }
 

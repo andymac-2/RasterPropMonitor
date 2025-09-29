@@ -27,6 +27,12 @@ using UnityEngine.Profiling;
 
 namespace JSI
 {
+    /// <summary>
+    /// A class that represents an individual Raster Prop Monitor display.
+    /// See also RasterPropMonitorComputer which contains data for all displays
+    /// in a pod, and RPMVesselComputer which represents all displays in a
+    /// vessel
+    /// </summary>
     public class RasterPropMonitor : InternalModule
     {
         [SerializeReference] ConfigNodeHolder moduleConfig;
@@ -71,11 +77,10 @@ namespace JSI
         [KSPField]
         public string resourceName = "SYSR_ELECTRICCHARGE";
         private bool resourceDepleted = false; // Managed by rpmComp callback
-        private Action<bool> delResourceCallback;
         [KSPField]
         public bool needsCommConnection = false;
         private bool noCommConnection = false; // Managed by rpmComp callback
-        private Action<float> delCommConnectionCallback;
+
         [KSPField]
         public string defaultFontTint = string.Empty;
         public Color defaultFontTintValue = Color.white;
@@ -107,6 +112,7 @@ namespace JSI
         private bool startupComplete;
         private string fontDefinitionString = @" !""#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~Δ☊¡¢£¤¥¦§¨©ª«¬☋®¯°±²³´µ¶·¸¹º»¼½¾¿";
         private RasterPropMonitorComputer rpmComp;
+        private int selectedPatchIndex;
 
         private static Texture2D LoadFont(object caller, InternalProp thisProp, string location)
         {
@@ -273,14 +279,12 @@ namespace JSI
 
                 if (needsElectricCharge)
                 {
-                    delResourceCallback = (Action<bool>)Delegate.CreateDelegate(typeof(Action<bool>), this, "ResourceDepletedCallback");
-                    rpmComp.RegisterResourceCallback(resourceName, delResourceCallback);
+                    rpmComp.RegisterResourceCallback(resourceName, ResourceDepletedCallback);
                 }
 
                 if (needsCommConnection)
                 {
-                    delCommConnectionCallback = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "CommConnectionCallback");
-                    rpmComp.RegisterVariableCallback("COMMNETVESSELCONTROLSTATE", delCommConnectionCallback);
+                    rpmComp.RegisterVariableCallback("COMMNETVESSELCONTROLSTATE", CommConnectionCallback);
                 }
 
                 // And if the try block never completed, startupComplete will never be true.
@@ -314,14 +318,246 @@ namespace JSI
             {
                 Destroy(screenMat);
             }
-            if (delResourceCallback != null)
+            rpmComp.UnregisterResourceCallback(resourceName, ResourceDepletedCallback);
+            rpmComp.UnregisterVariableCallback("COMMNETVESSELCONTROLSTATE", CommConnectionCallback);
+        }
+
+        /// <summary>
+        /// Find the selected orbital patch. A patch is selected if we are
+        /// looking at it.
+        /// </summary>
+        /// <returns>
+        /// 1. The count of the patch. 0 for current orbit, 1 for next SOI, and
+        ///     so on
+        /// 2. The orbit object that represents the patch.
+        /// </returns>
+        internal (int, Orbit) GetSelectedPatch()
+        {
+            return EffectivePatch(selectedPatchIndex);
+        }
+
+        private Orbit GetSelectedPatchOrbit()
+        {
+            (int _, Orbit patch) = GetSelectedPatch();
+            return patch;
+        }
+
+        internal (int, Orbit) GetLastPatch()
+        {
+            return EffectivePatch(1000);
+        }
+        internal void SelectNextPatch()
+        {
+            (int effectivePatchIndex, _) = GetSelectedPatch();
+            SelectPatch(effectivePatchIndex + 1);
+        }
+
+        internal void SelectPreviousPatch()
+        {
+            (int effectivePatchIndex, _) = GetSelectedPatch();
+            SelectPatch(effectivePatchIndex - 1);
+        }
+
+        internal void SelectPatch(int patchIndex)
+        {
+            (int effectivePatchIndex, _) = EffectivePatch(patchIndex);
+            selectedPatchIndex = effectivePatchIndex;
+        }
+
+        internal IVariable GetVariable(string variableName)
+        {
+            if (variableName == "MONITOR_LOCAL_PATCH_INDEX")
             {
-                rpmComp.UnregisterResourceCallback(resourceName, delResourceCallback);
+                return new GenericVariable(() =>
+                {
+                    (int index, Orbit _) = GetSelectedPatch();
+                    return index + 1;
+                });
             }
-            if (delCommConnectionCallback != null)
+            if (variableName == "MONITOR_LOCAL_PATCH_COUNT")
             {
-                rpmComp.UnregisterVariableCallback("COMMNETVESSELCONTROLSTATE", delCommConnectionCallback);
+                return new GenericVariable(() =>
+                {
+                    (int index, Orbit _) = GetLastPatch();
+                    return index + 1;
+                });
             }
+            if (variableName == "MONITOR_LOCAL_PATCH_ALTITUDE")
+            {
+                return new GenericVariable(() => GetSelectedPatchOrbit().referenceBody.GetAltitude(vessel.CoM));
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ORBTSPEED")
+            {
+                return new GenericVariable(() => GetSelectedPatchOrbit().GetVel().magnitude);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_APOAPSIS")
+            {
+                return new GenericVariable(() => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().ApA : double.NaN);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_PERIAPSIS")
+            {
+                return new GenericVariable(() => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().PeA : double.NaN);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_INCLINATION")
+            {
+                return new GenericVariable(() => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().inclination : double.NaN);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ECCENTRICITY")
+            {
+                return new GenericVariable(() => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().eccentricity : double.NaN);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_TIMETOAPSECS")
+            {
+                return new GenericVariable(() =>
+                {
+                    if (!JUtil.OrbitMakesSense(vessel)) return double.NaN;
+                    Orbit patch = GetSelectedPatchOrbit();
+                    // When the tracking station is not upgraded, StartUT will not be updated to the current time.
+                    if (patch.StartUT == 0.0) return patch.timeToAp;
+                    return patch.timeToAp + patch.StartUT - Planetarium.GetUniversalTime();
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_TIMETOPESECS")
+            {
+                return new GenericVariable(() =>
+                {
+                    if (!JUtil.OrbitMakesSense(vessel)) return double.NaN;
+                    Orbit patch = GetSelectedPatchOrbit();
+                    // When the tracking station is not upgraded, StartUT will not be updated to the current time.
+                    if (patch.StartUT == 0.0) return patch.timeToPe;
+                    return patch.timeToPe + patch.StartUT - Planetarium.GetUniversalTime();
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ORBPERIODSECS")
+            {
+                return new GenericVariable(() => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().period : double.NaN);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ORBITBODY")
+            {
+                return new GenericVariable(() => GetSelectedPatchOrbit().referenceBody.name);
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_TIMETOANEQUATORIAL")
+            {
+                return new GenericVariable(() =>
+                {
+                    Orbit patch = GetSelectedPatchOrbit();
+                    if (!JUtil.OrbitMakesSense(vessel) || !patch.AscendingNodeEquatorialExists())
+                    {
+                        return double.NaN;
+                    }
+                    return patch.TimeOfAscendingNodeEquatorial(Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_TIMETODNEQUATORIAL")
+            {
+                return new GenericVariable(() =>
+                {
+                    Orbit patch = GetSelectedPatchOrbit();
+                    if (!JUtil.OrbitMakesSense(vessel) || !patch.DescendingNodeEquatorialExists())
+                    {
+                        return double.NaN;
+                    }
+                    return patch.TimeOfDescendingNodeEquatorial(Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_FIRST")
+            {
+                return new GenericVariable(() =>
+                {
+                    (int index, Orbit _) = GetSelectedPatch();
+                    return index == 0 ? 1.0d : 0.0d;
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_LAST")
+            {
+                return new GenericVariable(() =>
+                {
+                    (int selected, Orbit _) = GetSelectedPatch();
+                    (int last, Orbit _) = GetLastPatch();
+                    return selected == last ? 1.0d : 0.0d;
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_NEXTAPSISTYPE")
+            {
+                return new GenericVariable(() =>
+                {
+                    Orbit patch = GetSelectedPatchOrbit();
+                    if (patch.eccentricity < 1.0)
+                    {
+                        // Which one will we reach first?
+                        return (patch.timeToPe < patch.timeToAp) ? -1.0 : 1.0;
+                    }
+
+                    // Ship is hyperbolic.  There is no Ap.  Have we already
+                    // passed Pe?
+                    return (patch.timeToPe > 0.0) ? -1.0 : 0.0;
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_NEXT_ANDN_EQUATORIAL")
+            {
+                return new GenericVariable(() =>
+                {
+                    Orbit patch = GetSelectedPatchOrbit();
+                    double universalTime = Planetarium.GetUniversalTime();
+                    if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+
+                    double dnTime = patch.DescendingNodeEquatorialExists() ? patch.TimeOfDescendingNodeEquatorial(universalTime) : double.NaN;
+                    double anTime = patch.AscendingNodeEquatorialExists() ? patch.TimeOfAscendingNodeEquatorial(universalTime) : double.NaN;
+
+                    if (double.IsNaN(anTime)) return -1.0;
+                    if (double.IsNaN(dnTime)) return 1.0;
+                    return Math.Max(0.0, anTime) < Math.Max(dnTime, 0.0) ? 1.0 : -1.0;
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ENCOUNTEREXISTS")
+            {
+                return new GenericVariable(() =>
+                {
+                    if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+                    Orbit patch = GetSelectedPatchOrbit();
+                    switch (patch.patchEndTransition)
+                    {
+                        case Orbit.PatchTransitionType.ESCAPE:
+                            return -1d;
+                        case Orbit.PatchTransitionType.ENCOUNTER:
+                            return 1d;
+                        default:
+                            return 0.0d;
+                    }
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ENCOUNTERTIME")
+            {
+                return new GenericVariable(() =>
+                {
+                    if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+                    Orbit patch = GetSelectedPatchOrbit();
+                    if (patch.patchEndTransition == Orbit.PatchTransitionType.ENCOUNTER ||
+                        patch.patchEndTransition == Orbit.PatchTransitionType.ESCAPE)
+                    {
+                        return patch.UTsoi - Planetarium.GetUniversalTime();
+                    }
+                    return 0.0;
+                });
+            }
+            if (variableName == "MONITOR_LOCAL_PATCH_ENCOUNTERBODY")
+            {
+                return new GenericVariable(() =>
+                {
+                    if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+                    Orbit patch = GetSelectedPatchOrbit();
+                    switch (patch.patchEndTransition)
+                    {
+                        case Orbit.PatchTransitionType.ENCOUNTER:
+                            return patch.nextPatch.referenceBody.bodyName;
+                        case Orbit.PatchTransitionType.ESCAPE:
+                            return patch.referenceBody.bodyName;
+                    }
+                    return string.Empty;
+                });
+            }
+
+            return null;
         }
 
         private static void PlayClickSound(FXGroup audioOutput)
@@ -609,6 +845,26 @@ namespace JSI
             {
                 noCommConnection = false;
             }
+        }
+
+        /// <summary>
+        /// Returns the orbit (patch) and orbit index given a selection.
+        /// </summary>
+        /// <returns>true if it's time to update things</returns>
+        private (int, Orbit) EffectivePatch(int patchIndex)
+        {
+            Orbit patch = vessel.orbit;
+            int effectivePatchIndex = 0;
+            while (effectivePatchIndex < patchIndex
+                && patch.nextPatch != null
+                && patch.nextPatch.activePatch
+                && (patch.patchEndTransition == Orbit.PatchTransitionType.ENCOUNTER || patch.patchEndTransition == Orbit.PatchTransitionType.ESCAPE))
+            {
+                patch = patch.nextPatch;
+                effectivePatchIndex++;
+            }
+
+            return (effectivePatchIndex, patch);
         }
     }
 }
