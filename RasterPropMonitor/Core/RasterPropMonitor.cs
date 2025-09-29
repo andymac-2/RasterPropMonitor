@@ -71,11 +71,9 @@ namespace JSI
         [KSPField]
         public string resourceName = "SYSR_ELECTRICCHARGE";
         private bool resourceDepleted = false; // Managed by rpmComp callback
-        private Action<bool> delResourceCallback;
         [KSPField]
         public bool needsCommConnection = false;
         private bool noCommConnection = false; // Managed by rpmComp callback
-        private Action<float> delCommConnectionCallback;
         [KSPField]
         public string defaultFontTint = string.Empty;
         public Color defaultFontTintValue = Color.white;
@@ -273,14 +271,12 @@ namespace JSI
 
                 if (needsElectricCharge)
                 {
-                    delResourceCallback = (Action<bool>)Delegate.CreateDelegate(typeof(Action<bool>), this, "ResourceDepletedCallback");
-                    rpmComp.RegisterResourceCallback(resourceName, delResourceCallback);
+                    rpmComp.RegisterResourceCallback(resourceName, ResourceDepletedCallback);
                 }
 
                 if (needsCommConnection)
                 {
-                    delCommConnectionCallback = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), this, "CommConnectionCallback");
-                    rpmComp.RegisterVariableCallback("COMMNETVESSELCONTROLSTATE", delCommConnectionCallback);
+                    rpmComp.RegisterVariableCallback("COMMNETVESSELCONTROLSTATE", CommConnectionCallback);
                 }
 
                 // And if the try block never completed, startupComplete will never be true.
@@ -314,14 +310,8 @@ namespace JSI
             {
                 Destroy(screenMat);
             }
-            if (delResourceCallback != null)
-            {
-                rpmComp.UnregisterResourceCallback(resourceName, delResourceCallback);
-            }
-            if (delCommConnectionCallback != null)
-            {
-                rpmComp.UnregisterVariableCallback("COMMNETVESSELCONTROLSTATE", delCommConnectionCallback);
-            }
+            rpmComp.UnregisterResourceCallback(resourceName, ResourceDepletedCallback);
+            rpmComp.UnregisterVariableCallback("COMMNETVESSELCONTROLSTATE", CommConnectionCallback);
         }
 
         private static void PlayClickSound(FXGroup audioOutput)
