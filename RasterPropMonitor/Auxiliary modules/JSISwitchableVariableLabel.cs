@@ -190,7 +190,7 @@ namespace JSI
         {
             if (UpdateCheck())
             {
-                textObj.text.text = StringProcessor.ProcessString(labelsEx[activeLabel].label, rpmComp);
+                textObj.text.text = labelsEx[activeLabel].label.GetFormattedString();
 
                 if (labelsEx[activeLabel].oneShot)
                 {
@@ -232,7 +232,7 @@ namespace JSI
 
             if (labelsEx[activeLabel].hasText)
             {
-                textObj.text.text = StringProcessor.ProcessString(labelsEx[activeLabel].label, rpmComp);
+                textObj.text.text = labelsEx[activeLabel].label.GetFormattedString();
             }
 
             // Force an update.

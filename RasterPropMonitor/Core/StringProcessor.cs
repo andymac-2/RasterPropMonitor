@@ -25,6 +25,8 @@ namespace JSI
 {
     public class StringProcessorFormatter
     {
+        internal static readonly SIFormatProvider fp = new SIFormatProvider();
+
         // The formatString or plain text (if usesComp is false).
         private readonly string formatString;
         // An array of source variables
@@ -69,7 +71,7 @@ namespace JSI
                         sourceValues[i] = sourceVariables[i].Get();
                     }
 
-                    cachedResult = string.Format(StringProcessor.fp, formatString, sourceValues);
+                    cachedResult = string.Format(fp, formatString, sourceValues);
 
                     // if every variable is a constant, we can run the format once and cache the result
                     if (allVariablesConstant)
@@ -116,27 +118,14 @@ namespace JSI
             return anyChanged;
         }
 
-        public string Get()
+        public string GetFormattedString()
         {
             if (UpdateValues())
             {
-                cachedResult = string.Format(StringProcessor.fp, formatString, sourceValues);
+                cachedResult = string.Format(fp, formatString, sourceValues);
             }
 
             return cachedResult;
-        }
-    }
-
-    public static class StringProcessor
-    {
-        internal static readonly SIFormatProvider fp = new SIFormatProvider();
-
-        public static string ProcessString(StringProcessorFormatter formatter, RasterPropMonitorComputer rpmComp)
-        {
-            Profiler.BeginSample("ProcessString_cached");
-            string result = formatter.Get();
-            Profiler.EndSample();
-            return result;
         }
     }
 }

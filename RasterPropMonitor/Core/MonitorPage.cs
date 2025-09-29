@@ -156,7 +156,7 @@ namespace JSI
                         {
                             if (spf[i] != null)
                             {
-                                outputLines[i] = StringProcessor.ProcessString(spf[i], rpmComp);
+                                outputLines[i] = spf[i].GetFormattedString();
                             }
                         }
                     }

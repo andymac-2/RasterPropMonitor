@@ -230,7 +230,7 @@ namespace JSI
 
                     if (oneshot)
                     {
-                        textObj.text = labels[0].Get();
+                        textObj.text = labels[0].GetFormattedString();
 
                         var propBatcher = internalModel.GetComponentInChildren<PropBatcher>();
                         if (propBatcher != null && canBatch)
@@ -338,7 +338,7 @@ namespace JSI
                 activeLabel = 0;
             }
 
-            textObj.text = labels[activeLabel].Get();
+            textObj.text = labels[activeLabel].GetFormattedString();
 
             // do we need to activate the update loop?
             if (labels.Count > 1 && !labels[activeLabel].IsConstant)
@@ -492,7 +492,7 @@ namespace JSI
 
             if (UpdateCheck() && JUtil.RasterPropMonitorShouldUpdate(part))
             {
-                textObj.text = labels[activeLabel].Get();
+                textObj.text = labels[activeLabel].GetFormattedString();
             }
         }
     }
