@@ -27,12 +27,6 @@ using UnityEngine.Profiling;
 
 namespace JSI
 {
-    /// <summary>
-    /// A class that represents an individual Raster Prop Monitor display.
-    /// See also RasterPropMonitorComputer which contains data for all displays
-    /// in a pod, and RPMVesselComputer which represents all displays in a
-    /// vessel
-    /// </summary>
     public class RasterPropMonitor : InternalModule
     {
         [SerializeReference] ConfigNodeHolder moduleConfig;
@@ -345,6 +339,7 @@ namespace JSI
         {
             return EffectivePatch(1000);
         }
+
         internal void SelectNextPatch()
         {
             (int effectivePatchIndex, _) = GetSelectedPatch();

@@ -25,6 +25,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
+using KSP.UI.Screens.Flight;
+using static JSI.RasterPropMonitorComputer;
 
 // MOARdV TODO:
 // Add callbacks for docking, undocking, staging, vessel switching
@@ -39,10 +41,6 @@ using UnityEngine;
 // ? GameEvents.onKerbalRemoved
 namespace JSI
 {
-    /// <summary>
-    /// The computer for the vessel. This class can be used for shared data
-    /// across different pods in the same vessel.
-    /// </summary>
     public partial class RPMVesselComputer : VesselModule
     {
         #region Static Variables

@@ -637,27 +637,22 @@ namespace JSI
             {
                 return false;
             }
-
             bool actionTaken = false;
-
             if (pageHandlerS.buttonClick != null)
             {
                 pageHandlerS.buttonClick(buttonID);
                 actionTaken = true;
             }
-
             if (backgroundHandlerS.buttonClick != null && pageHandlerS.buttonClick != backgroundHandlerS.buttonClick)
             {
                 backgroundHandlerS.buttonClick(buttonID);
                 actionTaken = true;
             }
-
             if (patchSelector != null)
             {
                 patchSelector.HandleButtonPress(buttonID);
                 actionTaken = true;
             }
-
             return actionTaken;
         }
 

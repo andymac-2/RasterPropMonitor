@@ -1600,9 +1600,9 @@ namespace JSI
                         }
                         return double.NaN;
                     };
-                case "TARGETEXISTS":
+                case "ANYTARGETEXISTS":
                     return (RPMVesselComputer comp) => comp.target == null ? -1d : 1d;
-                case "TARGETISVESSEL":
+                case "TARGETEXISTS":
                     return (RPMVesselComputer comp) =>
                     {
                         if (comp.target == null)
@@ -1675,7 +1675,7 @@ namespace JSI
                         if (comp.target is Vessel || comp.target is ModuleDockingNode)
                         {
                             return comp.target.GetVessel().mainBody.GetAltitude(comp.target.GetVessel().CoM);
-                        } 
+                        }
                         else
                         {
                             return vessel.mainBody.GetAltitude(comp.target.GetTransform().position);
