@@ -26,6 +26,9 @@ namespace JSI
     public class StringProcessorFormatter
     {
         internal static readonly SIFormatProvider fp = new SIFormatProvider();
+
+        // The formatString or plain text (if usesComp is false).
+        private readonly string formatString;
         // An array holding evaluants
         public readonly object[] sourceValues;
 

@@ -80,7 +80,6 @@ namespace JSI
         [KSPField]
         public bool needsCommConnection = false;
         private bool noCommConnection = false; // Managed by rpmComp callback
-
         [KSPField]
         public string defaultFontTint = string.Empty;
         public Color defaultFontTintValue = Color.white;
