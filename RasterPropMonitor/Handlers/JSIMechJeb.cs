@@ -834,6 +834,8 @@ namespace JSI
                 {
                     throw new NotImplementedException("mjModuleUsers");
                 }
+
+                IJSIModule.RegisterModule(typeof(JSIMechJeb));
             }
             catch (Exception e)
             {
@@ -853,9 +855,8 @@ namespace JSI
 
         static public bool IsInstalled => mjFound;
 
-        public JSIMechJeb(Vessel myVessel)
+        public JSIMechJeb(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
             JUtil.LogInfo(this, "A supported version of MechJeb is {0}", (mjFound) ? "present" : "not available");
         }
 

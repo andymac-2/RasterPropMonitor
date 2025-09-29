@@ -338,8 +338,6 @@ namespace JSI
         {
             if (!HighLogic.LoadedSceneIsEditor)
             {
-				SCANsat.PatchMaterial();
-
                 vid = vessel.id;
                 refreshDataRate = RPMGlobals.defaultRefreshRate;
 
@@ -347,16 +345,11 @@ namespace JSI
                 GameEvents.onVesselChange.Add(onVesselChange);
                 GameEvents.onVesselCrewWasModified.Add(onVesselCrewWasModified);
 
-                installedModules.Add(new JSIParachute(vessel)); // note this handles both stock chutes and realchute
-                if (JSIMechJeb.IsInstalled) installedModules.Add(new JSIMechJeb(vessel));
-                installedModules.Add(new JSIInternalRPMButtons(vessel));
-                if (JSIFAR.farFound) installedModules.Add(new JSIFAR(vessel));
-                if (JSIKAC.kacFound) installedModules.Add(new JSIKAC(vessel));
+                IJSIModule.CreateJSIModules(installedModules, vessel);
+
 #if ENABLE_ENGINE_MONITOR
                 installedModules.Add(new JSIEngine(vessel));
 #endif
-                if (JSIPilotAssistant.paFound) installedModules.Add(new JSIPilotAssistant(vessel));
-                if (JSIChatterer.chattererFound) installedModules.Add(new JSIChatterer(vessel));
 
                 if (string.IsNullOrEmpty(RPMCid))
                 {
@@ -640,10 +633,7 @@ namespace JSI
             localCrew.Clear();
             localCrewMedical.Clear();
 
-            for (int i = 0; i < installedModules.Count; ++i)
-            {
-                installedModules[i].vessel = null;
-            }
+            installedModules.Clear();
 
             variableCollection.Clear();
             ClearVariables();

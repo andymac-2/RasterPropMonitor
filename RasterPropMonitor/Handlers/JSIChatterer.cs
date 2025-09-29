@@ -90,6 +90,7 @@ namespace JSI
             if (chatterer_t != null && chattererStartTalking != null)
             {
                 chattererFound = true;
+                IJSIModule.RegisterModule(typeof(JSIChatterer));
             }
             else
             {
@@ -97,9 +98,8 @@ namespace JSI
             }
         }
 
-        public JSIChatterer(Vessel myVessel)
+        public JSIChatterer(Vessel myVessel) : base(myVessel)
         {
-            vessel = myVessel;
             JUtil.LogMessage(this, "A supported version of Chatterer is {0}", (chattererFound) ? "present" : "not available");
             lastVessel = Guid.Empty;
         }

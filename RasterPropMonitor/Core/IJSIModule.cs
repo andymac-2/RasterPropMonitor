@@ -19,6 +19,8 @@
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 using System;
+using System.Collections.Generic;
+using Log = KSPBuildTools.Log;
 
 namespace JSI
 {
@@ -28,6 +30,56 @@ namespace JSI
     /// </summary>
     public class IJSIModule
     {
+        public IJSIModule(Vessel v)
+        {
+            this.vessel = v;
+        }
+
         public Vessel vessel;
+
+        #region Module Registration
+
+        static List<Type> x_registeredTypes = new List<Type>();
+
+        internal static void CreateJSIModules(List<IJSIModule> modules, Vessel v)
+        {
+            foreach (Type t in x_registeredTypes)
+            {
+                try
+                {
+                    modules.Add((IJSIModule)Activator.CreateInstance(t, v));
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error creating JSI module of type " + t.Name + ": ");
+                    Log.Exception(e);
+                }
+            }
+        }
+
+        public static void RegisterModule(Type jsiModuleType)
+        {
+            if (x_registeredTypes.IndexOf(jsiModuleType) != -1) return;
+            if (!typeof(IJSIModule).IsAssignableFrom(jsiModuleType))
+            {
+                Log.Error($"Tried to register an ISJIModuleType {jsiModuleType.Name} that does not inherit from IJSIModule");
+                return;
+            }
+            x_registeredTypes.Add(jsiModuleType);
+        }
+
+        // A place to register known modules that might not otherwise have their static constructors called
+        static IJSIModule()
+        {
+            RegisterModule(typeof(JSIParachute));
+            RegisterModule(typeof(JSIInternalRPMButtons));
+            if (JSIChatterer.chattererFound) RegisterModule(typeof(JSIChatterer));
+            if (JSIFAR.farFound) RegisterModule(typeof(JSIFAR));
+            if (JSIKAC.kacFound) RegisterModule(typeof(JSIKAC));
+            if (JSIMechJeb.IsInstalled) RegisterModule(typeof(JSIMechJeb));
+            if (JSIPilotAssistant.paFound) RegisterModule(typeof(JSIPilotAssistant));
+        }
+
+        #endregion
     }
 }

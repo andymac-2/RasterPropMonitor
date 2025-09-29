@@ -12,6 +12,12 @@
     <GenerateKSPAssemblyDependencyAttributes>true</GenerateKSPAssemblyDependencyAttributes>
   </PropertyGroup>
   <ItemGroup>
+    <KSPVersionFile Include="$(RepoRootPath)\GameData\JSI\RasterPropMonitor\RasterPropMonitor.version">
+      <Destination>$(RepoRootPath)\GameData\JSI\RasterPropMonitor\RasterPropMonitor.version</Destination>
+      <KSP_Version_Min>1.12.3</KSP_Version_Min>
+    </KSPVersionFile>
+  </ItemGroup>
+  <ItemGroup>
     <Publicize Include="Assembly-CSharp" />
   </ItemGroup>
   <ItemGroup>

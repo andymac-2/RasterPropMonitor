@@ -1303,6 +1303,7 @@ namespace JSI
                 // way, the next FixedUpdate will trigger another update after
                 // navBall is ready.
                 timeToUpdate = true;
+                InvalidateModuleLists();
                 UpdateVariables();
                 // Re-trigger the update for the next FixedUpdate.
                 timeToUpdate = true;
