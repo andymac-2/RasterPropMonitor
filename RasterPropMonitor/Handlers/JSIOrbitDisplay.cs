@@ -22,7 +22,7 @@
 // JSIOrbitDisplay: Display a schematic (line-art) drawing of the vessel's
 // orbit, marking highlights (Pe, Ap, AN, DN), along with the mainbody's
 // surface and atmosphere (if applicable).
-using System;   
+using System;
 using UnityEngine;
 
 namespace JSI
@@ -66,8 +66,8 @@ namespace JSI
         private Material lineMaterial;
         private RasterPropMonitor rpm;
 
-        private static readonly int CIRCLE_POINTS = 60;
-        private static readonly int ORBIT_POINTS = 60;
+        static readonly int CIRCLE_POINTS = 60;
+        static readonly int ORBIT_POINTS = 60;
 
         public override void OnAwake()
         {
@@ -203,7 +203,6 @@ namespace JSI
             DrawOrbitSegment(o, referenceBody, screenTransform, now, startTA, startVertex, midTA, midVertex);
             DrawOrbitSegment(o, referenceBody, screenTransform, now, midTA, midVertex, endTA, endVertex);
         }
-
 
         // Fallback method: The orbit should be valid, but it's not showing as
         // active.  I've encountered this when targeting a vessel or planet.

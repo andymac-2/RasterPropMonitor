@@ -26,11 +26,11 @@ namespace JSI
     public class StringProcessorFormatter
     {
         internal static readonly SIFormatProvider fp = new SIFormatProvider();
+
         // The formatString or plain text (if usesComp is false).
         private readonly string formatString;
         // An array of source variables
-        internal readonly VariableOrNumber[] sourceVariables;
-
+        public readonly VariableOrNumber[] sourceVariables;
         // An array holding evaluants
         public readonly object[] sourceValues;
 
@@ -58,7 +58,7 @@ namespace JSI
 
                     string[] sourceVarStrings = tokens[1].Split(JUtil.VariableSeparator, StringSplitOptions.RemoveEmptyEntries);
                     sourceVariables = new VariableOrNumber[sourceVarStrings.Length];
-                    for (int i = 0; i < sourceVarStrings.Length; ++i)
+                    for (int i = 0; i < sourceVarStrings.Length; ++i )
                     {
                         var variableName = sourceVarStrings[i];
                         if (variableName.StartsWith("MONITOR_LOCAL_"))
@@ -67,7 +67,7 @@ namespace JSI
                         }
                         else
                         {
-                            sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(sourceVarStrings[i]);
+                            sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(variableName);
                         }
 
                         allVariablesConstant = allVariablesConstant && sourceVariables[i].isConstant;

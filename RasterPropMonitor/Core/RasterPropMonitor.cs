@@ -205,8 +205,8 @@ namespace JSI
                     // some assumptions about who managed the y-inversion issue between OpenGL and DX9.
                     if (manuallyInvertY)
                     {
-                        screenMat.SetTextureScale(layerID.Trim(), new Vector2(1.0f, -1.0f));
-                        screenMat.SetTextureOffset(layerID.Trim(), new Vector2(0.0f, 1.0f));
+                        screenMat.SetTextureScale(layerID.Trim(),  new Vector2(1.0f, -1.0f));
+                        screenMat.SetTextureOffset(layerID.Trim(),  new Vector2(0.0f, 1.0f));
                     }
                 }
 
@@ -647,53 +647,53 @@ namespace JSI
 
         private void RenderScreen()
         {
-            Profiler.BeginSample("RPM.RenderScreen [" + activePage.name + "]");
+			Profiler.BeginSample("RPM.RenderScreen [" + activePage.name + "]");
 
-            RenderTexture backupRenderTexture = RenderTexture.active;
+			RenderTexture backupRenderTexture = RenderTexture.active;
 
             if (!screenTexture.IsCreated())
             {
                 screenTexture.Create();
             }
-
-            if (resourceDepleted || noCommConnection)
-            {
+            
+			if (resourceDepleted || noCommConnection)
+			{
                 screenTexture.DiscardContents();
                 RenderTexture.active = screenTexture;
                 // If we're out of electric charge, we're drawing a blank screen.
                 GL.Clear(true, true, emptyColorValue);
-            }
-            else if (textRenderer.UpdateText(activePage) || activePage.background == MonitorPage.BackgroundType.Handler)
-            {
+			}
+			else if (textRenderer.UpdateText(activePage) || activePage.background == MonitorPage.BackgroundType.Handler)
+			{
                 screenTexture.DiscardContents();
                 RenderTexture.active = screenTexture;
 
                 // This is the important witchcraft. Without that, DrawTexture does not print where we expect it to.
                 // Cameras don't care because they have their own matrices, but DrawTexture does.
                 GL.PushMatrix();
-                GL.LoadPixelMatrix(0, screenPixelWidth, screenPixelHeight, 0);
+				GL.LoadPixelMatrix(0, screenPixelWidth, screenPixelHeight, 0);
 
-                // Actual rendering of the background is delegated to the page object.
-                activePage.RenderBackground(screenTexture);
+				// Actual rendering of the background is delegated to the page object.
+				activePage.RenderBackground(screenTexture);
 
-                if (!string.IsNullOrEmpty(activePage.ProcessedText))
-                {
-                    textRenderer.Render(screenTexture);
-                }
+				if (!string.IsNullOrEmpty(activePage.ProcessedText))
+				{
+					textRenderer.Render(screenTexture);
+				}
 
-                activePage.RenderOverlay(screenTexture);
-                GL.PopMatrix();
-            }
+				activePage.RenderOverlay(screenTexture);
+				GL.PopMatrix();
+			}
 
-            RenderTexture.active = backupRenderTexture;
-            Profiler.EndSample();
-        }
+			RenderTexture.active = backupRenderTexture;
+			Profiler.EndSample();
+		}
 
         private void FillScreenBuffer()
         {
-            Profiler.BeginSample("RasterPropMonitor.FillScreenBuffer");
-            activePage.UpdateText(rpmComp);
-            Profiler.EndSample();
+			Profiler.BeginSample("RasterPropMonitor.FillScreenBuffer");
+			activePage.UpdateText(rpmComp);
+			Profiler.EndSample();
         }
 
         public void LateUpdate()
@@ -710,7 +710,7 @@ namespace JSI
             {
                 return;
             }
-
+			
             if (!JUtil.RasterPropMonitorShouldUpdate(part))
             {
                 return;
@@ -739,7 +739,7 @@ namespace JSI
                 return;
             }
 
-            Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
+			Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
 
             if (resourceDepleted || noCommConnection)
             {
@@ -748,8 +748,8 @@ namespace JSI
                 firstRenderComplete = false;
                 textRefreshRequired = true;
             }
-            else if (!activePage.isMutable)
-            {
+			else if (!activePage.isMutable)
+			{
                 // In case the page is empty and has no camera, the screen is treated as turned off and blanked once.
                 if (!firstRenderComplete)
                 {
@@ -771,23 +771,23 @@ namespace JSI
                 firstRenderComplete = true;
             }
 
-            // Oneshot screens: We create a permanent texture from our RenderTexture if the first pass of the render is complete,
-            // set it in place of the rendertexture -- and then we selfdestruct.
-            // MOARdV: Except we don't want to self-destruct, because we will leak the frozenScreen texture.
-            if (oneshot && firstRenderComplete)
-            {
-                frozenScreen = new Texture2D(screenTexture.width, screenTexture.height);
-                RenderTexture backupRenderTexture = RenderTexture.active;
-                RenderTexture.active = screenTexture;
-                frozenScreen.ReadPixels(new Rect(0, 0, screenTexture.width, screenTexture.height), 0, 0);
-                RenderTexture.active = backupRenderTexture;
-                foreach (string layerID in textureLayerID.Split())
-                {
-                    screenMat.SetTexture(layerID.Trim(), frozenScreen);
-                }
-            }
+			// Oneshot screens: We create a permanent texture from our RenderTexture if the first pass of the render is complete,
+			// set it in place of the rendertexture -- and then we selfdestruct.
+			// MOARdV: Except we don't want to self-destruct, because we will leak the frozenScreen texture.
+			if (oneshot && firstRenderComplete)
+			{
+				frozenScreen = new Texture2D(screenTexture.width, screenTexture.height);
+				RenderTexture backupRenderTexture = RenderTexture.active;
+				RenderTexture.active = screenTexture;
+				frozenScreen.ReadPixels(new Rect(0, 0, screenTexture.width, screenTexture.height), 0, 0);
+				RenderTexture.active = backupRenderTexture;
+				foreach (string layerID in textureLayerID.Split())
+				{
+					screenMat.SetTexture(layerID.Trim(), frozenScreen);
+				}
+			}
 
-            Profiler.EndSample();
+			Profiler.EndSample();
         }
 
         public void OnApplicationPause(bool pause)
