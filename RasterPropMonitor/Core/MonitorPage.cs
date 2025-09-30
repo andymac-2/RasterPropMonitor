@@ -657,10 +657,12 @@ namespace JSI
             if (buttonID == buttonNextPatch)
             {
                 ourMonitor.SelectNextPatch();
+                actionTaken = true;
             }
             if (buttonID == buttonPrevPatch)
             {
                 ourMonitor.SelectPreviousPatch();
+                actionTaken = true; 
             }
             return actionTaken;
         }
