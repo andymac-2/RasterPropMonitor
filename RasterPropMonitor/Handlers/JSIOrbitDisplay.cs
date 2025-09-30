@@ -29,6 +29,7 @@ namespace JSI
 {
     public class JSIOrbitDisplay : InternalModule, IPageElement
     {
+        [KSPField]
         public string backgroundColor = string.Empty;
         private Color backgroundColorValue = Color.black;
         [KSPField]
@@ -63,21 +64,21 @@ namespace JSI
         public Vector2 iconShadowShift = new Vector2(1, 1);
 
         private bool startupComplete;
-        private Material lineMaterial;
+		private Material lineMaterial;
         private RasterPropMonitor rpm;
 
         static readonly int CIRCLE_POINTS = 60;
         static readonly int ORBIT_POINTS = 60;
 
-        public override void OnAwake()
-        {
-            base.OnAwake();
+		public override void OnAwake()
+		{
+			base.OnAwake();
 
-            if (lineMaterial == null)
-            {
-                lineMaterial = JUtil.DrawLineMaterial();
-            }
-        }
+			if (lineMaterial == null)
+			{
+				lineMaterial = JUtil.DrawLineMaterial();
+			}
+		}
 
         void IPageElement.HandlePageCreate(RasterPropMonitor rpm)
         {
@@ -712,14 +713,14 @@ namespace JSI
             //MapView.OrbitIconsMaterial.color = iconColorShadowValue;
             //Graphics.DrawTexture(shadow, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, MapView.OrbitIconsMaterial);
 
-            // the old icon material wasn't working, so just use this one
-            // but I don't fully understand the color/blend system
-            // a = 1.0 is far too faint; 4.0 looks pretty good
+			// the old icon material wasn't working, so just use this one
+			// but I don't fully understand the color/blend system
+			// a = 1.0 is far too faint; 4.0 looks pretty good
             MapView.OrbitIconsMaterial.color = new Color(iconColor.r, iconColor.g, iconColor.b, 4.0f);
             Graphics.DrawTexture(position, MapView.OrbitIconsMap, MapIcons.VesselTypeIcon(vt, icon), 0, 0, 0, 0, MapView.OrbitIconsMaterial);
-
-            // if the icon texture ever changes, you can use this code to dump it out for inspection
-#if false
+			
+			// if the icon texture ever changes, you can use this code to dump it out for inspection
+			#if false
 			var filepath = "orbiticonsmap.png";
 			if (!System.IO.File.Exists(filepath))
 			{
@@ -727,28 +728,28 @@ namespace JSI
 				var textureBytes = textureCopy.EncodeToPNG();
 				System.IO.File.WriteAllBytes(filepath, textureBytes);
 			}
-#endif
+			#endif
         }
 
-        Texture2D duplicateTexture(Texture2D source)
-        {
-            RenderTexture renderTex = RenderTexture.GetTemporary(
-                        source.width,
-                        source.height,
-                        0,
-                        RenderTextureFormat.Default,
-                        RenderTextureReadWrite.Linear);
+		Texture2D duplicateTexture(Texture2D source)
+		{
+			RenderTexture renderTex = RenderTexture.GetTemporary(
+						source.width,
+						source.height,
+						0,
+						RenderTextureFormat.Default,
+						RenderTextureReadWrite.Linear);
 
-            Graphics.Blit(source, renderTex);
-            RenderTexture previous = RenderTexture.active;
-            RenderTexture.active = renderTex;
-            Texture2D readableText = new Texture2D(source.width, source.height);
-            readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-            readableText.Apply();
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(renderTex);
-            return readableText;
-        }
+			Graphics.Blit(source, renderTex);
+			RenderTexture previous = RenderTexture.active;
+			RenderTexture.active = renderTex;
+			Texture2D readableText = new Texture2D(source.width, source.height);
+			readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+			readableText.Apply();
+			RenderTexture.active = previous;
+			RenderTexture.ReleaseTemporary(renderTex);
+			return readableText;
+		}
 
         public void Start()
         {
