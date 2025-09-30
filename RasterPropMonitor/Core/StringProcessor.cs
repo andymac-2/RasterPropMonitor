@@ -19,17 +19,17 @@
  * along with RasterPropMonitor.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 using System;
-using System.Diagnostics;
+using UnityEngine.Profiling;
 
 namespace JSI
 {
     public class StringProcessorFormatter
     {
+        internal static readonly SIFormatProvider fp = new SIFormatProvider();
         // The formatString or plain text (if usesComp is false).
         private readonly string formatString;
         // An array of source variables
         internal readonly IVariable[] sourceVariables;
-        internal static readonly SIFormatProvider fp = new SIFormatProvider();
 
         // An array holding evaluants
         public readonly object[] sourceValues;
@@ -38,12 +38,12 @@ namespace JSI
 
         public string cachedResult;
 
+        // TODO: Add support for multi-line processed support.
         public StringProcessorFormatter(string input, RasterPropMonitorComputer rpmComp, RasterPropMonitor rpm = null)
         {
-            if (string.IsNullOrEmpty(input))
+            if(string.IsNullOrEmpty(input))
             {
                 cachedResult = "";
-                return;
             }
             else if (input.IndexOf(JUtil.VariableListSeparator[0], StringComparison.Ordinal) >= 0)
             {
@@ -72,7 +72,6 @@ namespace JSI
 
                         allVariablesConstant = allVariablesConstant && sourceVariables[i].IsConstant();
                     }
-
                     sourceValues = new object[sourceVariables.Length];
                     formatString = tokens[0].TrimEnd();
 
@@ -93,7 +92,7 @@ namespace JSI
             }
             else
             {
-                cachedResult = input.TrimEnd();      
+                cachedResult = input.TrimEnd();
             }
         }
 

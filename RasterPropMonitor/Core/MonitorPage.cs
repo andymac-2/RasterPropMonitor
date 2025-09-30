@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 namespace JSI
@@ -32,6 +33,7 @@ namespace JSI
         public readonly int pageNumber;
         public readonly string name = string.Empty;
         public readonly bool unlocker;
+        private const int INVALID_BUTTON = -1;
         private string text;
         private StringProcessorFormatter[] spf;
         private string[] outputLines;
@@ -79,7 +81,8 @@ namespace JSI
         private readonly MonoBehaviour backgroundHandlerModule, pageHandlerModule;
         private readonly List<string> techsRequired = new List<string>();
         private readonly string fallbackPageName = string.Empty;
-        private readonly PatchSelector patchSelector;
+        private readonly int buttonNextPatch = INVALID_BUTTON;
+        private readonly int buttonPrevPatch = INVALID_BUTTON;
 
         private struct HandlerSupportMethods
         {
@@ -432,12 +435,15 @@ namespace JSI
                 }
             }
 
-            if (node.HasNode("PATCHSELECTOR"))
+            int intValue = INVALID_BUTTON;
+            if (node.TryGetValue("buttonNextPatch", ref intValue))
             {
-                foreach (ConfigNode patchSelectorNode in node.GetNodes("PATCHSELECTOR"))
-                {
-                    patchSelector = new PatchSelector(ourMonitor, patchSelectorNode);
-                }
+                buttonNextPatch = intValue;
+            }
+
+            if (node.TryGetValue("buttonPrevPatch", ref intValue))
+            {
+                buttonPrevPatch = intValue;
             }
         }
 
@@ -633,7 +639,7 @@ namespace JSI
         public bool GlobalButtonClick(int buttonID)
         {
             buttonID = redirectGlobals[buttonID] ?? buttonID;
-            if (buttonID == -1)
+            if (buttonID == INVALID_BUTTON)
             {
                 return false;
             }
@@ -648,10 +654,13 @@ namespace JSI
                 backgroundHandlerS.buttonClick(buttonID);
                 actionTaken = true;
             }
-            if (patchSelector != null)
+            if (buttonID == buttonNextPatch)
             {
-                patchSelector.HandleButtonPress(buttonID);
-                actionTaken = true;
+                ourMonitor.SelectNextPatch();
+            }
+            if (buttonID == buttonPrevPatch)
+            {
+                ourMonitor.SelectPreviousPatch();
             }
             return actionTaken;
         }
