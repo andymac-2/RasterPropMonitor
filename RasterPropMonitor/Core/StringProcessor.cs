@@ -29,7 +29,7 @@ namespace JSI
         // The formatString or plain text (if usesComp is false).
         private readonly string formatString;
         // An array of source variables
-        internal readonly IVariable[] sourceVariables;
+        internal readonly VariableOrNumber[] sourceVariables;
 
         // An array holding evaluants
         public readonly object[] sourceValues;
@@ -57,7 +57,7 @@ namespace JSI
                     bool allVariablesConstant = true;
 
                     string[] sourceVarStrings = tokens[1].Split(JUtil.VariableSeparator, StringSplitOptions.RemoveEmptyEntries);
-                    sourceVariables = new IVariable[sourceVarStrings.Length];
+                    sourceVariables = new VariableOrNumber[sourceVarStrings.Length];
                     for (int i = 0; i < sourceVarStrings.Length; ++i)
                     {
                         var variableName = sourceVarStrings[i];
@@ -70,14 +70,14 @@ namespace JSI
                             sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(sourceVarStrings[i]);
                         }
 
-                        allVariablesConstant = allVariablesConstant && sourceVariables[i].IsConstant();
+                        allVariablesConstant = allVariablesConstant && sourceVariables[i].isConstant;
                     }
                     sourceValues = new object[sourceVariables.Length];
                     formatString = tokens[0].TrimEnd();
 
                     for (int i = 0; i < sourceVariables.Length; ++i)
                     {
-                        sourceValues[i] = sourceVariables[i].GetValue();
+                        sourceValues[i] = sourceVariables[i].Get();
                     }
 
                     cachedResult = string.Format(fp, formatString, sourceValues);
@@ -104,10 +104,23 @@ namespace JSI
             for (int i = 0; i < sourceVariables.Length; ++i)
             {
                 var sourceVariable = sourceVariables[i];
-                if (!sourceVariable.IsConstant())
+                if (!sourceVariable.isConstant)
                 {
-                    anyChanged = anyChanged || sourceVariable.Changed(sourceValues[i]);
-                    sourceValues[i] = sourceVariable.GetValue();
+                    if (sourceVariable.isNumeric)
+                    {
+                        double newValue = (double)sourceVariable.Get();
+                        if (JUtil.ValueChanged((double)sourceValues[i], newValue))
+                        {
+                            anyChanged = true;
+                            sourceValues[i] = newValue;
+                        }
+                    }
+                    else
+                    {
+                        string newValue = (string)sourceVariable.Get();
+                        anyChanged = anyChanged || newValue != (string)sourceValues[i];
+                        sourceValues[i] = newValue;
+                    }
                 }
             }
 

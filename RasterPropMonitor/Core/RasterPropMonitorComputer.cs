@@ -151,7 +151,7 @@ namespace JSI
         {
             var vc = InstantiateVariableOrNumber(variableName);
             vc.onChangeCallbacks += cb;
-            cb((float)vc.numericValue);
+            cb(vc.AsFloat());
         }
 
         /// <summary>
@@ -178,7 +178,7 @@ namespace JSI
         {
             var vc = InstantiateVariableOrNumber(variableName);
             vc.onResourceDepletedCallbacks += cb;
-            cb(vc.numericValue < 0.01);
+            cb(vc.AsDouble() < 0.01);
         }
 
         /// <summary>

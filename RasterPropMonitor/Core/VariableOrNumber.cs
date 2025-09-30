@@ -38,11 +38,9 @@ namespace JSI
     /// It's owned by the VariableCache instances inside the RasterPropMonitorComputer
     /// This architecture is kind of strange; this could probably be unified with VariableCache
     /// </summary>
-    public class VariableOrNumber : IVariable
+    public class VariableOrNumber
     {
         internal readonly string variableName;
-        internal double numericValue;
-        internal string stringValue;
         internal bool isNumeric;
         internal VariableUpdateType updateType;
         private readonly RasterPropMonitorComputer rpmComp;
@@ -53,6 +51,9 @@ namespace JSI
         internal event Action<bool> onResourceDepletedCallbacks;
 
         public bool isConstant => updateType == VariableUpdateType.Constant;
+
+        private double numericValue;
+        private string stringValue;
 
         internal void FireCallbacks(float newValue)
         {
@@ -220,7 +221,7 @@ namespace JSI
         /// Return the value boxed as an object
         /// </summary>
         /// <returns></returns>
-        object IVariable.GetValue()
+        public object Get()
         {
             if (updateType == VariableUpdateType.Volatile)
             {
@@ -239,23 +240,6 @@ namespace JSI
             {
                 return stringValue;
             }
-        }
-
-        bool IVariable.Changed(object oldValue)
-        {
-            if (isNumeric)
-            {
-                return JUtil.ValueChanged((double)oldValue, numericValue);
-            }
-            else
-            {
-                return stringValue != (string)oldValue;
-            }
-        }
-
-        bool IVariable.IsConstant()
-        {
-            return isConstant;
         }
     }
 
