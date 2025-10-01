@@ -604,6 +604,7 @@ namespace JSI
                 }
                 modulesToRestore.Clear();
             }
+            profiler.Stop();
         }
 
         /// <summary>

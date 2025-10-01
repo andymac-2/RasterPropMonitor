@@ -18,7 +18,7 @@ class DumbProfiler
     {
         if (stopwatch.IsRunning)
         {
-            UnityEngine.Debug.Log("WARN: Stopwatch already started");
+            UnityEngine.Debug.Log($"WARN: profiler {name} already started");
         }
 
         stopwatch.Reset();
