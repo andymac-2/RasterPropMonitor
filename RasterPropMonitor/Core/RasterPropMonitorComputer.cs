@@ -111,6 +111,7 @@ namespace JSI
 
         private ExternalVariableHandlers plugins = null;
         internal Dictionary<string, Color32> overrideColors = new Dictionary<string, Color32>();
+        private int selectedPatchIndex;
 
         static readonly Regex x_agmemoRegex = new Regex("^AG([0-9])\\s*=\\s*(.*)\\s*");
 
@@ -330,6 +331,69 @@ namespace JSI
         public void RestoreInternalModule(InternalModule module)
         {
             modulesToRestore.Add(module);
+        }
+
+        /// <summary>
+        /// Find the selected orbital patch. A patch is selected if we are
+        /// looking at it.
+        /// </summary>
+        /// <returns>
+        /// 1. The count of the patch. 0 for current orbit, 1 for next SOI, and
+        ///     so on
+        /// 2. The orbit object that represents the patch.
+        /// </returns>
+        internal (int, Orbit) GetSelectedPatch()
+        {
+            return EffectivePatch(selectedPatchIndex);
+        }
+
+        private Orbit GetSelectedPatchOrbit()
+        {
+            (int _, Orbit patch) = GetSelectedPatch();
+            return patch;
+        }
+
+        internal (int, Orbit) GetLastPatch()
+        {
+            return EffectivePatch(1000);
+        }
+
+        internal void SelectNextPatch()
+        {
+            (int effectivePatchIndex, _) = GetSelectedPatch();
+            SelectPatch(effectivePatchIndex + 1);
+        }
+
+        internal void SelectPreviousPatch()
+        {
+            (int effectivePatchIndex, _) = GetSelectedPatch();
+            SelectPatch(effectivePatchIndex - 1);
+        }
+
+        private void SelectPatch(int patchIndex)
+        {
+            (int effectivePatchIndex, _) = EffectivePatch(patchIndex);
+            selectedPatchIndex = effectivePatchIndex;
+        }
+
+        /// <summary>
+        /// Returns the orbit (patch) and orbit index given a selection.
+        /// </summary>
+        /// <returns>true if it's time to update things</returns>
+        private (int, Orbit) EffectivePatch(int patchIndex)
+        {
+            Orbit patch = vessel.orbit;
+            int effectivePatchIndex = 0;
+            while (effectivePatchIndex < patchIndex
+                && patch.nextPatch != null
+                && patch.nextPatch.activePatch
+                && (patch.patchEndTransition == Orbit.PatchTransitionType.ENCOUNTER || patch.patchEndTransition == Orbit.PatchTransitionType.ESCAPE))
+            {
+                patch = patch.nextPatch;
+                effectivePatchIndex++;
+            }
+
+            return (effectivePatchIndex, patch);
         }
 
         #region Monobehaviour

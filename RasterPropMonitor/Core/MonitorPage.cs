@@ -605,11 +605,6 @@ namespace JSI
                     }
                 }
 
-                if (thatModule is IPageElement pageElement)
-                {
-                    pageElement.HandlePageCreate(ourMonitor);
-                }
-
                 moduleInstance = thatModule;
                 foreach (MethodInfo m in thatModule.GetType().GetMethods())
                 {

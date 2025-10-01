@@ -27,7 +27,7 @@ using UnityEngine;
 
 namespace JSI
 {
-    public class JSIOrbitDisplay : InternalModule, IPageElement
+    public class JSIOrbitDisplay : InternalModule
     {
         [KSPField]
         public string backgroundColor = string.Empty;
@@ -65,7 +65,6 @@ namespace JSI
 
         private bool startupComplete;
 		private Material lineMaterial;
-        private RasterPropMonitor rpm;
 
         static readonly int CIRCLE_POINTS = 60;
         static readonly int ORBIT_POINTS = 60;
@@ -79,11 +78,6 @@ namespace JSI
 				lineMaterial = JUtil.DrawLineMaterial();
 			}
 		}
-
-        void IPageElement.HandlePageCreate(RasterPropMonitor rpm)
-        {
-            this.rpm = rpm;
-        }
 
         // TODO: this could all be improved by implementint adaptive screen-space tesselation:
         // http://blog.johannesmp.com/2022/06/30/KSP2-Dev-Diary_Orbit-Tessellation/
@@ -327,7 +321,8 @@ namespace JSI
             double horizPixelSize = displayPosition.z - iconPixelSize;
             double vertPixelSize = displayPosition.w - iconPixelSize;
 
-            (int patchIndex, Orbit selectedPatch) = rpm.GetSelectedPatch();
+            RasterPropMonitorComputer rpmComp = RasterPropMonitorComputer.FindFromProp(internalProp);
+            (int patchIndex, Orbit selectedPatch) = rpmComp.GetSelectedPatch();
 
             // Find a basis for transforming values into the framework of
             // vessel.orbit.  The rendering framework assumes the periapsis

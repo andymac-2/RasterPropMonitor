@@ -60,16 +60,7 @@ namespace JSI
                     sourceVariables = new VariableOrNumber[sourceVarStrings.Length];
                     for (int i = 0; i < sourceVarStrings.Length; ++i )
                     {
-                        var variableName = sourceVarStrings[i];
-                        if (variableName.StartsWith("MONITOR_LOCAL_"))
-                        {
-                            sourceVariables[i] = rpm.GetVariable(variableName);
-                        }
-                        else
-                        {
-                            sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(variableName);
-                        }
-
+                        sourceVariables[i] = rpmComp.InstantiateVariableOrNumber(sourceVarStrings[i]);
                         allVariablesConstant = allVariablesConstant && sourceVariables[i].isConstant;
                     }
                     sourceValues = new object[sourceVariables.Length];
