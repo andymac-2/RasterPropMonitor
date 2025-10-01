@@ -104,11 +104,6 @@ namespace JSI
                     isNumeric = true;
                 }
             }
-
-            if (updateType != VariableUpdateType.Constant)
-            {
-                this.updateType = VariableUpdateType.Volatile;
-            }
         }
 
         internal VariableOrNumber(string input, NumericVariableEvaluator evaluator, RPMVesselComputer vesselComp, VariableUpdateType updateType, RasterPropMonitorComputer rpmComp_)
@@ -122,11 +117,6 @@ namespace JSI
 
             numericValue = value.MassageToDouble();
             isNumeric = true;
-
-            if (updateType != VariableUpdateType.Constant)
-            {
-                this.updateType = VariableUpdateType.Volatile;
-            }
         }
 
         void UpdateNumericValue(double newVal)

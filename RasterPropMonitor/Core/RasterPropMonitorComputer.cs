@@ -229,14 +229,14 @@ namespace JSI
             var numericEvaluator = GetNumericEvaluator(variableName, out VariableUpdateType updateType);
             if (numericEvaluator != null)
             {
-                vc = new VariableOrNumber(variableName, numericEvaluator, comp, updateType, this);
+                vc = new VariableOrNumber(variableName, numericEvaluator, comp, updateType, updateType == VariableUpdateType.Volatile ? this : null);
             }
             else
             {
                 // if that doesnt' work, look for a generic one
                 var evaluator = GetEvaluator(variableName, out updateType);
                 if (evaluator == null) updateType = VariableUpdateType.Constant;
-                vc = new VariableOrNumber(variableName, evaluator, comp, updateType, this);
+                vc = new VariableOrNumber(variableName, evaluator, comp, updateType, updateType == VariableUpdateType.Volatile ? this : null);
 
                 if (evaluator == null && !unrecognizedVariables.Contains(variableName))
                 {
@@ -518,7 +518,7 @@ namespace JSI
                 }
             }
 
-            // variableCollection.Update(comp);
+            variableCollection.Update(comp);
 
             ++debug_fixedUpdates;
 
