@@ -545,12 +545,11 @@ namespace JSI
                 DrawOrbit(node.nextPatch, selectedPatch.referenceBody, screenTransform);
             }
 
-            // TODO fix this up
-            // if (selectedPatch.nextPatch != null && selectedPatch.nextPatch.activePatch)
-            // {
-            //     GL.Color(orbitColorNextNodeValue);
-            //     DrawOrbit(selectedPatch.nextPatch, selectedPatch.referenceBody, screenTransform);
-            // }
+            if (selectedPatch.nextPatch != null && selectedPatch.nextPatch.activePatch)
+            {
+                GL.Color(orbitColorNextNodeValue);
+                DrawOrbit(selectedPatch.nextPatch, selectedPatch.referenceBody, screenTransform);
+            }
 
             // Draw the vessel orbit
             GL.Color(orbitColorSelfValue);
