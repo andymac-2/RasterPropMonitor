@@ -34,6 +34,7 @@ namespace JSI
     // onCrewTransferred
     public partial class RasterPropMonitorComputer : PartModule
     {
+        private DumbProfiler profiler = new DumbProfiler("RPMComputer");
         // The only public configuration variable.
         [KSPField]
         public string storedStrings = string.Empty;
@@ -535,6 +536,7 @@ namespace JSI
         /// </summary>
         public void Update()
         {
+            profiler.Start();
             if (HighLogic.LoadedSceneIsEditor)
             {
                 // well, it looks sometimes it might become null..

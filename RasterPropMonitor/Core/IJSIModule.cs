@@ -43,11 +43,12 @@ namespace JSI
 
         internal static void CreateJSIModules(List<IJSIModule> modules, Vessel v)
         {
+            object[] constructorArgs = new[] { v };
             foreach (Type t in x_registeredTypes)
             {
                 try
                 {
-                    modules.Add((IJSIModule)Activator.CreateInstance(t, v));
+                    modules.Add((IJSIModule)Activator.CreateInstance(t, constructorArgs));
                 }
                 catch (Exception e)
                 {

@@ -29,6 +29,7 @@ namespace JSI
 {
     public class RasterPropMonitor : InternalModule
     {
+        private DumbProfiler profiler = new DumbProfiler("RPM");
         [SerializeReference] ConfigNodeHolder moduleConfig;
 
         [KSPField]
@@ -698,8 +699,10 @@ namespace JSI
 
         public void LateUpdate()
         {
+            profiler.Start();
             if (HighLogic.LoadedSceneIsEditor)
             {
+                profiler.Stop();
                 return;
             }
 
@@ -708,11 +711,13 @@ namespace JSI
             // particularly when docking, so we can't use it to detect being broken by a third party plugin.
             if (!startupComplete)
             {
+                profiler.Stop();
                 return;
             }
 			
             if (!JUtil.RasterPropMonitorShouldUpdate(part))
             {
+                profiler.Stop();
                 return;
             }
 
@@ -736,10 +741,11 @@ namespace JSI
 
             if (!UpdateCheck())
             {
+                profiler.Stop();
                 return;
             }
 
-			Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
+            // Profiler.BeginSample("RasterPropMonitor.OnLateUpdate");
 
             if (resourceDepleted || noCommConnection)
             {
@@ -748,8 +754,8 @@ namespace JSI
                 firstRenderComplete = false;
                 textRefreshRequired = true;
             }
-			else if (!activePage.isMutable)
-			{
+            else if (!activePage.isMutable)
+            {
                 // In case the page is empty and has no camera, the screen is treated as turned off and blanked once.
                 if (!firstRenderComplete)
                 {
@@ -787,7 +793,8 @@ namespace JSI
 				}
 			}
 
-			Profiler.EndSample();
+            // Profiler.EndSample();
+            profiler.Stop();
         }
 
         public void OnApplicationPause(bool pause)
