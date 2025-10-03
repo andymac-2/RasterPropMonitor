@@ -6,6 +6,12 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 
 ## Unreleased
 
+### New Features
+
+- Add support for scrolling through orbit patches on the MFD (thanks @andymac-2)
+
+### Bug Fixes
+
 - Fix fallback evaluators for lift, drag, and terminal velocity when FAR is not installed (thanks @KlyithSA)
 - Add RPMComputer modules to a few B9 Aerospace parts that were missing them
 - Disabled some propbatching when MAS is installed because it interferes with their patches
