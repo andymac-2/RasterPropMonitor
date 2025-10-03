@@ -138,7 +138,7 @@ namespace JSI
                         allTextConstant = true;
                         for (int i = 0; i < linesArray.Length; ++i)
                         {
-                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp, ourMonitor);
+                            spf[i] = new StringProcessorFormatter(linesArray[i], rpmComp);
 
                             outputLines[i] = spf[i].cachedResult;
 
