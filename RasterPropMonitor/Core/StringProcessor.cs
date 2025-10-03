@@ -39,7 +39,7 @@ namespace JSI
         public string cachedResult;
 
         // TODO: Add support for multi-line processed support.
-        public StringProcessorFormatter(string input, RasterPropMonitorComputer rpmComp, RasterPropMonitor rpm = null)
+        public StringProcessorFormatter(string input, RasterPropMonitorComputer rpmComp)
         {
             if(string.IsNullOrEmpty(input))
             {
