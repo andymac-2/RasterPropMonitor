@@ -45,14 +45,7 @@ namespace JSI
         //occurs at a true anomaly that a does not actually ever attain
         public static double TimeOfAscendingNode(this Orbit a, Orbit b, double UT)
         {
-            if (a.eccentricity >= 1.0)
-            {
-                return UT;
-            }
-            else
-            {
-                return a.TimeOfTrueAnomaly(Orbit.AscendingNodeTrueAnomaly(a, b), UT);
-            }
+            return a.TimeOfTrueAnomaly(Orbit.AscendingNodeTrueAnomaly(a, b), UT);
         }
         //Returns the next time at which a will cross its descending node with b.
         //For elliptical orbits this is a time between UT and UT + a.period.
@@ -62,14 +55,7 @@ namespace JSI
         //occurs at a true anomaly that a does not actually ever attain
         public static double TimeOfDescendingNode(this Orbit a, Orbit b, double UT)
         {
-            if (a.eccentricity >= 1.0)
-            {
-                return UT;
-            }
-            else
-            {
-                return a.TimeOfTrueAnomaly(Orbit.DescendingNodeTrueAnomaly(a, b), UT);
-            }
+            return a.TimeOfTrueAnomaly(Orbit.DescendingNodeTrueAnomaly(a, b), UT);
         }
         //Returns the next time at which the orbiting object will cross the equator
         //moving northward, if o is east-moving, or southward, if o is west-moving.
@@ -80,14 +66,7 @@ namespace JSI
         //"ascending node" occurs at a true anomaly that o does not actually ever attain.
         public static double TimeOfAscendingNodeEquatorial(this Orbit o, double UT)
         {
-            if (o.eccentricity >= 1.0)
-            {
-                return UT;
-            }
-            else
-            {
-                return o.TimeOfTrueAnomaly(o.AscendingNodeEquatorialTrueAnomaly(), UT);
-            }
+            return o.TimeOfTrueAnomaly(o.AscendingNodeEquatorialTrueAnomaly(), UT);
         }
         //Returns the next time at which the orbiting object will cross the equator
         //moving southward, if o is east-moving, or northward, if o is west-moving.

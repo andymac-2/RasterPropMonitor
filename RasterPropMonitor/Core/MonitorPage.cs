@@ -33,6 +33,7 @@ namespace JSI
         public readonly int pageNumber;
         public readonly string name = string.Empty;
         public readonly bool unlocker;
+        private const int INVALID_BUTTON = -1;
         private string text;
         private StringProcessorFormatter[] spf;
         private string[] outputLines;
@@ -80,7 +81,8 @@ namespace JSI
         private readonly MonoBehaviour backgroundHandlerModule, pageHandlerModule;
         private readonly List<string> techsRequired = new List<string>();
         private readonly string fallbackPageName = string.Empty;
-
+        private readonly int buttonNextPatch = INVALID_BUTTON;
+        private readonly int buttonPrevPatch = INVALID_BUTTON;
 
         private struct HandlerSupportMethods
         {
@@ -433,6 +435,16 @@ namespace JSI
                 }
             }
 
+            int intValue = INVALID_BUTTON;
+            if (node.TryGetValue("buttonNextPatch", ref intValue))
+            {
+                buttonNextPatch = intValue;
+            }
+
+            if (node.TryGetValue("buttonPrevPatch", ref intValue))
+            {
+                buttonPrevPatch = intValue;
+            }
         }
 
         private static MethodInfo InstantiateHandler(ConfigNode node, RasterPropMonitor ourMonitor, out MonoBehaviour moduleInstance, out HandlerSupportMethods support)
@@ -622,7 +634,7 @@ namespace JSI
         public bool GlobalButtonClick(int buttonID)
         {
             buttonID = redirectGlobals[buttonID] ?? buttonID;
-            if (buttonID == -1)
+            if (buttonID == INVALID_BUTTON)
             {
                 return false;
             }
@@ -636,6 +648,16 @@ namespace JSI
             {
                 backgroundHandlerS.buttonClick(buttonID);
                 actionTaken = true;
+            }
+            if (buttonID == buttonNextPatch)
+            {
+                ourMonitor.SelectNextPatch();
+                actionTaken = true;
+            }
+            if (buttonID == buttonPrevPatch)
+            {
+                ourMonitor.SelectPreviousPatch();
+                actionTaken = true; 
             }
             return actionTaken;
         }

@@ -379,6 +379,16 @@ namespace JSI
             }
         }
 
+        internal void SelectNextPatch()
+        {
+            rpmComp.SelectNextPatch();
+        }
+
+        internal void SelectPreviousPatch()
+        {
+            rpmComp.SelectPreviousPatch();
+        }
+
         // Update according to the given refresh rate.
         private bool UpdateCheck()
         {
@@ -508,8 +518,8 @@ namespace JSI
                 firstRenderComplete = false;
                 textRefreshRequired = true;
             }
-			else if (!activePage.isMutable)
-			{
+            else if (!activePage.isMutable)
+            {
                 // In case the page is empty and has no camera, the screen is treated as turned off and blanked once.
                 if (!firstRenderComplete)
                 {

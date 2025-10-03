@@ -319,7 +319,22 @@ namespace JSI
                     {
                         return ScienceUtil.GetExperimentBiome(vessel.mainBody, vessel.latitude, vessel.longitude);
                     };
-
+                case "PATCHENCOUNTERBODY":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        if (!JUtil.OrbitMakesSense(vessel)) return string.Empty;
+                        Orbit patch = GetSelectedPatchOrbit();
+                        switch (patch.patchEndTransition)
+                        {
+                            case Orbit.PatchTransitionType.ENCOUNTER:
+                                return patch.nextPatch.referenceBody.bodyName;
+                            case Orbit.PatchTransitionType.ESCAPE:
+                                return patch.referenceBody.bodyName;
+                        }
+                        return string.Empty;
+                    };
+                case "PATCHORBITBODY":
+                    return (RPMVesselComputer comp) => GetSelectedPatchOrbit().referenceBody.name;
             }
 
             return null;
@@ -1600,6 +1615,8 @@ namespace JSI
                         }
                         return double.NaN;
                     };
+                case "ANYTARGETEXISTS":
+                    return (RPMVesselComputer comp) => comp.target == null ? -1d : 1d;
                 case "TARGETEXISTS":
                     return (RPMVesselComputer comp) =>
                     {
@@ -2625,6 +2642,138 @@ namespace JSI
                             return comp.targetBody.atmosphereTemperatureSeaLevel;
                         }
                         return -1d;
+                    };
+                case "PATCHINDEX":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        (int index, Orbit _) = GetSelectedPatch();
+                        return index + 1;
+                    };
+                case "PATCHCOUNT":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        (int index, Orbit _) = GetLastPatch();
+                        return index + 1;
+                    };
+                case "PATCHALTITUDE":
+                    return (RPMVesselComputer comp) => GetSelectedPatchOrbit().referenceBody.GetAltitude(vessel.CoM);
+                case "PATCHORBTSPEED":
+                    return (RPMVesselComputer comp) => GetSelectedPatchOrbit().GetVel().magnitude;
+                case "PATCHAPOAPSIS":
+                    return (RPMVesselComputer comp) => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().ApA : double.NaN;
+                case "PATCHPERIAPSIS":
+                    return (RPMVesselComputer comp) => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().PeA : double.NaN;
+                case "PATCHINCLINATION":
+                    return (RPMVesselComputer comp) => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().inclination : double.NaN;
+                case "PATCHECCENTRICITY":
+                    return (RPMVesselComputer comp) => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().eccentricity : double.NaN;
+                case "PATCHTIMETOAPSECS":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        if (!JUtil.OrbitMakesSense(vessel)) return double.NaN;
+                        Orbit patch = GetSelectedPatchOrbit();
+                        // When the tracking station is not upgraded, StartUT will not be updated to the current time.
+                        if (patch.StartUT == 0.0) return patch.timeToAp;
+                        return patch.timeToAp + patch.StartUT - Planetarium.GetUniversalTime();
+                    };
+                case "PATCHTIMETOPESECS":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        if (!JUtil.OrbitMakesSense(vessel)) return double.NaN;
+                        Orbit patch = GetSelectedPatchOrbit();
+                        // When the tracking station is not upgraded, StartUT will not be updated to the current time.
+                        if (patch.StartUT == 0.0) return patch.timeToPe;
+                        return patch.timeToPe + patch.StartUT - Planetarium.GetUniversalTime();
+                    };
+                case "PATCHORBPERIODSECS":
+                    return (RPMVesselComputer comp) => JUtil.OrbitMakesSense(vessel) ? GetSelectedPatchOrbit().period : double.NaN;
+                case "PATCHTIMETOANEQUATORIAL":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        Orbit patch = GetSelectedPatchOrbit();
+                        if (!JUtil.OrbitMakesSense(vessel) || !patch.AscendingNodeEquatorialExists())
+                        {
+                            return double.NaN;
+                        }
+                        return patch.TimeOfAscendingNodeEquatorial(Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                    };
+                case "PATCHTIMETODNEQUATORIAL":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        Orbit patch = GetSelectedPatchOrbit();
+                        if (!JUtil.OrbitMakesSense(vessel) || !patch.DescendingNodeEquatorialExists())
+                        {
+                            return double.NaN;
+                        }
+                        return patch.TimeOfDescendingNodeEquatorial(Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                    };
+                case "PATCHFIRST":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        (int index, Orbit _) = GetSelectedPatch();
+                        return index == 0 ? 1.0d : 0.0d;
+                    };
+                case "PATCHLAST":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        (int selected, Orbit _) = GetSelectedPatch();
+                        (int last, Orbit _) = GetLastPatch();
+                        return selected == last ? 1.0d : 0.0d;
+                    };
+                case "PATCHNEXTAPSISTYPE":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        Orbit patch = GetSelectedPatchOrbit();
+                        if (patch.eccentricity < 1.0)
+                        {
+                            // Which one will we reach first?
+                            return (patch.timeToPe < patch.timeToAp) ? -1.0 : 1.0;
+                        }
+
+                        // Ship is hyperbolic.  There is no Ap.  Have we already
+                        // passed Pe?
+                        return (patch.timeToPe > 0.0) ? -1.0 : 0.0;
+                    };
+                case "PATCHNEXT_ANDN_EQUATORIAL":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        Orbit patch = GetSelectedPatchOrbit();
+                        double universalTime = Planetarium.GetUniversalTime();
+                        if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+
+                        double dnTime = patch.DescendingNodeEquatorialExists() ? patch.TimeOfDescendingNodeEquatorial(universalTime) : double.NaN;
+                        double anTime = patch.AscendingNodeEquatorialExists() ? patch.TimeOfAscendingNodeEquatorial(universalTime) : double.NaN;
+
+                        if (double.IsNaN(anTime)) return -1.0;
+                        if (double.IsNaN(dnTime)) return 1.0;
+                        return Math.Max(0.0, anTime) < Math.Max(dnTime, 0.0) ? 1.0 : -1.0;
+                    };
+                case "PATCHENCOUNTEREXISTS":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+                        Orbit patch = GetSelectedPatchOrbit();
+                        switch (patch.patchEndTransition)
+                        {
+                            case Orbit.PatchTransitionType.ESCAPE:
+                                return -1d;
+                            case Orbit.PatchTransitionType.ENCOUNTER:
+                                return 1d;
+                            default:
+                                return 0.0d;
+                        }
+                    };
+                case "PATCHENCOUNTERTIME":
+                    return (RPMVesselComputer comp) =>
+                    {
+                        if (!JUtil.OrbitMakesSense(vessel)) return 0.0;
+                        Orbit patch = GetSelectedPatchOrbit();
+                        if (patch.patchEndTransition == Orbit.PatchTransitionType.ENCOUNTER ||
+                            patch.patchEndTransition == Orbit.PatchTransitionType.ESCAPE)
+                        {
+                            return patch.UTsoi - Planetarium.GetUniversalTime();
+                        }
+                        return 0.0;
                     };
             }
 
