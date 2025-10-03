@@ -41,6 +41,8 @@ namespace JSI
     public class VariableOrNumber
     {
         internal readonly string variableName;
+        private double numericValue;
+        private string stringValue;
         internal bool isNumeric;
         internal VariableUpdateType updateType;
         private readonly RasterPropMonitorComputer rpmComp;
@@ -51,9 +53,6 @@ namespace JSI
         internal event Action<bool> onResourceDepletedCallbacks;
 
         public bool isConstant => updateType == VariableUpdateType.Constant;
-
-        private double numericValue;
-        private string stringValue;
 
         internal void FireCallbacks(float newValue)
         {

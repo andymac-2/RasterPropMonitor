@@ -99,7 +99,7 @@ namespace JSI
                 {
                     if (sourceVariable.isNumeric)
                     {
-                        double newValue = (double)sourceVariable.Get();
+                        double newValue = sourceVariable.AsDouble();
                         if (JUtil.ValueChanged((double)sourceValues[i], newValue))
                         {
                             anyChanged = true;
