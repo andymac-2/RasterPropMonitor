@@ -41,8 +41,8 @@ namespace JSI
     public class VariableOrNumber
     {
         internal readonly string variableName;
-        internal double numericValue;
-        internal string stringValue;
+        private double numericValue;
+        private string stringValue;
         internal bool isNumeric;
         internal VariableUpdateType updateType;
         private readonly RasterPropMonitorComputer rpmComp;
