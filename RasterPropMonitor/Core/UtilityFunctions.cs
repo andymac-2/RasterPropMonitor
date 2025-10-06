@@ -1112,41 +1112,19 @@ namespace JSI
             return "Space over " + thatVessel.mainBody.bodyName;
         }
 
-
-        // Pseudo-orbit for closest approach to a landed object
-        public static Orbit OrbitFromSurfacePos(CelestialBody body, double lat, double lon, double alt, double UT)
+        public static Vector3d ClosestApproachSrfOrbit(Orbit vesselOrbit, Vessel target, out double UT, out double distance)
         {
-            double t0 = Planetarium.GetUniversalTime();
-            double angle = body.rotates ? (UT - t0) * 360.0 / body.rotationPeriod : 0;
+            CelestialBody body = target.mainBody;
 
-            double LAN = (lon + body.rotationAngle + angle - 90.0) % 360.0;
-            Orbit orbit = new Orbit(lat, 0, body.Radius + alt, LAN, 90.0, 0, UT, body);
+            // longitude and latitude calculations are offset by a different amount every
+            // time we load the scene. We can use a zero latitude/longitude to find out what
+            // that offset is.
+            Vector3d zeroPos = body.GetRelSurfacePosition(0, 0, 0);
+            body.GetLatLonAltOrbital(zeroPos, out var zeroLat, out var zeroLon, out var _);
 
-            orbit.pos = orbit.getRelativePositionAtT(0);
-            if (body.rotates)
-                orbit.vel = Vector3d.Cross(body.zUpAngularVelocity, -orbit.pos);
-            else
-                orbit.vel = orbit.getOrbitalVelocityAtObT(Time.fixedDeltaTime);
-            orbit.h = Vector3d.Cross(orbit.pos, orbit.vel);
-
-            orbit.StartUT = t0;
-            orbit.EndUT = UT + orbit.period;
-            if (body.rotates)
-                orbit.period = body.rotationPeriod;
-            orbit.patchEndTransition = Orbit.PatchTransitionType.FINAL;
-            return orbit;
-        }
-
-        public static Orbit ClosestApproachSrfOrbit(Orbit vesselOrbit, Vessel target, out double UT, out double distance)
-        {
-            return ClosestApproachSrfOrbit(vesselOrbit, target.mainBody, target.latitude, target.longitude, target.altitude, out UT, out distance);
-        }
-
-        public static Orbit ClosestApproachSrfOrbit(Orbit vesselOrbit, CelestialBody body, double lat, double lon, double alt, out double UT, out double distance)
-        {
-            Vector3d pos = body.GetRelSurfacePosition(lat, lon, alt);
+            Vector3d pos = body.GetRelSurfacePosition(target.latitude - zeroLat, target.longitude - zeroLon, target.altitude);
             distance = GetClosestApproach(vesselOrbit, body, pos, out UT);
-            return OrbitFromSurfacePos(body, lat, lon, alt, UT);
+            return pos;
         }
 
         public static double GetClosestApproach(Orbit vesselOrbit, ITargetable target, out double timeAtClosestApproach)
@@ -1171,7 +1149,7 @@ namespace JSI
                 if (targetVessel.LandedOrSplashed)
                 {
                     double closestApproach;
-                    Orbit targetOrbit = JUtil.ClosestApproachSrfOrbit(vesselOrbit, targetVessel, out timeAtClosestApproach, out closestApproach);
+                    ClosestApproachSrfOrbit(vesselOrbit, targetVessel, out timeAtClosestApproach, out closestApproach);
                     return closestApproach;
                 }
                 else
