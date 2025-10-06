@@ -623,7 +623,7 @@ namespace JSI
                     DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorClosestApproachValue, MapIcons.OtherIcon.SHIPATINTERCEPT);
                 }
 
-                if (!targetVessel.LandedOrSplashed)
+                if (targetVessel == null || !targetVessel.LandedOrSplashed)
                 {
                     // Unconditionally try to draw the closest approach point on
                     // the target orbit.
