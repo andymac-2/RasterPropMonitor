@@ -9,6 +9,7 @@ Please always post your [KSP.log file](https://gist.github.com/JonnyOThan/04c207
 ### New Features
 
 - Add support for scrolling through orbit patches on the MFD (thanks @andymac-2)
+- Allow targeting flags and landed vessels (thanks @andymac-2)
 
 ### Bug Fixes
 
