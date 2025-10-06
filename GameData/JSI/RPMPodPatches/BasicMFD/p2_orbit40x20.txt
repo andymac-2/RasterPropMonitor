@@ -1,4 +1,4 @@
-----Orbit: {1,-15} Stage {0:00}---- $&$ STAGE PATCHORBITBODY 
+----Orbit: {0,-16} Patch {1}/{2}---- $&$ PATCHORBITBODY PATCHINDEX PATCHCOUNT
 Vel: {0:SIP_10.1}m/s  Alt: {1:SIP_8.3}m  $&$ PATCHORBTSPEED PATCHALTITUDE
 ------Node in T-----------ΔV:---THROTTLE---------------------------
 {0,17:MET+yy:ddd:hh:mm:ss.f}  |{1,9:0.00} |   {2,5:P0} $&$ MNODETIMESECS MNODEDV THROTTLE
