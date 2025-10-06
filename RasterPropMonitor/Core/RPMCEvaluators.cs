@@ -1714,21 +1714,21 @@ namespace JSI
                 case "TIMETOANWITHTARGETSECS":
                     return (RPMVesselComputer comp) =>
                     {
-                        if (comp.target == null || comp.targetOrbit == null)
+                        if (comp.target == null)
                             return double.NaN;
-                        return vessel.GetOrbit().TimeOfAscendingNode(comp.targetOrbit, Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                        return vessel.GetOrbit().TimeOfAscendingNode(comp.target.GetOrbit(), Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
                     };
                 case "TIMETODNWITHTARGETSECS":
                     return (RPMVesselComputer comp) =>
                     {
-                        if (comp.target == null || comp.targetOrbit == null)
+                        if (comp.target == null)
                             return double.NaN;
-                        return vessel.GetOrbit().TimeOfDescendingNode(comp.targetOrbit, Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
+                        return vessel.GetOrbit().TimeOfDescendingNode(comp.target.GetOrbit(), Planetarium.GetUniversalTime()) - Planetarium.GetUniversalTime();
                     };
                 case "TARGETCLOSESTAPPROACHTIME":
                     return (RPMVesselComputer comp) =>
                     {
-                        if (comp.target == null || comp.targetOrbit == null || orbitSensibility == false)
+                        if (comp.target == null || orbitSensibility == false)
                         {
                             return double.NaN;
                         }
@@ -1742,7 +1742,7 @@ namespace JSI
                 case "TARGETCLOSESTAPPROACHDISTANCE":
                     return (RPMVesselComputer comp) =>
                     {
-                        if (comp.target == null || comp.targetOrbit == null || orbitSensibility == false)
+                        if (comp.target == null || orbitSensibility == false)
                         {
                             return double.NaN;
                         }

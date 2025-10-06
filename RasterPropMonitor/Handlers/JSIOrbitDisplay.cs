@@ -186,7 +186,7 @@ namespace JSI
             Vector3 midStraight = (startVertex + endVertex) * 0.5f;
             // Debug.Log($"startTA: {startTA}, endTA: {endTA}, startVertex: {startVertex}, endVertex: {endVertex}, midVertex: {midVertex}, midStraight: {midStraight}");
 
-            if (Math.Abs(startTA - endTA) <  0.01 || (midStraight - midVertex).sqrMagnitude < 9.0)
+            if (Math.Abs(startTA - endTA) <  0.01 || (midStraight - midVertex).sqrMagnitude < 16.0)
             {
                 GL.Vertex3(startVertex.x, startVertex.y, 0.0f);
                 GL.Vertex3(midVertex.x, midVertex.y, 0.0f);
@@ -569,29 +569,31 @@ namespace JSI
             {
                 var orbit = (targetVessel != null) ? targetVessel.GetOrbit() : targetBody.GetOrbit();
 
-                double tClosestApproach, dClosestApproach;
+                double tClosestApproach;
 
                 if (targetVessel != null && targetVessel.LandedOrSplashed)
                 {
-                    orbit = JUtil.ClosestApproachSrfOrbit(selectedPatch, targetVessel, out tClosestApproach, out dClosestApproach);
+                    Vector3d position = JUtil.ClosestApproachSrfOrbit(selectedPatch, targetVessel, out tClosestApproach, out double _);
+                    transformedPosition = screenTransform.MultiplyPoint3x4(position);
+                    DrawIcon(transformedPosition.x, transformedPosition.y, targetVessel.vesselType, iconColorTargetValue);
                 }
                 else
                 {
-                    dClosestApproach = JUtil.GetClosestApproach(selectedPatch, orbit, out tClosestApproach);
+                    JUtil.GetClosestApproach(selectedPatch, orbit, out tClosestApproach);
 
                     DrawNextPe(orbit, selectedPatch.referenceBody, now, iconColorTargetValue, screenTransform);
                     DrawNextAp(orbit, selectedPatch.referenceBody, now, iconColorTargetValue, screenTransform);
-                }
 
-                if (targetBody != null)
-                {
-                    transformedPosition = screenTransform.MultiplyPoint3x4(targetBody.getTruePositionAtUT(now) - selectedPatch.referenceBody.getTruePositionAtUT(now));
-                    DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorTargetValue, MapIcons.OtherIcon.PLANET);
-                }
-                else
-                {
-                    transformedPosition = screenTransform.MultiplyPoint3x4(orbit.SwappedRelativePositionAtUT(now));
-                    DrawIcon(transformedPosition.x, transformedPosition.y, targetVessel.vesselType, iconColorTargetValue);
+                    if (targetBody != null)
+                    {
+                        transformedPosition = screenTransform.MultiplyPoint3x4(targetBody.getTruePositionAtUT(now) - selectedPatch.referenceBody.getTruePositionAtUT(now));
+                        DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorTargetValue, MapIcons.OtherIcon.PLANET);
+                    }
+                    else
+                    {
+                        transformedPosition = screenTransform.MultiplyPoint3x4(orbit.SwappedRelativePositionAtUT(now));
+                        DrawIcon(transformedPosition.x, transformedPosition.y, targetVessel.vesselType, iconColorTargetValue);
+                    }
                 }
 
                 if (selectedPatch.AscendingNodeExists(orbit))
@@ -621,10 +623,13 @@ namespace JSI
                     DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorClosestApproachValue, MapIcons.OtherIcon.SHIPATINTERCEPT);
                 }
 
-                // Unconditionally try to draw the closest approach point on
-                // the target orbit.
-                transformedPosition = screenTransform.MultiplyPoint3x4(orbit.SwappedRelativePositionAtUT(tClosestApproach));
-                DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorClosestApproachValue, MapIcons.OtherIcon.TGTATINTERCEPT);
+                if (!targetVessel.LandedOrSplashed)
+                {
+                    // Unconditionally try to draw the closest approach point on
+                    // the target orbit.
+                    transformedPosition = screenTransform.MultiplyPoint3x4(orbit.SwappedRelativePositionAtUT(tClosestApproach));
+                    DrawIcon(transformedPosition.x, transformedPosition.y, VesselType.Unknown, iconColorClosestApproachValue, MapIcons.OtherIcon.TGTATINTERCEPT);
+                }
             }
             else
             {
