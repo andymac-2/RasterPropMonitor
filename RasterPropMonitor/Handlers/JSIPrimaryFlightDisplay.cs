@@ -20,7 +20,7 @@
  ****************************************************************************/
 using UnityEngine;
 using System;
-using KSP.UI.Screens.Flight;
+using FinePrint;
 
 namespace JSI
 {
@@ -291,37 +291,32 @@ namespace JSI
                 markerManeuverMinus.visible = true;
             }
 
-            /*
-            if (FinePrint.WaypointManager.navIsActive() == true)
+            NavWaypoint waypoint = NavWaypoint.fetch;
+            if (waypoint != null && waypoint.IsActive)
             {
-                // MOARdV: Code for the waypoint marker based on https://github.com/Ninenium/NavHud/blob/master/Source/WaypointMarker.cs
-                // However, in 1.1.2 (maybe earlier), the NavBall gameobject doesn't have children.
-                // And in 1.1.3, FinePrint.WaypointManager .navIsActive and .navWaypoint no longer exist...
                 try
                 {
-                    GameObject navWaypointIndicator = GameObject.Find("NavBall").transform.FindChild("vectorsPivot").FindChild("NavWaypoint").gameObject;
-                    Renderer markerRenderer = null;
-                    markerNavWaypoint.GetComponentCached<Renderer>(ref markerRenderer);
-                    Material material = navWaypointIndicator.GetComponent<Renderer>().sharedMaterial;
-                    markerRenderer.material.mainTexture = material.mainTexture;
-                    markerRenderer.material.mainTextureScale = Vector2.one;
-                    markerRenderer.material.mainTextureOffset = Vector2.zero;
+                    Material material = waypoint.Visual.GetComponent<Renderer>().sharedMaterial;
+                    markerNavWaypoint.gameObject.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+                    markerNavWaypoint.material.mainTexture = material.GetTexture("_MainTexture");
+                    markerNavWaypoint.material.mainTextureScale = Vector2.one;
+                    markerNavWaypoint.material.mainTextureOffset = Vector2.zero;
                     if (string.IsNullOrEmpty(waypointColor))
                     {
-                        markerRenderer.material.SetVector("_Color", material.GetVector("_Color"));
+                        markerNavWaypoint.material.SetVector("_Color", material.GetVector("_TintColor"));
                     }
-
-                    Vector3d waypointPosition = vessel.mainBody.GetWorldSurfacePosition(FinePrint.WaypointManager.navWaypoint.latitude, FinePrint.WaypointManager.navWaypoint.longitude, FinePrint.WaypointManager.navWaypoint.altitude);
-                    Vector3 waypointDirection = (waypointPosition - vessel.CoM).normalized;
-                    MoveMarker(markerNavWaypoint, waypointDirection, gymbal);
-                    JUtil.ShowHide(true, markerNavWaypoint);
                 }
-                catch
+                catch (Exception e)
                 {
-                    // if something's borked, let's just silently do nothing
+                    Debug.Log($"Waypoint material failure: {e}");
                 }
+
+                Vector3d waypointPosition = waypoint.Body.GetWorldSurfacePosition(waypoint.Latitude, waypoint.Longitude, waypoint.Altitude);
+                Vector3 waypointDirection = (waypointPosition - vessel.CoM).normalized;
+                MoveMarker(markerNavWaypoint, waypointDirection, gymbal);
+                markerNavWaypoint.visible = true;
             }
-            */
+
             ITargetable target = FlightGlobals.fetch.VesselTarget;
             if (target != null)
             {
